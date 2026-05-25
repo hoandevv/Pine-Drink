@@ -6,7 +6,17 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Repository for managing {@link Role} entities.
+ */
 @Repository
 public interface RoleRepository extends JpaRepository<Role, String> {
+
+    /**
+     * Finds a role by its unique code.
+     *
+     * @param code the role code to search for
+     * @return an {@link Optional} containing the role if found
+     */
     Optional<Role> findByCode(String code);
 }

@@ -13,6 +13,7 @@ import java.util.UUID;
 public abstract class BaseEntity {
 
     @Id
+    @Column(columnDefinition = "CHAR(36)")
     private String id;
 
     @Column(name = "status", nullable = false)

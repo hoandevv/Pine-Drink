@@ -1,0 +1,47 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: "${TEST_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/${TEST_MYSQL_DATABASE:pine_drink_test}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: ${TEST_DATASOURCE_USERNAME:${MYSQL_USER:pine_drink_user}}
+    password: ${TEST_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:123456789}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:${REDIS_HOST:localhost}}
+      port: ${TEST_REDIS_PORT:${REDIS_PORT:6379}}
+      password: ${TEST_REDIS_PASSWORD:${REDIS_PASSWORD:redis123}}
+  rabbitmq:
+    host: ${TEST_RABBITMQ_HOST:${RABBITMQ_HOST:localhost}}
+    port: ${TEST_RABBITMQ_PORT:${RABBITMQ_PORT:5672}}
+    username: ${TEST_RABBITMQ_USERNAME:${RABBITMQ_DEFAULT_USER:admin}}
+    password: ${TEST_RABBITMQ_PASSWORD:${RABBITMQ_DEFAULT_PASS:admin123}}
+  jpa:
+    hibernate:
+      ddl-auto: ${TEST_JPA_DDL_AUTO:validate}
+    show-sql: false
+  flyway:
+    enabled: ${TEST_FLYWAY_ENABLED:true}
+  session:
+    redis:
+      namespace: ${SESSION_REDIS_NAMESPACE:pine-drink:test:session}
+  mail:
+    host: ${TEST_MAIL_HOST:localhost}
+    port: ${TEST_MAIL_PORT:3025}
+    username: ${TEST_MAIL_USERNAME:}
+    password: ${TEST_MAIL_PASSWORD:}
+
+logging:
+  level:
+    root: WARN
+    com.hoandev.pinedrink: INFO
+    org.hibernate.SQL: WARN
+
+app:
+  email:
+    enabled: ${EMAIL_ENABLED:false}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:false}
+  minio:
+    bucket-name: ${MINIO_BUCKET_NAME:pine-drink-test-storage}

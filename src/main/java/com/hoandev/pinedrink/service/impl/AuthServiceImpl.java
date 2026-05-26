@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.AccountRoleAssignment;
 import com.hoandev.pinedrink.entity.CustomerProfile;
 import com.hoandev.pinedrink.entity.RefreshToken;
 import com.hoandev.pinedrink.entity.Role;
+import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.entity.dto.request.Auth.LoginRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RefreshTokenRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
@@ -19,6 +20,7 @@ import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
 import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.repository.RefreshTokenRepository;
 import com.hoandev.pinedrink.repository.RoleRepository;
+import com.hoandev.pinedrink.repository.ScopeRepository;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
@@ -62,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository assignmentRepository;
+    private final ScopeRepository scopeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final CustomerProfileRepository customerProfileRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -175,9 +178,13 @@ public class AuthServiceImpl implements AuthService {
         Role customerRole = roleRepository.findByCode(Constants.ROLE_CUSTOMER)
                 .orElseThrow(() -> new BaseException(ErrorCode.ROLE_NOT_FOUND));
 
+        Scope systemScope = scopeRepository.findByScopeTypeAndBrandIdAndBranchId("SYSTEM", null, null)
+                .orElseThrow(() -> new BaseException(ErrorCode.SCOPE_NOT_FOUND));
+
         AccountRoleAssignment assignment = new AccountRoleAssignment();
         assignment.setAccount(account);
         assignment.setRole(customerRole);
+        assignment.setScope(systemScope);
         assignment.setAssignedAt(LocalDateTime.now());
         assignment.setStatus(Constants.STATUS_ACTIVE);
         assignmentRepository.save(assignment);
@@ -386,7 +393,6 @@ public class AuthServiceImpl implements AuthService {
         token.setTokenHash(hashToken(rawToken));
         token.setAccount(account);
         token.setExpiresAt(LocalDateTime.now().plusSeconds(refreshTokenExpirationSeconds));
-        token.setStatus(Constants.STATUS_ACTIVE);
         refreshTokenRepository.save(token);
     }
 

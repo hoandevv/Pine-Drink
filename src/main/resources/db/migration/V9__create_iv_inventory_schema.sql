@@ -36,10 +36,14 @@ CREATE TABLE iv_recipe (
 
 CREATE TABLE iv_recipe_item (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     recipe_id CHAR(36) NOT NULL,
     ingredient_id CHAR(36) NOT NULL,
     quantity DECIMAL(12,3) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     UNIQUE KEY uk_iv_recipe_ingredient (recipe_id, ingredient_id),
     CONSTRAINT fk_iv_recipe_item_recipe FOREIGN KEY (recipe_id) REFERENCES iv_recipe(id) ON DELETE CASCADE,
     CONSTRAINT fk_iv_recipe_item_ingredient FOREIGN KEY (ingredient_id) REFERENCES iv_ingredient(id) ON DELETE RESTRICT,
@@ -49,11 +53,15 @@ CREATE TABLE iv_recipe_item (
 
 CREATE TABLE iv_stock (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     branch_id CHAR(36) NOT NULL,
     ingredient_id CHAR(36) NOT NULL,
     quantity_on_hand DECIMAL(12,3) NOT NULL DEFAULT 0,
     reserved_quantity DECIMAL(12,3) NOT NULL DEFAULT 0,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_by CHAR(36) NULL,
     UNIQUE KEY uk_iv_stock_branch_ingredient (branch_id, ingredient_id),
     CONSTRAINT fk_iv_stock_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
     CONSTRAINT fk_iv_stock_ingredient FOREIGN KEY (ingredient_id) REFERENCES iv_ingredient(id) ON DELETE RESTRICT,
@@ -64,6 +72,7 @@ CREATE TABLE iv_stock (
 
 CREATE TABLE iv_stock_movement (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     branch_id CHAR(36) NOT NULL,
     ingredient_id CHAR(36) NOT NULL,
     order_id CHAR(36) NULL,
@@ -74,6 +83,8 @@ CREATE TABLE iv_stock_movement (
     reason VARCHAR(255) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     CONSTRAINT fk_iv_movement_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE RESTRICT,
     CONSTRAINT fk_iv_movement_ingredient FOREIGN KEY (ingredient_id) REFERENCES iv_ingredient(id) ON DELETE RESTRICT,
     CONSTRAINT fk_iv_movement_order FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE SET NULL,

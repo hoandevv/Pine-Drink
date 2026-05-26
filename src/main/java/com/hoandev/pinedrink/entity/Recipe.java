@@ -10,7 +10,7 @@ import lombok.Setter;
 @Table(name = "iv_recipe")
 public class Recipe extends BaseEntity {
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)

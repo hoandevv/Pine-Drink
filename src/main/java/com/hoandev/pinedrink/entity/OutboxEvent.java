@@ -10,6 +10,11 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "pf_outbox_event")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class OutboxEvent extends BaseEntity {
 
     @Column(name = "event_type", nullable = false)
@@ -18,19 +23,19 @@ public class OutboxEvent extends BaseEntity {
     @Column(name = "aggregate_type", nullable = false)
     private String aggregateType;
 
-    @Column(name = "aggregate_id", nullable = false)
+    @Column(name = "aggregate_id", nullable = false, columnDefinition = "CHAR(36)")
     private String aggregateId;
 
-    @Column(name = "brand_id")
+    @Column(name = "brand_id", columnDefinition = "CHAR(36)")
     private String brandId;
 
-    @Column(name = "branch_id")
+    @Column(name = "branch_id", columnDefinition = "CHAR(36)")
     private String branchId;
 
-    @Column(name = "routing_key")
+    @Column(name = "routing_key", nullable = false)
     private String routingKey;
 
-    @Column(name = "payload", columnDefinition = "json")
+    @Column(columnDefinition = "json", nullable = false)
     private String payload;
 
     @Column(name = "retry_count", nullable = false)

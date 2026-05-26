@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ExportRequestRepository extends JpaRepository<ExportRequest, String> {
-    List<ExportRequest> findByRequestedByOrderByRequestedAtDesc(String requestedBy);
+    List<ExportRequest> findByRequestedByIdOrderByCreatedAtDesc(String requestedById);
 }

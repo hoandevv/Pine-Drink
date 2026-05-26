@@ -10,9 +10,13 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "cu_loyalty_account", uniqueConstraints = @UniqueConstraint(columnNames = "customer_id"))
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class LoyaltyAccount extends BaseEntity {
 
-    @Column(name = "tier", nullable = false)
+    @Column(nullable = false)
     private String tier = "SILVER";
 
     @Column(name = "points_balance", nullable = false)
@@ -21,8 +25,8 @@ public class LoyaltyAccount extends BaseEntity {
     @Column(name = "lifetime_points", nullable = false)
     private int lifetimePoints = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", unique = true, nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false, unique = true)
     private CustomerProfile customer;
 
     @OneToMany(mappedBy = "loyaltyAccount")

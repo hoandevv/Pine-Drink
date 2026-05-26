@@ -10,18 +10,18 @@ import lombok.Setter;
 @Table(name = "ce_setting", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "branch_id", "config_key"}))
 public class Setting extends BaseEntity {
 
-    @Column(name = "config_key")
+    @Column(name = "config_key", nullable = false)
     private String configKey;
 
-    @Column(name = "config_value")
+    @Column(name = "config_value", nullable = false)
     private String configValue;
 
-    @Column(name = "data_type")
+    @Column(name = "data_type", nullable = false)
     private String dataType;
 
     private String description;
 
-    @Column(name = "is_runtime_editable")
+    @Column(name = "is_runtime_editable", nullable = false)
     private boolean isRuntimeEditable = true;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -45,6 +45,7 @@ CREATE TABLE od_order (
 
 CREATE TABLE od_order_item (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     order_id CHAR(36) NOT NULL,
     product_id CHAR(36) NULL,
     variant_id CHAR(36) NULL,
@@ -58,6 +59,9 @@ CREATE TABLE od_order_item (
     unit_price DECIMAL(12,2) NOT NULL,
     total_price DECIMAL(12,2) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     CONSTRAINT fk_od_item_order FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE CASCADE,
     CONSTRAINT fk_od_item_product FOREIGN KEY (product_id) REFERENCES pr_product(id) ON DELETE SET NULL,
     CONSTRAINT fk_od_item_variant FOREIGN KEY (variant_id) REFERENCES pr_product_variant(id) ON DELETE SET NULL,
@@ -70,6 +74,7 @@ CREATE TABLE od_order_item (
 
 CREATE TABLE od_order_item_topping (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     order_item_id CHAR(36) NOT NULL,
     topping_id CHAR(36) NULL,
     topping_code VARCHAR(50) NOT NULL,
@@ -77,6 +82,10 @@ CREATE TABLE od_order_item_topping (
     quantity INT NOT NULL DEFAULT 1,
     unit_price DECIMAL(12,2) NOT NULL,
     total_price DECIMAL(12,2) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     CONSTRAINT fk_od_item_topping_item FOREIGN KEY (order_item_id) REFERENCES od_order_item(id) ON DELETE CASCADE,
     CONSTRAINT fk_od_item_topping_topping FOREIGN KEY (topping_id) REFERENCES pr_topping(id) ON DELETE SET NULL,
     INDEX idx_od_item_topping_item (order_item_id),
@@ -87,12 +96,15 @@ CREATE TABLE od_order_item_topping (
 
 CREATE TABLE od_order_status_history (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     order_id CHAR(36) NOT NULL,
     old_status VARCHAR(30) NULL,
     new_status VARCHAR(30) NOT NULL,
     reason VARCHAR(255) NULL,
     changed_by CHAR(36) NULL,
     changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     CONSTRAINT fk_od_status_history_order FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE CASCADE,
     CONSTRAINT fk_od_status_history_actor FOREIGN KEY (changed_by) REFERENCES ia_account(id) ON DELETE SET NULL,
     INDEX idx_od_status_history_order_changed (order_id, changed_at),

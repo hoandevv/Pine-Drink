@@ -21,19 +21,16 @@ public class CustomerAddress extends BaseEntity {
     @Column(name = "address_line", nullable = false)
     private String addressLine;
 
-    @Column(name = "ward")
     private String ward;
 
-    @Column(name = "district")
     private String district;
 
-    @Column(name = "city")
     private String city;
 
-    @Column(name = "latitude", precision = 10, scale = 7)
+    @Column(precision = 10, scale = 7)
     private BigDecimal latitude;
 
-    @Column(name = "longitude", precision = 10, scale = 7)
+    @Column(precision = 10, scale = 7)
     private BigDecimal longitude;
 
     @Column(name = "is_default", nullable = false)

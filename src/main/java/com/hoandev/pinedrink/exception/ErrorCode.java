@@ -37,7 +37,8 @@ public enum ErrorCode {
 
     RATE_LIMIT_EXCEEDED("RATE_001", "Rate limit exceeded - too many requests"),
 
-    ROLE_NOT_FOUND("ROLE_001", "Role not found");
+    ROLE_NOT_FOUND("ROLE_001", "Role not found"),
+    SCOPE_NOT_FOUND("SCOPE_001", "Scope not found");
 
     private final String code;
     private final String message;

@@ -13,17 +13,16 @@ public class Template extends BaseEntity {
     @Column(name = "template_code", nullable = false)
     private String templateCode;
 
-    @Column(name = "channel", nullable = false)
+    @Column(nullable = false)
     private String channel;
 
-    @Column(name = "subject")
     private String subject;
 
     @Lob
-    @Column(name = "body", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String body;
 
-    @Column(name = "variables", columnDefinition = "json")
+    @Column(columnDefinition = "json")
     private String variables;
 
     @ManyToOne(fetch = FetchType.LAZY)

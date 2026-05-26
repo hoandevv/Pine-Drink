@@ -10,13 +10,14 @@ import lombok.Setter;
 @Table(name = "ia_role")
 public class Role extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String code;
 
+    @Column(nullable = false)
     private String name;
 
     private String description;
 
-    @Column(name = "role_type")
+    @Column(name = "role_type", nullable = false)
     private String roleType = "SYSTEM";
 }

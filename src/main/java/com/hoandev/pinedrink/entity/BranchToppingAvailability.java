@@ -9,8 +9,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "mn_branch_topping_availability", uniqueConstraints = @UniqueConstraint(columnNames = {"branch_id", "topping_id"}))
 @AttributeOverrides({
-    @AttributeOverride(name = "createdAt", column = @Column(name = "created_at", insertable = false, updatable = false)),
-    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false))
+    @AttributeOverride(name = "createdAt", column = @Column(name = "created_at", updatable = false)),
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", columnDefinition = "CHAR(36)", insertable = false, updatable = false))
 })
 public class BranchToppingAvailability extends BaseEntity {
 

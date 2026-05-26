@@ -19,20 +19,17 @@ public class CustomerProfile extends BaseEntity {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "email")
     private String email;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "gender")
     private String gender;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", unique = true)
+    @JoinColumn(name = "account_id", nullable = false, unique = true)
     private Account account;
 
     @OneToMany(mappedBy = "customer")

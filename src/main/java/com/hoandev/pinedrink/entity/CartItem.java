@@ -11,13 +11,9 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "ca_cart_item")
-@AttributeOverrides({
-    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
-    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
-})
 public class CartItem extends BaseEntity {
 
-    @Column(name = "quantity", nullable = false)
+    @Column(nullable = false)
     private int quantity;
 
     @Column(name = "sugar_level", nullable = false)
@@ -26,7 +22,6 @@ public class CartItem extends BaseEntity {
     @Column(name = "ice_level", nullable = false)
     private String iceLevel = "NORMAL";
 
-    @Column(name = "note")
     private String note;
 
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)

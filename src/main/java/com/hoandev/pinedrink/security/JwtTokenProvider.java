@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Component responsible for generating and validating JWT tokens.
@@ -38,11 +41,15 @@ public class JwtTokenProvider {
     public String generateAccessToken(UserPrincipal principal) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpirationSeconds * 1000);
+        List<String> roles = principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
 
         return Jwts.builder()
                 .subject(principal.getId())
                 .claim("username", principal.getUsername())
                 .claim("email", principal.getEmail())
+                .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)

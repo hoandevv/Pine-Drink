@@ -4,7 +4,6 @@ import com.hoandev.pinedrink.security.CustomUserDetailsService;
 import com.hoandev.pinedrink.security.JwtAuthFilter;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.RateLimitFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,13 +31,18 @@ import java.util.List;
  * access token.</p>
  */
 @Configuration
-@RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthFilter jwtAuthFilter;
     private final RateLimitFilter rateLimitFilter;
-    private final CustomUserDetailsService customUserDetailsService;
+
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          RateLimitFilter rateLimitFilter,
+                          CustomUserDetailsService customUserDetailsService) {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.rateLimitFilter = rateLimitFilter;
+    }
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -61,14 +65,6 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
-    }
-
-    /**
-     * Creates the JWT filter that authenticates Bearer access tokens.
-     */
-    @Bean
-    public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter(jwtTokenProvider, customUserDetailsService);
     }
 
     /**
@@ -105,7 +101,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

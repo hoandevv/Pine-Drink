@@ -66,6 +66,7 @@ CREATE TABLE ce_branch (
 
 CREATE TABLE ce_branch_hours (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     branch_id CHAR(36) NOT NULL,
     day_of_week TINYINT NOT NULL,
     open_time TIME NOT NULL,

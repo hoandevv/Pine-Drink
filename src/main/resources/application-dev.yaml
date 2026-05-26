@@ -3,7 +3,7 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: "${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pine_drink_dev}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pine_drink_dev}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}"
     username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:pine_drink_user}}
     password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:123456789}}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -19,7 +19,7 @@ spring:
     password: ${RABBITMQ_DEFAULT_PASS:admin123}
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:validate}
+      ddl-auto: ${JPA_DDL_AUTO:none}
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:

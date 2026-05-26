@@ -12,8 +12,10 @@ import java.math.BigDecimal;
 @Table(name = "ce_branch", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
 public class Branch extends BaseEntity {
 
+    @Column(nullable = false)
     private String code;
 
+    @Column(nullable = false)
     private String name;
 
     private String address;
@@ -28,18 +30,19 @@ public class Branch extends BaseEntity {
     @Column(precision = 10, scale = 7)
     private BigDecimal longitude;
 
+    @Column(nullable = false)
     private String timezone = "Asia/Ho_Chi_Minh";
 
-    @Column(name = "supports_pickup")
+    @Column(name = "supports_pickup", nullable = false)
     private boolean supportsPickup = true;
 
-    @Column(name = "supports_delivery")
+    @Column(name = "supports_delivery", nullable = false)
     private boolean supportsDelivery = false;
 
-    @Column(name = "average_preparation_minutes")
+    @Column(name = "average_preparation_minutes", nullable = false)
     private int averagePreparationMinutes = 15;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id")
+    @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 }

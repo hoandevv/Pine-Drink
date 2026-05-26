@@ -5,11 +5,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "od_order_item")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class OrderItem extends BaseEntity {
 
     @Column(name = "product_code", nullable = false)
@@ -21,7 +27,7 @@ public class OrderItem extends BaseEntity {
     @Column(name = "variant_name")
     private String variantName;
 
-    @Column(name = "quantity", nullable = false)
+    @Column(nullable = false)
     private int quantity;
 
     @Column(name = "sugar_level", nullable = false)
@@ -30,7 +36,6 @@ public class OrderItem extends BaseEntity {
     @Column(name = "ice_level", nullable = false)
     private String iceLevel = "NORMAL";
 
-    @Column(name = "note")
     private String note;
 
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)

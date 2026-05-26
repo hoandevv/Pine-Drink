@@ -13,13 +13,13 @@ import java.util.List;
 @Table(name = "pr_topping", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
 public class Topping extends BaseEntity {
 
-    @Column(name = "code", nullable = false)
+    @Column(nullable = false)
     private String code;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "price", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
     @Column(name = "image_url")

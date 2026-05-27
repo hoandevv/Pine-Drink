@@ -35,19 +35,19 @@ public record PasswordResetEmailEvent(
      * password-reset flow.
      *
      * @param to            recipient email
-     * @param resetToken    the password-reset token (will be placed in template data)
-     * @param expiryMinutes token validity duration shown in the email
+     * @param otp           the OTP code (will be placed in template data)
+     * @param expiryMinutes OTP validity duration shown in the email
      */
-    public static PasswordResetEmailEvent of(String to, String resetToken, int expiryMinutes) {
+    public static PasswordResetEmailEvent of(String to, String otp, int expiryMinutes) {
         return new PasswordResetEmailEvent(
                 UUID.randomUUID().toString(),
                 "EMAIL_PASSWORD_RESET",
                 Instant.now(),
                 "auth-service",
                 to,
-                "Đặt lại mật khẩu",
+                "Đặt lại mật khẩu - Pine Drink",
                 "password-reset",
-                Map.of("resetToken", resetToken, "expiryMinutes", expiryMinutes),
+                Map.of("otp", otp, "expiryMinutes", expiryMinutes),
                 Map.of()
         );
     }

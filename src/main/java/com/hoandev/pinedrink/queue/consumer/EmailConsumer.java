@@ -36,11 +36,10 @@ public class EmailConsumer {
 
     /**
      * Handles password-reset email events.
-     * <p>
-     * TODO: Implement password-reset email sending logic.
      */
     @RabbitHandler
     public void handlePasswordReset(PasswordResetEmailEvent event) {
         log.debug("Received password reset event: to={}", event.to());
+        emailService.sendPasswordResetOtpEmail(event);
     }
 }

@@ -1,5 +1,7 @@
 package com.hoandev.pinedrink.configuration;
 
+import com.hoandev.pinedrink.security.CustomAccessDeniedHandler;
+import com.hoandev.pinedrink.security.CustomAuthenticationEntryPoint;
 import com.hoandev.pinedrink.security.CustomUserDetailsService;
 import com.hoandev.pinedrink.security.JwtAuthFilter;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
@@ -36,12 +38,18 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           RateLimitFilter rateLimitFilter,
-                          CustomUserDetailsService customUserDetailsService) {
+                          CustomUserDetailsService customUserDetailsService,
+                          CustomAuthenticationEntryPoint authenticationEntryPoint,
+                          CustomAccessDeniedHandler accessDeniedHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Value("${app.cors.allowed-origins}")
@@ -79,10 +87,8 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(HttpStatus.FORBIDDEN.value(), "Forbidden"))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -92,9 +98,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/register/resend-otp",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/refresh-token",
-                                "/swagger-ui.html",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/forgot-password/verify-otp",
                                 "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
                                 "/favicon.ico",
                                 "/actuator/health",
                                 "/actuator/info"

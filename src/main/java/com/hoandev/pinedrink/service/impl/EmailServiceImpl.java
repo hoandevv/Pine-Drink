@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.exception.EmailSendException;
+import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
@@ -30,7 +31,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
 
-    @Value("${spring.mail.from:noreply@pinedrink.com}")
+    @Value("${app.email.from:noreply@pine-drink.com}")
     private String from;
 
     /**
@@ -75,6 +76,44 @@ public class EmailServiceImpl implements EmailService {
      * {@inheritDoc}
      */
     @Override
+    public void sendPasswordResetOtpEmail(PasswordResetEmailEvent event) {
+        validatePasswordResetEmailEvent(event);
+
+        if (!emailEnabled) {
+            log.info("[EMAIL_DISABLED] Password reset OTP email skipped to={}, subject={}",
+                    event.to(), event.subject());
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(from);
+            helper.setTo(event.to());
+            helper.setSubject(event.subject());
+
+            String otp = getString(event.templateData(), "otp", "");
+            int expiry = getInt(event.templateData(), "expiryMinutes", 5);
+
+            Context context = new Context();
+            context.setVariable("otp", otp);
+            context.setVariable("expiryMinutes", expiry);
+
+            String html = templateEngine.process("email/password-reset", context);
+            helper.setText(html, true);
+
+            mailSender.send(message);
+            log.info("Password reset OTP email sent to={}", event.to());
+        } catch (Exception e) {
+            log.error("Failed to send password reset OTP email to={}", event.to(), e);
+            throw new EmailSendException("Failed to send password reset OTP email", e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isEnabled() {
         return emailEnabled;
     }
@@ -87,6 +126,21 @@ public class EmailServiceImpl implements EmailService {
      * Validates that the email event has valid recipient and subject.
      */
     private void validateOtpEmailEvent(RegisterOtpEmailEvent event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Email event must not be null");
+        }
+        if (event.to() == null || event.to().isBlank()) {
+            throw new IllegalArgumentException("Email recipient must not be blank");
+        }
+        if (event.subject() == null || event.subject().isBlank()) {
+            throw new IllegalArgumentException("Email subject must not be blank");
+        }
+    }
+
+    /**
+     * Validates that the password reset email event has valid recipient and subject.
+     */
+    private void validatePasswordResetEmailEvent(PasswordResetEmailEvent event) {
         if (event == null) {
             throw new IllegalArgumentException("Email event must not be null");
         }

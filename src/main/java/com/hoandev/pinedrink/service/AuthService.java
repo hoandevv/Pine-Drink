@@ -3,10 +3,7 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Auth.LoginRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RefreshTokenRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
-import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.LoginResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.RefreshTokenResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.RegisterResponse;
+import com.hoandev.pinedrink.entity.dto.response.Auth.*;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -71,4 +68,31 @@ public interface AuthService {
      * @param email the email address to resend the OTP to
      */
     void resendRegistrationOtp(String email);
+
+    /**
+     * Initiates the password reset process by generating an OTP
+     * and sending it via email.
+     *
+     * @param email the email address of the account requesting password reset
+     */
+    void forgotPassword(String email);
+
+    /**
+     * Verifies the forgot password OTP and issues a reset token.
+     * The reset token can be used to call the reset password endpoint.
+     *
+     * @param email the email address
+     * @param otp the OTP to verify
+     * @return reset token information (token, tokenType, expiresIn)
+     */
+    ForgotPasswordOtpResponse verifyForgotPasswordOtp(String email, String otp);
+
+    /**
+     * Resets the account password for the authenticated user.
+     * Requires authentication via reset token (Bearer token).
+     *
+     * @param newPassword the new password to set
+     * @param confirmPassword confirmation of the new password
+     */
+    void resetPassword(String newPassword, String confirmPassword);
 }

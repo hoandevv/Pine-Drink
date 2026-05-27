@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,6 +20,7 @@ import java.io.IOException;
  * from the Authorization header and sets the security context.
  */
 @Component
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -37,20 +39,44 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = extractToken(request);
+        try {
+            String token = extractToken(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            Claims claims = jwtTokenProvider.parseToken(token);
+            if (token != null) {
+                log.debug("Token found in request: {}", request.getRequestURI());
+                
+                if (jwtTokenProvider.validateToken(token)) {
+                    Claims claims = jwtTokenProvider.parseToken(token);
+                    
+                    // Check if this is a reset token (has "type": "reset" claim)
+                    String tokenType = claims.get("type", String.class);
+                    
+                    UserPrincipal userPrincipal;
+                    if ("reset".equals(tokenType)) {
+                        // Reset token: subject is userId, no username claim
+                        String userId = claims.getSubject();
+                        log.debug("Reset token validated for userId: {}", userId);
+                        userPrincipal = (UserPrincipal) customUserDetailsService.loadUserById(userId);
+                    } else {
+                        // Regular access token: has username claim
+                        String username = claims.get("username", String.class);
+                        log.debug("Access token validated for username: {}", username);
+                        userPrincipal = (UserPrincipal) customUserDetailsService.loadUserByUsername(username);
+                    }
 
-            UserPrincipal userPrincipal = (UserPrincipal) customUserDetailsService
-                    .loadUserByUsername(claims.get("username", String.class));
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userPrincipal, null, userPrincipal.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userPrincipal, null, userPrincipal.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.debug("Authentication set for user: {}", userPrincipal.getUsername());
+                } else {
+                    log.warn("Invalid token for request: {}", request.getRequestURI());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Cannot set user authentication: {}", e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);

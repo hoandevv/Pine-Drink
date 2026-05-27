@@ -5,10 +5,14 @@ import com.hoandev.pinedrink.entity.dto.request.Auth.RefreshTokenRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.ResendRegisterOtpRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.VerifyRegisterOtpRequest;
+import com.hoandev.pinedrink.entity.dto.request.Auth.ForgotPasswordRequest;
+import com.hoandev.pinedrink.entity.dto.request.Auth.VerifyForgotPasswordOtpRequest;
+import com.hoandev.pinedrink.entity.dto.request.Auth.ResetPasswordRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.Auth.LoginResponse;
 import com.hoandev.pinedrink.entity.dto.response.Auth.RefreshTokenResponse;
 import com.hoandev.pinedrink.entity.dto.response.Auth.RegisterResponse;
+import com.hoandev.pinedrink.entity.dto.response.Auth.ForgotPasswordOtpResponse;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -162,6 +166,72 @@ public class AuthController {
         AccountResponse response = authService.getCurrentProfile();
         return ResponseEntity.ok(
                 BaseResponse.success(response)
+        );
+    }
+
+    /**
+     * Initiates the password reset process by sending an OTP via email.
+     * <p>
+     * Generates an OTP, stores it in Redis with expiration time,
+     * and sends an email containing the OTP to the user.
+     *
+     * @param request containing the email address
+     * @return {@code 200 OK} with a success message
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<BaseResponse<Void>> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request
+    ) {
+        log.debug("Forgot password request received for email: {}", request.getEmail());
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(
+                BaseResponse.success(null, "Password reset OTP has been sent to your email")
+        );
+    }
+
+    /**
+     * Verifies the forgot password OTP and issues a reset token.
+     * <p>
+     * Validates the OTP, and if correct, returns a JWT reset token
+     * that can be used to call the reset password endpoint.
+     *
+     * @param request containing email and OTP
+     * @return {@code 200 OK} with {@link ForgotPasswordOtpResponse} containing reset token
+     */
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<BaseResponse<ForgotPasswordOtpResponse>> verifyForgotPasswordOtp(
+            @RequestBody @Valid VerifyForgotPasswordOtpRequest request
+    ) {
+        log.debug("Verify forgot password OTP request received");
+        ForgotPasswordOtpResponse response = authService.verifyForgotPasswordOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
+        return ResponseEntity.ok(
+                BaseResponse.success(response, "OTP verified successfully")
+        );
+    }
+
+    /**
+     * Resets the account password for the authenticated user.
+     * <p>
+     * Requires authentication via reset token (Bearer token in Authorization header).
+     * Validates that new password matches confirm password, then updates the password.
+     *
+     * @param request containing newPassword and confirmPassword
+     * @return {@code 200 OK} with success message
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<BaseResponse<Void>> resetPassword(
+            @RequestBody @Valid ResetPasswordRequest request
+    ) {
+        log.debug("Reset password request received");
+        authService.resetPassword(
+                request.getNewPassword(),
+                request.getConfirmPassword()
+        );
+        return ResponseEntity.ok(
+                BaseResponse.success(null, "Password has been reset successfully")
         );
     }
 }

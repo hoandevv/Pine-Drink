@@ -74,6 +74,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        // Ignore static resource not found exceptions (favicon, etc.)
+        if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
+            return null; // Let Spring handle it with 404
+        }
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.COM_002, "Internal server error", null, null);
     }
 

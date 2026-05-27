@@ -34,6 +34,7 @@ public enum ErrorCode {
     AUTH_022("AUTH_022", "Invalid registration site"),
     AUTH_023("AUTH_023", "Public registration is disabled for this site"),
     AUTH_024("AUTH_024", "Center domain already exists"),
+    AUTH_027("AUTH_027", "Passwords do not match"),
 
     RATE_LIMIT_EXCEEDED("RATE_001", "Rate limit exceeded - too many requests"),
 

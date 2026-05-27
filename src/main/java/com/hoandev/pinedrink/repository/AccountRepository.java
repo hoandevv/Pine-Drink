@@ -51,4 +51,14 @@ public interface AccountRepository extends JpaRepository<Account, String> {
      * @return true if an account with the phone number exists
      */
     boolean existsByPhone(String phone);
+
+    /**
+     * Checks whether an account with the given phone number exists,
+     * excluding the account with the specified ID.
+     *
+     * @param phone the phone number to check
+     * @param id the account ID to exclude from the check
+     * @return true if another account with the phone number exists
+     */
+    boolean existsByPhoneAndIdNot(String phone, String id);
 }

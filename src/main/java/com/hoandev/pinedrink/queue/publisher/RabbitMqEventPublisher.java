@@ -34,7 +34,7 @@ public class RabbitMqEventPublisher implements EventPublisher {
     @Override
     public void publish(DomainEvent event) {
         switch (event.eventType()) {
-            case "EMAIL_OTP_VERIFICATION", "EMAIL_RESET_PASSWORD", "EMAIL_WELCOME" -> {
+            case "EMAIL_OTP_VERIFICATION", "EMAIL_PASSWORD_RESET", "EMAIL_WELCOME" -> {
                 var email = properties.email();
                 log.debug("Publishing email event: {} to exchange={}, routingKey={}",
                         event.eventId(), email.exchange(), email.routingKey());

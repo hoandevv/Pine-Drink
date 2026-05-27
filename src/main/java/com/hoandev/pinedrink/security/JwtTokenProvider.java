@@ -21,15 +21,18 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final long accessTokenExpirationSeconds;
     private final long refreshTokenExpirationSeconds;
+    private final long resetTokenExpirationSeconds;
 
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-token-expiration:3600}") long accessTokenExpirationSeconds,
-            @Value("${app.jwt.refresh-token-expiration:86400}") long refreshTokenExpirationSeconds
+            @Value("${app.jwt.refresh-token-expiration:86400}") long refreshTokenExpirationSeconds,
+            @Value("${app.jwt.reset-token-expiration:900}") long resetTokenExpirationSeconds
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
         this.refreshTokenExpirationSeconds = refreshTokenExpirationSeconds;
+        this.resetTokenExpirationSeconds = resetTokenExpirationSeconds;
     }
 
     /**
@@ -74,6 +77,26 @@ public class JwtTokenProvider {
     }
 
     /**
+     * Generates a reset token for password reset flow.
+     * Contains userId and a special claim to identify it as a reset token.
+     *
+     * @param userId the user ID
+     * @return a signed JWT reset token
+     */
+    public String generateResetToken(String userId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + resetTokenExpirationSeconds * 1000);
+
+        return Jwts.builder()
+                .subject(userId)
+                .claim("type", "reset")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
+    }
+
+    /**
      * Parses and verifies a JWT token, returning its claims.
      *
      * @param token the JWT token to parse
@@ -110,5 +133,14 @@ public class JwtTokenProvider {
      */
     public long getAccessTokenExpiresInSeconds() {
         return accessTokenExpirationSeconds;
+    }
+
+    /**
+     * Returns the reset token expiration duration in seconds.
+     *
+     * @return expiration time in seconds
+     */
+    public long getResetTokenExpiresInSeconds() {
+        return resetTokenExpirationSeconds;
     }
 }

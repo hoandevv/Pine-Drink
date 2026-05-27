@@ -9,10 +9,7 @@ import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.entity.dto.request.Auth.LoginRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RefreshTokenRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
-import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.LoginResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.RefreshTokenResponse;
-import com.hoandev.pinedrink.entity.dto.response.Auth.RegisterResponse;
+import com.hoandev.pinedrink.entity.dto.response.Auth.*;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRepository;
@@ -23,6 +20,7 @@ import com.hoandev.pinedrink.repository.RoleRepository;
 import com.hoandev.pinedrink.repository.ScopeRepository;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.UserPrincipal;
+import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.queue.publisher.EventPublisher;
 import com.hoandev.pinedrink.service.AuthService;
@@ -50,6 +48,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -82,8 +81,15 @@ public class AuthServiceImpl implements AuthService {
     private static final int MAX_OTP_ATTEMPTS = 5;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    private static final String FORGOT_PASSWORD_OTP_PREFIX = "otp:forgot-password:";
+    private static final String FORGOT_PASSWORD_COOLDOWN_PREFIX = "otp:forgot-password:cooldown:";
+    private static final String FORGOT_PASSWORD_ATTEMPT_PREFIX = "otp:forgot-password:attempt:";
+
     @Value("${app.jwt.refresh-token-expiration:86400}")
     private long refreshTokenExpirationSeconds;
+
+    @Value("${app.jwt.reset-token-expiration:900}")
+    private long resetTokenExpirationSeconds;
 
     /**
      * {@inheritDoc}
@@ -448,5 +454,172 @@ public class AuthServiceImpl implements AuthService {
             otp.append(SECURE_RANDOM.nextInt(10));
         }
         return otp.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void forgotPassword(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
+
+        // Find account by email - don't throw exception to prevent email enumeration
+        Optional<Account> accountOpt = accountRepository.findByEmail(normalizedEmail);
+
+        if (accountOpt.isEmpty()) {
+            log.info("Forgot password requested for non-existing email: {}", normalizedEmail);
+            // Return silently - don't reveal that email doesn't exist
+            return;
+        }
+
+        Account account = accountOpt.get();
+
+        // Check account status - also return silently to prevent enumeration
+        if ("LOCKED".equals(account.getStatus())) {
+            log.info("Forgot password requested for locked account: {}", normalizedEmail);
+            return;
+        }
+
+        if ("INACTIVE".equals(account.getStatus())) {
+            log.info("Forgot password requested for inactive account: {}", normalizedEmail);
+            return;
+        }
+
+        // Check cooldown
+        String cooldownKey = FORGOT_PASSWORD_COOLDOWN_PREFIX + normalizedEmail;
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(cooldownKey))) {
+            throw new BaseException(ErrorCode.AUTH_020);
+        }
+
+        // Generate OTP
+        String otp = generateOtp();
+
+        // Hash OTP before storing in Redis
+        String otpHash = passwordEncoder.encode(otp);
+        String otpKey = FORGOT_PASSWORD_OTP_PREFIX + normalizedEmail;
+        stringRedisTemplate.opsForValue().set(otpKey, otpHash, OTP_TTL);
+
+        // Set cooldown
+        stringRedisTemplate.opsForValue().set(cooldownKey, "1", RESEND_COOLDOWN);
+
+        // Reset attempt counter
+        String attemptKey = FORGOT_PASSWORD_ATTEMPT_PREFIX + normalizedEmail;
+        stringRedisTemplate.delete(attemptKey);
+
+        log.info("Forgot password OTP generated for account: {}", account.getUsername());
+
+        // Publish email event after transaction commits
+        final String finalEmail = normalizedEmail;
+        final String finalOtp = otp;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // Reuse PasswordResetEmailEvent but with OTP instead of token
+                PasswordResetEmailEvent event = PasswordResetEmailEvent.of(
+                        finalEmail,
+                        finalOtp,
+                        (int) OTP_TTL.toMinutes()
+                );
+                eventPublisher.publish(event);
+                log.info("Forgot password OTP email event published for: {}", finalEmail);
+            }
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public ForgotPasswordOtpResponse verifyForgotPasswordOtp(String email, String otp) {
+        String normalizedEmail = email.trim().toLowerCase();
+
+        // Find account by email
+        Account account = accountRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
+
+        // Check account status
+        if ("LOCKED".equals(account.getStatus())) {
+            throw new BaseException(ErrorCode.AUTH_005);
+        }
+
+        if ("INACTIVE".equals(account.getStatus())) {
+            throw new BaseException(ErrorCode.AUTH_006);
+        }
+
+        // Check attempt limit
+        String attemptKey = FORGOT_PASSWORD_ATTEMPT_PREFIX + normalizedEmail;
+        String attemptCount = stringRedisTemplate.opsForValue().get(attemptKey);
+        if (attemptCount != null && Integer.parseInt(attemptCount) >= MAX_OTP_ATTEMPTS) {
+            throw new BaseException(ErrorCode.AUTH_019);
+        }
+
+        // Get OTP hash from Redis
+        String otpKey = FORGOT_PASSWORD_OTP_PREFIX + normalizedEmail;
+        String storedOtpHash = stringRedisTemplate.opsForValue().get(otpKey);
+
+        if (storedOtpHash == null) {
+            throw new BaseException(ErrorCode.AUTH_017);
+        }
+
+        // Verify OTP using passwordEncoder
+        if (!passwordEncoder.matches(otp, storedOtpHash)) {
+            // Increment attempt counter
+            stringRedisTemplate.opsForValue().increment(attemptKey);
+            stringRedisTemplate.expire(attemptKey, OTP_TTL);
+            throw new BaseException(ErrorCode.AUTH_016);
+        }
+
+        // OTP is valid, delete it
+        stringRedisTemplate.delete(otpKey);
+        stringRedisTemplate.delete(attemptKey);
+
+        // Generate reset token (JWT with special claim)
+        String resetToken = jwtTokenProvider.generateResetToken(account.getId());
+
+        log.info("Forgot password OTP verified for account: {}", account.getUsername());
+
+        return ForgotPasswordOtpResponse.builder()
+                .resetToken(resetToken)
+                .tokenType(Constants.TOKEN_TYPE_BEARER)
+                .expiresIn(jwtTokenProvider.getResetTokenExpiresInSeconds())
+                .build();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void resetPassword(String newPassword, String confirmPassword) {
+        // Validate passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BaseException(ErrorCode.AUTH_027);
+        }
+
+        // Get current authenticated user from security context
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BaseException(ErrorCode.AUTH_012);
+        }
+
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        Account account = accountRepository.findById(principal.getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
+
+        // Check account status
+        if ("LOCKED".equals(account.getStatus())) {
+            throw new BaseException(ErrorCode.AUTH_005);
+        }
+
+        // Update password
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+
+        // Revoke all refresh tokens for this account (invalidate all sessions)
+        refreshTokenRepository.deleteByAccountId(account.getId());
+
+        log.info("Password reset successfully for account: {} - all sessions revoked", account.getUsername());
     }
 }

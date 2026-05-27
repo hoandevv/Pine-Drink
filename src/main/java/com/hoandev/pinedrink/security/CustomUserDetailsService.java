@@ -40,11 +40,33 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         List<GrantedAuthority> authorities = assignmentRepository
-                .findByAccountId(account.getId())
+                .findActiveRoleCodesByAccountId(account.getId(), LocalDateTime.now())
                 .stream()
-                .filter(a -> "ACTIVE".equals(a.getStatus()))
-                .filter(a -> a.getExpiresAt() == null || a.getExpiresAt().isAfter(LocalDateTime.now()))
-                .map(a -> new SimpleGrantedAuthority("ROLE_" + a.getRole().getCode()))
+                .map(roleCode -> new SimpleGrantedAuthority("ROLE_" + roleCode))
+                .distinct()
+                .collect(Collectors.toList());
+
+        return new UserPrincipal(
+                account.getId(), account.getUsername(), account.getEmail(),
+                account.getPassword(), account.getStatus(), authorities
+        );
+    }
+
+    /**
+     * Loads user details by user ID (used for reset token authentication).
+     *
+     * @param userId the user ID to search for
+     * @return the user details
+     * @throws UsernameNotFoundException if the user is not found
+     */
+    public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+
+        List<GrantedAuthority> authorities = assignmentRepository
+                .findActiveRoleCodesByAccountId(account.getId(), LocalDateTime.now())
+                .stream()
+                .map(roleCode -> new SimpleGrantedAuthority("ROLE_" + roleCode))
                 .distinct()
                 .collect(Collectors.toList());
 

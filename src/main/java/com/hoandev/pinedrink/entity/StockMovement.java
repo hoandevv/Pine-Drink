@@ -10,15 +10,19 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "iv_stock_movement")
+@AttributeOverrides({
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class StockMovement extends BaseEntity {
 
-    @Column(name = "order_id", insertable = false, updatable = false)
+    @Column(name = "order_id", columnDefinition = "CHAR(36)", insertable = false, updatable = false)
     private String orderId;
 
     @Column(name = "movement_type", nullable = false)
     private String movementType;
 
-    @Column(name = "quantity", nullable = false, precision = 12, scale = 3)
+    @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantity;
 
     @Column(name = "before_quantity", nullable = false, precision = 12, scale = 3)
@@ -27,7 +31,6 @@ public class StockMovement extends BaseEntity {
     @Column(name = "after_quantity", nullable = false, precision = 12, scale = 3)
     private BigDecimal afterQuantity;
 
-    @Column(name = "reason")
     private String reason;
 
     @ManyToOne(fetch = FetchType.LAZY)

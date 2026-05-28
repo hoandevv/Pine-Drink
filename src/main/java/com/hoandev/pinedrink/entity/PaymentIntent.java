@@ -11,15 +11,19 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "py_payment_intent", uniqueConstraints = @UniqueConstraint(columnNames = {"order_id", "provider"}))
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class PaymentIntent extends BaseEntity {
 
-    @Column(name = "provider", nullable = false)
+    @Column(nullable = false)
     private String provider;
 
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "currency", nullable = false)
+    @Column(nullable = false)
     private String currency = "VND";
 
     @Column(name = "request_payload", columnDefinition = "json")

@@ -11,21 +11,25 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "py_transaction")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class PaymentTransaction extends BaseEntity {
 
-    @Column(name = "transaction_code", unique = true, nullable = false)
+    @Column(name = "transaction_code", nullable = false, unique = true)
     private String transactionCode;
 
-    @Column(name = "provider", nullable = false)
+    @Column(nullable = false)
     private String provider;
 
     @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
 
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "currency", nullable = false)
+    @Column(nullable = false)
     private String currency = "VND";
 
     @Column(name = "paid_at")

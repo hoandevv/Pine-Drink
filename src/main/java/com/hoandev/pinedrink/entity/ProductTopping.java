@@ -8,6 +8,10 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "pr_product_topping", uniqueConstraints = @UniqueConstraint(columnNames = {"product_id", "topping_id"}))
+@AttributeOverrides({
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class ProductTopping extends BaseEntity {
 
     @Column(name = "is_default", nullable = false)

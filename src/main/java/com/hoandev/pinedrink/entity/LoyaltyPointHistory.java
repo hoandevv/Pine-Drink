@@ -8,21 +8,24 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "cu_loyalty_point_history")
+@AttributeOverrides({
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class LoyaltyPointHistory extends BaseEntity {
 
-    @Column(name = "order_id")
+    @Column(name = "order_id", columnDefinition = "CHAR(36)")
     private String orderId;
 
     @Column(name = "transaction_type", nullable = false)
     private String transactionType;
 
-    @Column(name = "points", nullable = false)
+    @Column(nullable = false)
     private int points;
 
     @Column(name = "balance_after", nullable = false)
     private int balanceAfter;
 
-    @Column(name = "reason")
     private String reason;
 
     @ManyToOne(fetch = FetchType.LAZY)

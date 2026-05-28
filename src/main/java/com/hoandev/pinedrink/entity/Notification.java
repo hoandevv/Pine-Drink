@@ -10,27 +10,32 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "nt_notification")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class Notification extends BaseEntity {
 
     @Column(name = "notification_type", nullable = false)
     private String notificationType;
 
-    @Column(name = "title", nullable = false)
+    @Column(nullable = false)
     private String title;
 
-    @Column(name = "content", nullable = false, length = 1000)
+    @Column(nullable = false, length = 1000)
     private String content;
 
-    @Column(name = "channel", nullable = false)
+    @Column(nullable = false)
     private String channel = "IN_APP";
 
     @Column(name = "reference_type")
     private String referenceType;
 
-    @Column(name = "reference_id")
+    @Column(name = "reference_id", columnDefinition = "CHAR(36)")
     private String referenceId;
 
-    @Column(name = "metadata", columnDefinition = "json")
+    @Column(columnDefinition = "json")
     private String metadata;
 
     @Column(name = "sent_at")

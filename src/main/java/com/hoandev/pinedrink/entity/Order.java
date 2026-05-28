@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "od_order")
 public class Order extends BaseEntity {
 
-    @Column(name = "order_code", unique = true, nullable = false)
+    @Column(name = "order_code", nullable = false, unique = true)
     private String orderCode;
 
     @Column(name = "customer_name", nullable = false)
@@ -49,7 +49,6 @@ public class Order extends BaseEntity {
     @Column(name = "delivery_address")
     private String deliveryAddress;
 
-    @Column(name = "note")
     private String note;
 
     @Column(name = "confirmed_at")

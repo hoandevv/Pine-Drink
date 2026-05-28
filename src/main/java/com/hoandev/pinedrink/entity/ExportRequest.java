@@ -10,6 +10,12 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "rp_export_request")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdAt", column = @Column(name = "requested_at", nullable = false, updatable = false)),
+    @AttributeOverride(name = "createdBy", column = @Column(name = "requested_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class ExportRequest extends BaseEntity {
 
     @Column(name = "report_type", nullable = false)
@@ -18,7 +24,7 @@ public class ExportRequest extends BaseEntity {
     @Column(name = "file_format", nullable = false)
     private String fileFormat = "XLSX";
 
-    @Column(name = "filters", columnDefinition = "json")
+    @Column(columnDefinition = "json")
     private String filters;
 
     @Column(name = "file_url")
@@ -26,9 +32,6 @@ public class ExportRequest extends BaseEntity {
 
     @Column(name = "error_message")
     private String errorMessage;
-
-    @Column(name = "requested_at", nullable = false)
-    private LocalDateTime requestedAt;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;
@@ -45,6 +48,6 @@ public class ExportRequest extends BaseEntity {
     private Branch branch;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requested_by_id", nullable = false)
+    @JoinColumn(name = "requested_by", nullable = false)
     private Account requestedBy;
 }

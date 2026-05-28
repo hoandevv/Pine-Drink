@@ -10,7 +10,6 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "ca_cart")
-@AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
 public class Cart extends BaseEntity {
 
     @Column(name = "session_id")

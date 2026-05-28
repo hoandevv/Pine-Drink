@@ -9,26 +9,28 @@ import lombok.Setter;
 @Entity
 @Table(name = "ia_audit_log")
 @AttributeOverrides({
-    @AttributeOverride(name = "status", column = @Column(insertable = false, updatable = false)),
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
     @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
     @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
 })
 public class AuditLog extends BaseEntity {
 
+    @Column(nullable = false)
     private String action;
 
+    @Column(nullable = false)
     private String module;
 
     @Column(name = "target_type")
     private String targetType;
 
-    @Column(name = "target_id")
+    @Column(name = "target_id", columnDefinition = "CHAR(36)")
     private String targetId;
 
-    @Column(name = "brand_id")
+    @Column(name = "brand_id", columnDefinition = "CHAR(36)")
     private String brandId;
 
-    @Column(name = "branch_id")
+    @Column(name = "branch_id", columnDefinition = "CHAR(36)")
     private String branchId;
 
     @Column(name = "ip_address")

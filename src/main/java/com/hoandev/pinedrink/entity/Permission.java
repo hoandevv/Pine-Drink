@@ -10,11 +10,13 @@ import lombok.Setter;
 @Table(name = "ia_permission")
 public class Permission extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String code;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String module;
 
     private String description;

@@ -10,9 +10,13 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "pf_idempotency_key")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class IdempotencyKey extends BaseEntity {
 
-    @Column(name = "idempotency_key", unique = true, nullable = false)
+    @Column(name = "idempotency_key", nullable = false, unique = true)
     private String idempotencyKey;
 
     @Column(name = "request_hash", nullable = false)

@@ -12,13 +12,13 @@ import java.math.BigDecimal;
 @Table(name = "iv_ingredient", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
 public class Ingredient extends BaseEntity {
 
-    @Column(name = "code", nullable = false)
+    @Column(nullable = false)
     private String code;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "unit", nullable = false)
+    @Column(nullable = false)
     private String unit;
 
     @Column(name = "min_stock_quantity", nullable = false, precision = 12, scale = 3)

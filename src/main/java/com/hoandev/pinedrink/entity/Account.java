@@ -12,12 +12,13 @@ import java.time.LocalDateTime;
 @Table(name = "ia_account")
 public class Account extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String username;
 
+    @Column(nullable = false)
     private String password;
 
-    @Column(name = "full_name")
+    @Column(name = "full_name", nullable = false)
     private String fullName;
 
     @Column(unique = true)

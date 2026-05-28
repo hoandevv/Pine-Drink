@@ -1,0 +1,14 @@
+### Register a new account
+### Account created in INACTIVE state. OTP sent via email.
+
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "Test@123456",
+  "fullName": "Test User",
+  "email": "testuser@example.com",
+  "phone": "0987654321",
+  "siteKey": "DEFAULT"
+}

@@ -89,6 +89,8 @@ CREATE TABLE pr_product_topping (
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     UNIQUE KEY uk_pr_product_topping (product_id, topping_id),
     CONSTRAINT fk_pr_product_topping_product FOREIGN KEY (product_id) REFERENCES pr_product(id) ON DELETE CASCADE,
     CONSTRAINT fk_pr_product_topping_topping FOREIGN KEY (topping_id) REFERENCES pr_topping(id) ON DELETE RESTRICT,
@@ -99,6 +101,7 @@ CREATE TABLE pr_product_topping (
 
 CREATE TABLE mn_branch_product_availability (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     branch_id CHAR(36) NOT NULL,
     product_id CHAR(36) NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
@@ -106,6 +109,8 @@ CREATE TABLE mn_branch_product_availability (
     sold_out_reason VARCHAR(255) NULL,
     available_from DATETIME NULL,
     available_to DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
     UNIQUE KEY uk_mn_branch_product (branch_id, product_id),
@@ -118,12 +123,15 @@ CREATE TABLE mn_branch_product_availability (
 
 CREATE TABLE mn_branch_topping_availability (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     branch_id CHAR(36) NOT NULL,
     topping_id CHAR(36) NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
     sold_out_reason VARCHAR(255) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
     UNIQUE KEY uk_mn_branch_topping (branch_id, topping_id),
     CONSTRAINT fk_mn_branch_topping_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
     CONSTRAINT fk_mn_branch_topping_topping FOREIGN KEY (topping_id) REFERENCES pr_topping(id) ON DELETE CASCADE,

@@ -53,6 +53,8 @@ CREATE TABLE cu_loyalty_account (
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_by CHAR(36) NULL,
     UNIQUE KEY uk_cu_loyalty_customer (customer_id),
     CONSTRAINT fk_cu_loyalty_customer FOREIGN KEY (customer_id) REFERENCES cu_customer_profile(id) ON DELETE CASCADE,
     INDEX idx_cu_loyalty_tier (tier),
@@ -62,6 +64,7 @@ CREATE TABLE cu_loyalty_account (
 
 CREATE TABLE cu_loyalty_point_history (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     loyalty_account_id CHAR(36) NOT NULL,
     order_id CHAR(36) NULL,
     transaction_type VARCHAR(30) NOT NULL,
@@ -70,6 +73,8 @@ CREATE TABLE cu_loyalty_point_history (
     reason VARCHAR(255) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
     CONSTRAINT fk_cu_point_history_loyalty FOREIGN KEY (loyalty_account_id) REFERENCES cu_loyalty_account(id) ON DELETE CASCADE,
     INDEX idx_cu_point_history_loyalty_created (loyalty_account_id, created_at),
     INDEX idx_cu_point_history_order (order_id)

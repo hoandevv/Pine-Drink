@@ -11,19 +11,21 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "py_refund")
+@AttributeOverrides({
+    @AttributeOverride(name = "createdAt", column = @Column(name = "requested_at", nullable = false, updatable = false)),
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class Refund extends BaseEntity {
 
-    @Column(name = "refund_code", unique = true, nullable = false)
+    @Column(name = "refund_code", nullable = false, unique = true)
     private String refundCode;
 
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "reason")
     private String reason;
-
-    @Column(name = "requested_at", nullable = false)
-    private LocalDateTime requestedAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
@@ -33,6 +35,6 @@ public class Refund extends BaseEntity {
     private PaymentTransaction transaction;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requested_by_id")
+    @JoinColumn(name = "requested_by")
     private Account requestedBy;
 }

@@ -12,9 +12,10 @@ import java.util.List;
 @Table(name = "ce_brand")
 public class Brand extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String code;
 
+    @Column(nullable = false)
     private String name;
 
     @Column(name = "legal_name")
@@ -29,6 +30,7 @@ public class Brand extends BaseEntity {
 
     private String email;
 
+    @Column(nullable = false)
     private String timezone = "Asia/Ho_Chi_Minh";
 
     @OneToMany(mappedBy = "brand")

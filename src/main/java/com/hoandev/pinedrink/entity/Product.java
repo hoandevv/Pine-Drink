@@ -13,13 +13,12 @@ import java.util.List;
 @Table(name = "pr_product", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
 public class Product extends BaseEntity {
 
-    @Column(name = "code", nullable = false)
+    @Column(nullable = false)
     private String code;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description")
     private String description;
 
     @Column(name = "image_url")

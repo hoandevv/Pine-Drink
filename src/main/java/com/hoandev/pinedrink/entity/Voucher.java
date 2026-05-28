@@ -13,13 +13,12 @@ import java.time.LocalDateTime;
 @Table(name = "vc_voucher", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
 public class Voucher extends BaseEntity {
 
-    @Column(name = "code", nullable = false)
+    @Column(nullable = false)
     private String code;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description")
     private String description;
 
     @Column(name = "discount_type", nullable = false)

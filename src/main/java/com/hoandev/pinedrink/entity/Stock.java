@@ -10,6 +10,11 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "iv_stock", uniqueConstraints = @UniqueConstraint(columnNames = {"branch_id", "ingredient_id"}))
+@AttributeOverrides({
+    @AttributeOverride(name = "createdAt", column = @Column(name = "created_at", insertable = false, updatable = false)),
+    @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),
+    @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))
+})
 public class Stock extends BaseEntity {
 
     @Column(name = "quantity_on_hand", nullable = false, precision = 12, scale = 3)

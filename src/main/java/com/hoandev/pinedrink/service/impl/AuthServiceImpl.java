@@ -24,6 +24,7 @@ import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.queue.publisher.EventPublisher;
 import com.hoandev.pinedrink.service.AuthService;
+import com.hoandev.pinedrink.mapper.AuthMapper;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
     private final CodeGenerator codeGenerator;
     private final StringRedisTemplate stringRedisTemplate;
     private final EventPublisher eventPublisher;
+    private final AuthMapper authMapper;
 
     private static final String OTP_KEY_PREFIX = "otp:register:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
@@ -130,12 +132,7 @@ public class AuthServiceImpl implements AuthService {
                 account.getEmail(), otp, (int) OTP_TTL.toMinutes());
         publishAfterCommit(event);
 
-        return RegisterResponse.builder()
-                .userId(account.getId())
-                .username(account.getUsername())
-                .email(account.getEmail())
-                .message("Account created. Please verify your email with the OTP sent.")
-                .build();
+        return authMapper.toRegisterResponse(account);
     }
 
     /**
@@ -266,7 +263,7 @@ public class AuthServiceImpl implements AuthService {
         accountRepository.save(account);
         log.info("Account logged in: {}", account.getUsername());
 
-        return buildLoginResponse(accessToken, refreshToken, account);
+        return authMapper.toLoginResponse(accessToken, refreshToken, account);
     }
 
     /**
@@ -336,7 +333,7 @@ public class AuthServiceImpl implements AuthService {
         }
         Account account = accountRepository.findById(principal.getId())
                 .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
-        return toAccountResponse(account);
+        return authMapper.toAccountResponse(account);
     }
 
     /**
@@ -413,36 +410,6 @@ public class AuthServiceImpl implements AuthService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 not available", e);
         }
-    }
-
-    /**
-     * Builds a {@link LoginResponse} from the generated tokens and account.
-     */
-    private LoginResponse buildLoginResponse(String accessToken, String refreshToken, Account account) {
-        LoginResponse response = new LoginResponse();
-        response.setAccessToken(accessToken);
-        response.setRefreshToken(refreshToken);
-        response.setTokenType(Constants.TOKEN_TYPE_BEARER);
-        response.setExpiresIn(jwtTokenProvider.getAccessTokenExpiresInSeconds());
-        response.setAccount(toAccountResponse(account));
-        return response;
-    }
-
-    /**
-     * Maps an {@link Account} entity to an {@link AccountResponse} DTO.
-     */
-    private AccountResponse toAccountResponse(Account account) {
-        AccountResponse response = new AccountResponse();
-        response.setId(account.getId());
-        response.setBrandId(account.getBrand() != null ? account.getBrand().getId() : null);
-        response.setUsername(account.getUsername());
-        response.setFullName(account.getFullName());
-        response.setEmail(account.getEmail());
-        response.setPhone(account.getPhone());
-        response.setAvatarUrl(account.getAvatarUrl());
-        response.setStatus(account.getStatus());
-        response.setLastLoginAt(account.getLastLoginAt());
-        return response;
     }
 
     /**

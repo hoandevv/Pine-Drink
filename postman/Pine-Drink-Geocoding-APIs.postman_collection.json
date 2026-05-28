@@ -1,0 +1,257 @@
+{
+  "info": {
+    "name": "Pine Drink - Geocoding & Address APIs",
+    "description": "Collection để test Geocoding và Customer Address APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "    console.log('Access token saved:', jsonData.data.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"your_username\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Geocoding APIs (Public)",
+      "item": [
+        {
+          "name": "Search Address (Autocomplete)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Dai Co Viet\",\n  \"limit\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geocoding/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "geocoding", "search"]
+            }
+          }
+        },
+        {
+          "name": "Reverse Geocoding",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geocoding/reverse?latitude=21.005921&longitude=105.843112",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "geocoding", "reverse"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "21.005921"
+                },
+                {
+                  "key": "longitude",
+                  "value": "105.843112"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Geocoding Service Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geocoding/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "geocoding", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Customer Address APIs (Require Auth)",
+      "item": [
+        {
+          "name": "Create Address (Flow 1 - Text Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('addressId', jsonData.data.id);",
+                  "    console.log('Address ID saved:', jsonData.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"receiverPhone\": \"0987654321\",\n  \"addressLine\": \"So 1 Dai Co Viet\",\n  \"ward\": \"Bach Khoa\",\n  \"district\": \"Hai Ba Trung\",\n  \"city\": \"Ha Noi\",\n  \"isDefault\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customer", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Create Address (Flow 2 - With Coordinates)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Tran Thi B\",\n  \"receiverPhone\": \"0912345678\",\n  \"addressLine\": \"So 144 Xuan Thuy\",\n  \"ward\": \"Dich Vong Hau\",\n  \"district\": \"Cau Giay\",\n  \"city\": \"Ha Noi\",\n  \"latitude\": 21.028511,\n  \"longitude\": 105.804817,\n  \"isDefault\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customer", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Get All My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customer", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Get Address By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/addresses/{{addressId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customer", "addresses", "{{addressId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A Updated\",\n  \"receiverPhone\": \"0987654321\",\n  \"addressLine\": \"So 1 Dai Co Viet (Updated)\",\n  \"ward\": \"Bach Khoa\",\n  \"district\": \"Hai Ba Trung\",\n  \"city\": \"Ha Noi\",\n  \"latitude\": 21.005921,\n  \"longitude\": 105.843112,\n  \"isDefault\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/addresses/{{addressId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customer", "addresses", "{{addressId}}"]
+            }
+          }
+        },
+        {
+          "name": "Set Address as Default",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+        

@@ -27,14 +27,6 @@ public class UserPrincipal implements UserDetails {
         this.authorities = authorities;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
     @Override
     public String getUsername() {
         return username;

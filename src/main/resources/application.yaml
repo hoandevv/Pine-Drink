@@ -199,3 +199,14 @@ app:
       max-consumers: ${APP_RABBITMQ_BACKGROUND_JOB_MAX_CONSUMERS:4}
       prefetch: ${APP_RABBITMQ_BACKGROUND_JOB_PREFETCH:1}
       export-folder: ${BACKGROUND_JOB_EXPORT_FOLDER:background-jobs/exports}
+
+    queue:
+      geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}
+
+geocoding:
+  nominatim:
+    base-url: ${GEOCODING_NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
+    user-agent: ${GEOCODING_NOMINATIM_USER_AGENT:PineDrinkApp/1.0}
+  cache:
+    enabled: ${GEOCODING_CACHE_ENABLED:true}
+    ttl-days: ${GEOCODING_CACHE_TTL_DAYS:30}

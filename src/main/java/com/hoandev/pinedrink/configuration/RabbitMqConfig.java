@@ -11,6 +11,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,6 +21,9 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMqConfig {
 
     private final RabbitMqProperties properties;
+
+    @Value("${app.rabbitmq.queue.geocoding:pine-drink.geocoding.queue}")
+    private String geocodingQueueName;
 
     // ──────────────────────────────────────────────
     // 1. Topic Exchanges
@@ -83,6 +87,18 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(domainEventDlq())
                 .to(domainEventExchange())
                 .with(properties.domainEvents().dlqRoutingKey());
+    }
+
+    @Bean
+    public Queue geocodingQueue() {
+        return QueueBuilder.durable(geocodingQueueName).build();
+    }
+
+    @Bean
+    public Binding geocodingBinding() {
+        return BindingBuilder.bind(geocodingQueue())
+                .to(domainEventExchange())
+                .with(properties.domainEvents().routingKey());
     }
 
     // ──────────────────────────────────────────────

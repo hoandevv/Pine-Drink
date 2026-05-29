@@ -1,8 +1,10 @@
 package com.hoandev.pinedrink.entity.dto.response.Address;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerAddressResponse  {
 
     private String id;

@@ -22,7 +22,7 @@ public interface ProfileService {
      * Updates the currently authenticated user's profile information.
      * Only non-null fields in the request will be updated.
      *
-     * @param request containing the fields to update (fullName, phone, avatarUrl)
+     * @param request containing the fields to update (fullName, phone, avatarUrl, dateOfBirth, gender)
      * @return {@link AccountResponse} containing the updated profile details
      */
     AccountResponse updateProfile(UpdateProfileRequest request);

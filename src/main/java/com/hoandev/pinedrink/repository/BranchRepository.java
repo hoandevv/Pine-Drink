@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface BranchRepository extends JpaRepository<Branch, String> {
+    List<Branch> findByBrandId(String brandId);
     List<Branch> findByBrandIdAndStatus(String brandId, String status);
     Optional<Branch> findByCode(String code);
+    boolean existsByCode(String code);
 }

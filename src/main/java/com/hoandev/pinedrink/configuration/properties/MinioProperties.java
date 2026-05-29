@@ -28,14 +28,29 @@ public class MinioProperties {
     private String secretKey;
 
     /**
-     * Default bucket name for storing files.
+     * Default bucket name for storing files (deprecated - use publicBucketName or privateBucketName).
      */
     private String bucketName = "pine-drink";
+
+    /**
+     * Bucket name for public files (avatars, products, banners, logos).
+     */
+    private String publicBucketName = "pine-drink-public";
+
+    /**
+     * Bucket name for private files (invoices, exports, documents).
+     */
+    private String privateBucketName = "pine-drink-private";
 
     /**
      * Public URL for accessing files (if using reverse proxy/CDN).
      */
     private String publicUrl;
+
+    /**
+     * Presigned URL expiry time in seconds (default 1 hour).
+     */
+    private int presignedUrlExpiry = 3600;
 
     /**
      * Maximum file size in bytes (default 5MB).

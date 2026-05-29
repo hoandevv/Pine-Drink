@@ -1,6 +1,9 @@
 package com.hoandev.pinedrink.service;
 
+import com.hoandev.pinedrink.enums.FileVisibility;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
 
 /**
  * Service interface for file storage operations using MinIO.
@@ -12,14 +15,24 @@ public interface FileStorageService {
      *
      * @param file the file to upload
      * @param folder the folder path in the bucket (e.g., "avatars", "products")
-     * @return the public URL of the uploaded file
+     * @param visibility the visibility level (PUBLIC or PRIVATE)
+     * @return the URL of the uploaded file (direct URL for public, proxy URL for private)
      */
-    String uploadFile(MultipartFile file, String folder);
+    String uploadFile(MultipartFile file, String folder, FileVisibility visibility);
+
+    /**
+     * Gets file stream from MinIO storage (for private files).
+     *
+     * @param objectName the object name (e.g., "invoices/uuid.pdf")
+     * @param visibility the visibility level (PUBLIC or PRIVATE)
+     * @return InputStream of the file
+     */
+    InputStream getFileStream(String objectName, FileVisibility visibility);
 
     /**
      * Deletes a file from MinIO storage.
      *
-     * @param fileUrl the public URL of the file to delete
+     * @param fileUrl the URL of the file to delete
      */
     void deleteFile(String fileUrl);
 

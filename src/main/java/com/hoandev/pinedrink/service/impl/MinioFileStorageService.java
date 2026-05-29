@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.configuration.properties.MinioProperties;
+import com.hoandev.pinedrink.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.FileStorageService;
@@ -32,12 +33,15 @@ public class MinioFileStorageService implements FileStorageService {
      * {@inheritDoc}
      */
     @Override
-    public String uploadFile(MultipartFile file, String folder) {
+    public String uploadFile(MultipartFile file, String folder, FileVisibility visibility) {
         validateFile(file);
 
         try {
+            // Determine bucket based on visibility
+            String bucketName = getBucketName(visibility);
+            
             // Ensure bucket exists
-            ensureBucketExists();
+            ensureBucketExists(bucketName, visibility);
 
             // Generate unique filename
             String originalFilename = file.getOriginalFilename();
@@ -49,7 +53,7 @@ public class MinioFileStorageService implements FileStorageService {
             try (InputStream inputStream = file.getInputStream()) {
                 minioClient.putObject(
                         PutObjectArgs.builder()
-                                .bucket(minioProperties.getBucketName())
+                                .bucket(bucketName)
                                 .object(objectName)
                                 .stream(inputStream, file.getSize(), -1)
                                 .contentType(file.getContentType())
@@ -57,13 +61,33 @@ public class MinioFileStorageService implements FileStorageService {
                 );
             }
 
-            log.info("File uploaded successfully: {}", objectName);
+            log.info("File uploaded successfully: {} to bucket: {}", objectName, bucketName);
 
-            // Return public URL
-            return buildPublicUrl(objectName);
+            // Return URL based on visibility
+            return buildUrl(objectName, visibility);
 
         } catch (Exception e) {
             log.error("Failed to upload file to MinIO", e);
+            throw new BaseException(ErrorCode.COM_002);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream getFileStream(String objectName, FileVisibility visibility) {
+        try {
+            String bucketName = getBucketName(visibility);
+            
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Failed to get file stream from MinIO: {}", objectName, e);
             throw new BaseException(ErrorCode.COM_002);
         }
     }
@@ -85,15 +109,22 @@ public class MinioFileStorageService implements FileStorageService {
                 return;
             }
 
+            // Determine bucket from URL
+            String bucketName = extractBucketNameFromUrl(fileUrl);
+            if (bucketName == null) {
+                log.warn("Cannot extract bucket name from URL: {}", fileUrl);
+                return;
+            }
+
             // Delete file from MinIO
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
-                            .bucket(minioProperties.getBucketName())
+                            .bucket(bucketName)
                             .object(objectName)
                             .build()
             );
 
-            log.info("File deleted successfully: {}", objectName);
+            log.info("File deleted successfully: {} from bucket: {}", objectName, bucketName);
 
         } catch (Exception e) {
             log.error("Failed to delete file from MinIO: {}", fileUrl, e);
@@ -136,23 +167,36 @@ public class MinioFileStorageService implements FileStorageService {
     }
 
     /**
+     * Gets bucket name based on visibility.
+     */
+    private String getBucketName(FileVisibility visibility) {
+        return visibility == FileVisibility.PUBLIC 
+                ? minioProperties.getPublicBucketName() 
+                : minioProperties.getPrivateBucketName();
+    }
+
+    /**
      * Ensures the bucket exists, creates it if not.
      */
-    private void ensureBucketExists() throws Exception {
+    private void ensureBucketExists(String bucketName, FileVisibility visibility) throws Exception {
         boolean exists = minioClient.bucketExists(
                 BucketExistsArgs.builder()
-                        .bucket(minioProperties.getBucketName())
+                        .bucket(bucketName)
                         .build()
         );
 
         if (!exists) {
             minioClient.makeBucket(
                     MakeBucketArgs.builder()
-                            .bucket(minioProperties.getBucketName())
+                            .bucket(bucketName)
                             .build()
             );
 
-            // Set bucket policy to public read
+            log.info("Bucket created: {}", bucketName);
+        }
+
+        // Always set bucket policy for public buckets to ensure it's public
+        if (visibility == FileVisibility.PUBLIC) {
             String policy = """
                     {
                         "Version": "2012-10-17",
@@ -165,40 +209,85 @@ public class MinioFileStorageService implements FileStorageService {
                             }
                         ]
                     }
-                    """.formatted(minioProperties.getBucketName());
+                    """.formatted(bucketName);
 
             minioClient.setBucketPolicy(
                     SetBucketPolicyArgs.builder()
-                            .bucket(minioProperties.getBucketName())
+                            .bucket(bucketName)
                             .config(policy)
                             .build()
             );
 
-            log.info("Bucket created and policy set: {}", minioProperties.getBucketName());
+            log.info("Bucket policy set to public: {}", bucketName);
         }
     }
 
     /**
-     * Builds the public URL for accessing the file.
+     * Builds the URL for accessing the file based on visibility.
      */
-    private String buildPublicUrl(String objectName) {
-        if (minioProperties.getPublicUrl() != null && !minioProperties.getPublicUrl().isEmpty()) {
-            return minioProperties.getPublicUrl() + "/" + minioProperties.getBucketName() + "/" + objectName;
+    private String buildUrl(String objectName, FileVisibility visibility) {
+        if (visibility == FileVisibility.PUBLIC) {
+            // Public files: direct MinIO URL
+            String bucketName = minioProperties.getPublicBucketName();
+            if (minioProperties.getPublicUrl() != null && !minioProperties.getPublicUrl().isEmpty()) {
+                return minioProperties.getPublicUrl() + "/" + bucketName + "/" + objectName;
+            }
+            return minioProperties.getEndpoint() + "/" + bucketName + "/" + objectName;
+        } else {
+            // Private files: return object name only (will be proxied through backend)
+            return objectName;
         }
-        return minioProperties.getEndpoint() + "/" + minioProperties.getBucketName() + "/" + objectName;
     }
 
     /**
-     * Extracts object name from the public URL.
+     * Extracts object name from the URL.
      */
     private String extractObjectNameFromUrl(String fileUrl) {
         try {
-            String bucketName = minioProperties.getBucketName();
-            int bucketIndex = fileUrl.indexOf(bucketName);
-            if (bucketIndex == -1) {
-                return null;
+            // Try public bucket
+            String publicBucket = minioProperties.getPublicBucketName();
+            int publicIndex = fileUrl.indexOf(publicBucket);
+            if (publicIndex != -1) {
+                return fileUrl.substring(publicIndex + publicBucket.length() + 1);
             }
-            return fileUrl.substring(bucketIndex + bucketName.length() + 1);
+
+            // Try private bucket
+            String privateBucket = minioProperties.getPrivateBucketName();
+            int privateIndex = fileUrl.indexOf(privateBucket);
+            if (privateIndex != -1) {
+                return fileUrl.substring(privateIndex + privateBucket.length() + 1);
+            }
+
+            // Try legacy bucket
+            String legacyBucket = minioProperties.getBucketName();
+            int legacyIndex = fileUrl.indexOf(legacyBucket);
+            if (legacyIndex != -1) {
+                return fileUrl.substring(legacyIndex + legacyBucket.length() + 1);
+            }
+
+            // If no bucket found, assume it's just the object name
+            return fileUrl;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Extracts bucket name from the URL.
+     */
+    private String extractBucketNameFromUrl(String fileUrl) {
+        try {
+            if (fileUrl.contains(minioProperties.getPublicBucketName())) {
+                return minioProperties.getPublicBucketName();
+            }
+            if (fileUrl.contains(minioProperties.getPrivateBucketName())) {
+                return minioProperties.getPrivateBucketName();
+            }
+            if (fileUrl.contains(minioProperties.getBucketName())) {
+                return minioProperties.getBucketName();
+            }
+            // Default to public bucket
+            return minioProperties.getPublicBucketName();
         } catch (Exception e) {
             return null;
         }

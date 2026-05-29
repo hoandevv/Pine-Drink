@@ -129,6 +129,8 @@ app:
     access-key: ${MINIO_ACCESS_KEY:}
     secret-key: ${MINIO_SECRET_KEY:}
     bucket-name: ${MINIO_BUCKET_NAME:pine-drink-storage}
+    public-bucket-name: ${MINIO_PUBLIC_BUCKET_NAME:pine-drink-public}
+    private-bucket-name: ${MINIO_PRIVATE_BUCKET_NAME:pine-drink-private}
     presigned-url-expiry: ${MINIO_PRESIGNED_URL_EXPIRY:3600}
 
   email:

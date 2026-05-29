@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.entity.dto.response.Address;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +33,7 @@ public class CustomerAddressResponse  {
 
     private BigDecimal longitude;
 
+    @JsonProperty("isDefault")
     private boolean isDefault;
 
     private LocalDateTime createdAt;

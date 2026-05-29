@@ -1,4 +1,5 @@
 package com.hoandev.pinedrink.entity.dto.request.Address;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -39,6 +40,7 @@ public class CreateAddressRequest {
 
     private BigDecimal longitude;
 
+    @JsonProperty("isDefault")
     private boolean isDefault;
 
 }

@@ -1,21 +1,17 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.configuration.properties.MinioProperties;
-import com.hoandev.pinedrink.enums.FileVisibility;
+import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.FileStorageService;
 import io.minio.*;
-import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 /**

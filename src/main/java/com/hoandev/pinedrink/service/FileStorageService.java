@@ -1,6 +1,6 @@
 package com.hoandev.pinedrink.service;
 
-import com.hoandev.pinedrink.enums.FileVisibility;
+import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;

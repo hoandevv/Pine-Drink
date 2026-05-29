@@ -47,7 +47,7 @@ public class ProfileController {
      * Only non-null fields in the request will be updated.
      * Validates that phone number is not already used by another account.
      *
-     * @param request containing fields to update (fullName, phone, avatarUrl)
+     * @param request containing fields to update (fullName, phone, avatarUrl, dateOfBirth, gender)
      * @return {@code 200 OK} with {@link AccountResponse} containing updated profile
      */
     @PutMapping

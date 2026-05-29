@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.Account;
+import com.hoandev.pinedrink.entity.CustomerProfile;
 import com.hoandev.pinedrink.entity.dto.request.Profile.ChangePasswordRequest;
 import com.hoandev.pinedrink.entity.dto.request.Profile.UpdateProfileRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
@@ -9,6 +10,7 @@ import com.hoandev.pinedrink.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRepository;
+import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ProfileService;
@@ -31,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfileServiceImpl implements ProfileService {
 
     private final AccountRepository accountRepository;
+    private final CustomerProfileRepository customerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
 
@@ -71,6 +74,26 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         Account updatedAccount = accountRepository.save(account);
+
+        // Update CustomerProfile fields
+        CustomerProfile customerProfile = customerProfileRepository.findByAccountId(account.getId())
+                .orElse(null);
+        if (customerProfile != null) {
+            if (request.getFullName() != null && !request.getFullName().trim().isEmpty()) {
+                customerProfile.setFullName(request.getFullName().trim());
+            }
+            if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+                customerProfile.setPhone(request.getPhone().trim());
+            }
+            if (request.getDateOfBirth() != null) {
+                customerProfile.setDateOfBirth(request.getDateOfBirth());
+            }
+            if (request.getGender() != null) {
+                customerProfile.setGender(request.getGender());
+            }
+            customerProfileRepository.save(customerProfile);
+        }
+
         log.info("Profile updated for account: {}", updatedAccount.getUsername());
 
         return mapToAccountResponse(updatedAccount);
@@ -163,6 +186,9 @@ public class ProfileServiceImpl implements ProfileService {
      * @return the account response DTO
      */
     private AccountResponse mapToAccountResponse(Account account) {
+        CustomerProfile customerProfile = customerProfileRepository.findByAccountId(account.getId())
+                .orElse(null);
+
         return AccountResponse.builder()
                 .id(account.getId())
                 .brandId(account.getBrand() != null ? account.getBrand().getId() : null)
@@ -173,6 +199,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .avatarUrl(account.getAvatarUrl())
                 .status(account.getStatus())
                 .lastLoginAt(account.getLastLoginAt())
+                .dateOfBirth(customerProfile != null ? customerProfile.getDateOfBirth() : null)
+                .gender(customerProfile != null ? customerProfile.getGender() : null)
                 .build();
     }
 

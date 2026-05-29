@@ -1,11 +1,14 @@
 package com.hoandev.pinedrink.entity.dto.request.Profile;
 
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 /**
  * Request DTO for updating user profile.
@@ -24,5 +27,11 @@ public class UpdateProfileRequest {
 
     @Size(max = 500, message = "Avatar URL must not exceed 500 characters")
     private String avatarUrl;
+
+    @Past(message = "Date of birth must be in the past")
+    private LocalDate dateOfBirth;
+
+    @Pattern(regexp = "^(MALE|FEMALE|OTHER)$", message = "Gender must be MALE, FEMALE, or OTHER")
+    private String gender;
 
 }

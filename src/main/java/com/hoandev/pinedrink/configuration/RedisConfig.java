@@ -82,6 +82,21 @@ public class RedisConfig {
         return new StringRedisTemplate(redisConnectionFactory);
     }
 
+    @Bean("redisListTemplate")
+    @Profile("!test")
+    public RedisTemplate<String, Object> redisListTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisSerializer<Object> serializer = RedisSerializer.json();
+
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+        template.afterPropertiesSet();
+        return template;
+    }
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisSerializer<Object> serializer = RedisSerializer.json();

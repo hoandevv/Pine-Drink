@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.Profile.ChangePasswordRequest;
 import com.hoandev.pinedrink.entity.dto.request.Profile.UpdateProfileRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.FileUploadResponse;
+import com.hoandev.pinedrink.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRepository;
@@ -116,8 +117,8 @@ public class ProfileServiceImpl implements ProfileService {
         // Get old avatar URL before uploading new one
         String oldAvatarUrl = account.getAvatarUrl();
 
-        // Upload new avatar to MinIO
-        String newAvatarUrl = fileStorageService.uploadFile(file, "avatars");
+        // Upload new avatar to MinIO (PUBLIC bucket)
+        String newAvatarUrl = fileStorageService.uploadFile(file, "avatars", FileVisibility.PUBLIC);
 
         // Update account with new avatar URL
         account.setAvatarUrl(newAvatarUrl);

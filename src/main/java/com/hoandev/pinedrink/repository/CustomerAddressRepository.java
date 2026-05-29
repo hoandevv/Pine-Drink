@@ -8,5 +8,11 @@ import java.util.List;
 
 @Repository
 public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, String> {
+   /**
+     * Finds all customer addresses by customer ID.
+     *
+     * @param customerId the ID of the customer
+     * @return a list of customer addresses
+     */
     List<CustomerAddress> findByCustomerId(String customerId);
 }

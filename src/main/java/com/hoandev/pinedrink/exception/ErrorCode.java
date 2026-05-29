@@ -39,7 +39,13 @@ public enum ErrorCode {
     RATE_LIMIT_EXCEEDED("RATE_001", "Rate limit exceeded - too many requests"),
 
     ROLE_NOT_FOUND("ROLE_001", "Role not found"),
-    SCOPE_NOT_FOUND("SCOPE_001", "Scope not found");
+    SCOPE_NOT_FOUND("SCOPE_001", "Scope not found"),
+
+    CUSTOMER_001("CUSTOMER_001", "Customer profile not found"),
+    CUSTOMER_002("CUSTOMER_002", "Customer address not found"),
+    CUSTOMER_003("CUSTOMER_003", "Customer address does not belong to this customer"),
+    CUSTOMER_004("CUSTOMER_004", "Cannot delete default address"),
+    CUSTOMER_005("CUSTOMER_005", "Customer already has a default address");
 
     private final String code;
     private final String message;

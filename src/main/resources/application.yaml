@@ -129,6 +129,8 @@ app:
     access-key: ${MINIO_ACCESS_KEY:}
     secret-key: ${MINIO_SECRET_KEY:}
     bucket-name: ${MINIO_BUCKET_NAME:pine-drink-storage}
+    public-bucket-name: ${MINIO_PUBLIC_BUCKET_NAME:pine-drink-public}
+    private-bucket-name: ${MINIO_PRIVATE_BUCKET_NAME:pine-drink-private}
     presigned-url-expiry: ${MINIO_PRESIGNED_URL_EXPIRY:3600}
 
   email:
@@ -199,3 +201,14 @@ app:
       max-consumers: ${APP_RABBITMQ_BACKGROUND_JOB_MAX_CONSUMERS:4}
       prefetch: ${APP_RABBITMQ_BACKGROUND_JOB_PREFETCH:1}
       export-folder: ${BACKGROUND_JOB_EXPORT_FOLDER:background-jobs/exports}
+
+    queue:
+      geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}
+
+geocoding:
+  nominatim:
+    base-url: ${GEOCODING_NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
+    user-agent: ${GEOCODING_NOMINATIM_USER_AGENT:PineDrinkApp/1.0}
+  cache:
+    enabled: ${GEOCODING_CACHE_ENABLED:true}
+    ttl-days: ${GEOCODING_CACHE_TTL_DAYS:30}

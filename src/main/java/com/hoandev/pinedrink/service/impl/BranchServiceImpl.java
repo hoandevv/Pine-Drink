@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.Brand;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.BranchStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
@@ -15,6 +16,8 @@ import com.hoandev.pinedrink.service.BranchService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,29 +97,33 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BranchResponse> getAllByBrandId(String brandId) {
+    public PageResponse<BranchResponse> getAllByBrandId(String brandId, Pageable pageable) {
         // Verify brand exists
         brandRepository.findById(brandId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
 
-        List<Branch> branches = branchRepository.findByBrandId(brandId);
+        Page<Branch> branches = branchRepository.findByBrandId(brandId, pageable);
 
-        return branches.stream()
+        List<BranchResponse> content = branches.getContent().stream()
                 .map(branchMapper::toResponse)
                 .collect(Collectors.toList());
+
+        return PageResponse.from(branches, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BranchResponse> getAllActiveByBrandId(String brandId) {
+    public PageResponse<BranchResponse> getAllActiveByBrandId(String brandId, Pageable pageable) {
         // Verify brand exists
         brandRepository.findById(brandId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
 
-        List<Branch> branches = branchRepository.findByBrandIdAndStatus(brandId, BranchStatus.ACTIVE.getValue());
+        Page<Branch> branches = branchRepository.findByBrandIdAndStatus(brandId, BranchStatus.ACTIVE.getValue(), pageable);
 
-        return branches.stream()
+        List<BranchResponse> content = branches.getContent().stream()
                 .map(branchMapper::toResponse)
                 .collect(Collectors.toList());
+
+        return PageResponse.from(branches, content);
     }
 }

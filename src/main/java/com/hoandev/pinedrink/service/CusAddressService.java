@@ -3,8 +3,9 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Address.CreateAddressRequest;
 import com.hoandev.pinedrink.entity.dto.request.Address.UpdateCusAddress;
 import com.hoandev.pinedrink.entity.dto.response.Address.CustomerAddressResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 /**
  * Service interface for managing customer addresses.
@@ -47,7 +48,7 @@ public interface CusAddressService {
      *
      * @return list of customer addresses
      */
-    List<CustomerAddressResponse> getAllByCurrentCustomer();
+    PageResponse<CustomerAddressResponse> getAllByCurrentCustomer(Pageable pageable);
 
     /**
      * Sets an address as default for the current customer.

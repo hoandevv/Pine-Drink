@@ -4,16 +4,19 @@ import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.BranchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * REST controller for managing branches.
@@ -92,9 +95,11 @@ public class BranchController {
      * @return list of branches
      */
     @GetMapping("/brand/{brandId}")
-    public ResponseEntity<BaseResponse<List<BranchResponse>>> getAllByBrandId(@PathVariable String brandId) {
+    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllByBrandId(
+            @PathVariable String brandId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting all branches for brand: brandId={}", brandId);
-        List<BranchResponse> responses = branchService.getAllByBrandId(brandId);
+        PageResponse<BranchResponse> responses = branchService.getAllByBrandId(brandId, pageable);
         return ResponseEntity.ok(BaseResponse.success(responses, "Branches retrieved successfully"));
     }
 
@@ -105,9 +110,11 @@ public class BranchController {
      * @return list of active branches
      */
     @GetMapping("/brand/{brandId}/active")
-    public ResponseEntity<BaseResponse<List<BranchResponse>>> getAllActiveByBrandId(@PathVariable String brandId) {
+    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActiveByBrandId(
+            @PathVariable String brandId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting all active branches for brand: brandId={}", brandId);
-        List<BranchResponse> responses = branchService.getAllActiveByBrandId(brandId);
+        PageResponse<BranchResponse> responses = branchService.getAllActiveByBrandId(brandId, pageable);
         return ResponseEntity.ok(BaseResponse.success(responses, "Active branches retrieved successfully"));
     }
 }

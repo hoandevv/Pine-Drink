@@ -3,8 +3,9 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 /**
  * Service interface for managing branches.
@@ -48,7 +49,7 @@ public interface BranchService {
      * @param brandId the brand ID
      * @return list of branches
      */
-    List<BranchResponse> getAllByBrandId(String brandId);
+    PageResponse<BranchResponse> getAllByBrandId(String brandId, Pageable pageable);
 
     /**
      * Retrieves all active branches for a specific brand.
@@ -56,5 +57,5 @@ public interface BranchService {
      * @param brandId the brand ID
      * @return list of active branches
      */
-    List<BranchResponse> getAllActiveByBrandId(String brandId);
+    PageResponse<BranchResponse> getAllActiveByBrandId(String brandId, Pageable pageable);
 }

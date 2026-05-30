@@ -4,16 +4,18 @@ import com.hoandev.pinedrink.entity.dto.request.Address.CreateAddressRequest;
 import com.hoandev.pinedrink.entity.dto.request.Address.UpdateCusAddress;
 import com.hoandev.pinedrink.entity.dto.response.Address.CustomerAddressResponse;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.CusAddressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * REST controller for managing customer addresses.
@@ -89,9 +91,10 @@ public class CusAddressController {
      * @return list of customer addresses
      */
     @GetMapping
-    public ResponseEntity<BaseResponse<List<CustomerAddressResponse>>> getAllByCurrentCustomer() {
+    public ResponseEntity<BaseResponse<PageResponse<CustomerAddressResponse>>> getAllByCurrentCustomer(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting all customer addresses for current customer");
-        List<CustomerAddressResponse> responses = cusAddressService.getAllByCurrentCustomer();
+        PageResponse<CustomerAddressResponse> responses = cusAddressService.getAllByCurrentCustomer(pageable);
         return ResponseEntity.ok(BaseResponse.success(responses, "Customer addresses retrieved successfully"));
     }
 

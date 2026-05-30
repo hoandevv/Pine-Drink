@@ -45,7 +45,12 @@ public enum ErrorCode {
     CUSTOMER_002("CUSTOMER_002", "Customer address not found"),
     CUSTOMER_003("CUSTOMER_003", "Customer address does not belong to this customer"),
     CUSTOMER_004("CUSTOMER_004", "Cannot delete default address"),
-    CUSTOMER_005("CUSTOMER_005", "Customer already has a default address");
+    CUSTOMER_005("CUSTOMER_005", "Customer already has a default address"),
+
+    BRANCH_001("BRANCH_001", "Branch not found"),
+    BRANCH_002("BRANCH_002", "Branch code already exists for this brand"),
+    BRANCH_003("BRANCH_003", "Brand not found"),
+    BRANCH_004("BRANCH_004", "Branch is already inactive");
 
     private final String code;
     private final String message;

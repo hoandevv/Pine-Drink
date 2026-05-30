@@ -1,0 +1,68 @@
+### Create Branch
+POST http://localhost:8080/api/v1/branches
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Pine Drink Nguyen Hue",
+  "address": "86 Nguyen Hue, Ben Nghe, District 1, Ho Chi Minh City",
+  "phone": "0901234567",
+  "email": "nguyenhue@pinedrink.vn",
+  "latitude": 10.7756587,
+  "longitude": 106.7004238,
+  "timezone": "Asia/Ho_Chi_Minh",
+  "supportsPickup": true,
+  "supportsDelivery": true,
+  "averagePreparationMinutes": 15,
+  "brandId": "{{brandId}}"
+}
+
+###
+
+### Get Branch By ID
+GET http://localhost:8080/api/v1/branches/{{branchId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+### Get All Branches By Brand
+GET http://localhost:8080/api/v1/branches/brand/{{brandId}}?page=0&size=20&sort=createdAt,desc
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+### Get Active Branches By Brand
+GET http://localhost:8080/api/v1/branches/brand/{{brandId}}/active?page=0&size=20&sort=createdAt,desc
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+### Update Branch
+PUT http://localhost:8080/api/v1/branches/{{branchId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Pine Drink Nguyen Hue Updated",
+  "address": "88 Nguyen Hue, Ben Nghe, District 1, Ho Chi Minh City",
+  "phone": "0907654321",
+  "email": "nguyenhue.updated@pinedrink.vn",
+  "latitude": 10.7760000,
+  "longitude": 106.7010000,
+  "timezone": "Asia/Ho_Chi_Minh",
+  "supportsPickup": true,
+  "supportsDelivery": false,
+  "averagePreparationMinutes": 20
+}
+
+###
+
+### Delete Branch Soft
+DELETE http://localhost:8080/api/v1/branches/{{branchId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###

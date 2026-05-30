@@ -1,6 +1,6 @@
 package com.hoandev.pinedrink.controller;
 
-import com.hoandev.pinedrink.enums.FileVisibility;
+import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.FileStorageService;

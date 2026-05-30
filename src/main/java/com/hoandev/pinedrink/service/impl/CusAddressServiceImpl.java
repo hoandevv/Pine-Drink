@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.CustomerProfile;
 import com.hoandev.pinedrink.entity.dto.request.Address.CreateAddressRequest;
 import com.hoandev.pinedrink.entity.dto.request.Address.UpdateCusAddress;
 import com.hoandev.pinedrink.entity.dto.response.Address.CustomerAddressResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.CustomerAddressMapper;
@@ -16,6 +17,8 @@ import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.CusAddressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -126,13 +129,15 @@ public class CusAddressServiceImpl implements CusAddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CustomerAddressResponse> getAllByCurrentCustomer() {
+    public PageResponse<CustomerAddressResponse> getAllByCurrentCustomer(Pageable pageable) {
         CustomerProfile customer = getCurrentCustomerProfile();
-        List<CustomerAddress> addresses = customerAddressRepository.findByCustomerId(customer.getId());
+        Page<CustomerAddress> addresses = customerAddressRepository.findByCustomerId(customer.getId(), pageable);
 
-        return addresses.stream()
+        List<CustomerAddressResponse> content = addresses.getContent().stream()
                 .map(customerAddressMapper::toResponse)
                 .collect(Collectors.toList());
+
+        return PageResponse.from(addresses, content);
     }
 
     @Override

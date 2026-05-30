@@ -1,0 +1,197 @@
+{
+  "info": {
+    "name": "Pine Drink - Branch Management",
+    "description": "API collection for branch management: create, update, soft delete, get by id, list by brand, and list active by brand",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Branch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Pine Drink Nguyen Hue\",\n  \"address\": \"86 Nguyen Hue, Ben Nghe, District 1, Ho Chi Minh City\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenhue@pinedrink.vn\",\n  \"latitude\": 10.7756587,\n  \"longitude\": 106.7004238,\n  \"timezone\": \"Asia/Ho_Chi_Minh\",\n  \"supportsPickup\": true,\n  \"supportsDelivery\": true,\n  \"averagePreparationMinutes\": 15,\n  \"brandId\": \"{{brandId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches"]
+        },
+        "description": "Create a new branch. Requires ADMIN or MANAGER role."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Branch By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches/{{branchId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches", "{{branchId}}"]
+        },
+        "description": "Get branch detail by id."
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Branches By Brand",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches/brand/{{brandId}}?page=0&size=20&sort=createdAt,desc",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches", "brand", "{{brandId}}"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "createdAt,desc"
+            }
+          ]
+        },
+        "description": "Get all branches for a brand."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Active Branches By Brand",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches/brand/{{brandId}}/active?page=0&size=20&sort=createdAt,desc",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches", "brand", "{{brandId}}", "active"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "createdAt,desc"
+            }
+          ]
+        },
+        "description": "Get active branches for a brand."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Branch",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Pine Drink Nguyen Hue Updated\",\n  \"address\": \"88 Nguyen Hue, Ben Nghe, District 1, Ho Chi Minh City\",\n  \"phone\": \"0907654321\",\n  \"email\": \"nguyenhue.updated@pinedrink.vn\",\n  \"latitude\": 10.7760000,\n  \"longitude\": 106.7010000,\n  \"timezone\": \"Asia/Ho_Chi_Minh\",\n  \"supportsPickup\": true,\n  \"supportsDelivery\": false,\n  \"averagePreparationMinutes\": 20\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches/{{branchId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches", "{{branchId}}"]
+        },
+        "description": "Update branch by id. Requires ADMIN or MANAGER role."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Branch Soft",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/branches/{{branchId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "branches", "{{branchId}}"]
+        },
+        "description": "Soft delete branch by setting status to INACTIVE. Requires ADMIN or MANAGER role."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "brandId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

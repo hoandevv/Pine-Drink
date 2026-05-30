@@ -1,6 +1,8 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.CustomerAddress;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +17,5 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
      * @return a list of customer addresses
      */
     List<CustomerAddress> findByCustomerId(String customerId);
+    Page<CustomerAddress> findByCustomerId(String customerId, Pageable pageable);
 }

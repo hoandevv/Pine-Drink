@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -32,6 +33,11 @@ public class GlobalExceptionHandler {
                 .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
                 .toList();
         return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_001, "Validation failed", errors, null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ErrorResponse> handleInvalidRequestBody(HttpMessageNotReadableException ex) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_001, "Invalid request body", null, null);
     }
 
     /**

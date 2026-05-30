@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.enums;
+package com.hoandev.pinedrink.entity.enums;
 
 /**
  * Enum representing file visibility levels.

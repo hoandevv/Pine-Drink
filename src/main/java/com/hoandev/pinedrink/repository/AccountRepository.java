@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,7 +11,7 @@ import java.util.Optional;
  * Repository for managing {@link Account} entities.
  */
 @Repository
-public interface AccountRepository extends JpaRepository<Account, String> {
+public interface AccountRepository extends JpaRepository<Account, String>, JpaSpecificationExecutor<Account> {
 
     /**
      * Finds an account by its unique username.
@@ -61,4 +62,14 @@ public interface AccountRepository extends JpaRepository<Account, String> {
      * @return true if another account with the phone number exists
      */
     boolean existsByPhoneAndIdNot(String phone, String id);
+
+    /**
+     * Checks whether an account with the given email exists,
+     * excluding the account with the specified ID.
+     *
+     * @param email the email to check
+     * @param id the account ID to exclude from the check
+     * @return true if another account with the email exists
+     */
+    boolean existsByEmailAndIdNot(String email, String id);
 }

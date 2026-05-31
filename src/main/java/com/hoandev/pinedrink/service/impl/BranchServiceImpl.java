@@ -3,6 +3,7 @@ package com.hoandev.pinedrink.service.impl;
 import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.Brand;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
@@ -72,6 +73,21 @@ public class BranchServiceImpl implements BranchService {
         branch = branchRepository.save(branch);
 
         log.info("Branch updated: id={}, code={}", branch.getId(), branch.getCode());
+        return branchMapper.toResponse(branch);
+    }
+
+    @Override
+    @Transactional
+    public BranchResponse updateStatus(String id, UpdateBranchStatusRequest request) {
+        accessScopeService.assertCanManageBranch(id);
+
+        Branch branch = branchRepository.findById(id)
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+
+        branch.setStatus(request.getStatus());
+        branch = branchRepository.save(branch);
+
+        log.info("Branch status updated: id={}, code={}, status={}", branch.getId(), branch.getCode(), branch.getStatus());
         return branchMapper.toResponse(branch);
     }
 

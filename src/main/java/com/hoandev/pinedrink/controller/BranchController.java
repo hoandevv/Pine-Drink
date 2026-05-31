@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
@@ -59,6 +60,23 @@ public class BranchController {
         log.info("Updating branch: id={}", id);
         BranchResponse response = branchService.update(id, request);
         return ResponseEntity.ok(BaseResponse.success(response, "Branch updated successfully"));
+    }
+
+    /**
+     * Updates branch status.
+     *
+     * @param id the branch ID
+     * @param request the status update request
+     * @return the updated branch
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
+    public ResponseEntity<BaseResponse<BranchResponse>> updateStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateBranchStatusRequest request) {
+        log.info("Updating branch status: id={}, status={}", id, request.getStatus());
+        BranchResponse response = branchService.updateStatus(id, request);
+        return ResponseEntity.ok(BaseResponse.success(response, "Branch status updated successfully"));
     }
 
     /**

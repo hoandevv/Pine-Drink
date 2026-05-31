@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service;
 
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
@@ -27,6 +28,15 @@ public interface BranchService {
      * @return the updated branch
      */
     BranchResponse update(String id, UpdateBranchRequest request);
+
+    /**
+     * Updates branch status.
+     *
+     * @param id the ID of the branch to update
+     * @param request the request containing the new status
+     * @return the updated branch
+     */
+    BranchResponse updateStatus(String id, UpdateBranchStatusRequest request);
 
     /**
      * Deletes a branch (soft delete by setting status to INACTIVE).

@@ -23,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller exposing authentication and registration endpoints.
  * <p>
@@ -166,6 +168,21 @@ public class AuthController {
         AccountResponse response = authService.getCurrentProfile();
         return ResponseEntity.ok(
                 BaseResponse.success(response)
+        );
+    }
+
+    /**
+     * Retrieves current authenticated account permissions for frontend access control.
+     * <p>
+     * Permissions are resolved from backend cache/DB and returned without the Spring Security PERM_ prefix.
+     *
+     * @return {@code 200 OK} with raw permission codes
+     */
+    @GetMapping("/me/permissions")
+    public ResponseEntity<BaseResponse<List<String>>> getCurrentPermissions() {
+        List<String> permissions = authService.getCurrentPermissions();
+        return ResponseEntity.ok(
+                BaseResponse.success(permissions, "Permissions retrieved successfully")
         );
     }
 

@@ -25,6 +25,7 @@ import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.queue.publisher.EventPublisher;
 import com.hoandev.pinedrink.service.AuthService;
+import com.hoandev.pinedrink.service.PermissionCacheService;
 import com.hoandev.pinedrink.mapper.AuthMapper;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
@@ -73,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
     private final EventPublisher eventPublisher;
     private final AuthMapper authMapper;
     private final CustomUserDetailsService customUserDetailsService;
+    private final PermissionCacheService permissionCacheService;
 
     private static final String OTP_KEY_PREFIX = "otp:register:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
@@ -317,13 +319,36 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public AccountResponse getCurrentProfile() {
+        UserPrincipal principal = getCurrentPrincipal();
+        Account account = accountRepository.findById(principal.getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
+        return authMapper.toAccountResponse(account);
+    }
+
+    @Override
+    public List<String> getCurrentPermissions() {
+        UserPrincipal principal = getCurrentPrincipal();
+        return permissionCacheService.getPermissionAuthorities(principal.getId())
+                .stream()
+                .map(this::removePermissionPrefix)
+                .distinct()
+                .toList();
+    }
+
+    private UserPrincipal getCurrentPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
             throw new BaseException(ErrorCode.AUTH_003);
         }
-        Account account = accountRepository.findById(principal.getId())
-                .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
-        return authMapper.toAccountResponse(account);
+        return principal;
+    }
+
+    private String removePermissionPrefix(String authority) {
+        String prefix = "PERM_";
+        if (authority != null && authority.startsWith(prefix)) {
+            return authority.substring(prefix.length());
+        }
+        return authority;
     }
 
     /**

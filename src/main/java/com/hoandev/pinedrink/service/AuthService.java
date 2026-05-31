@@ -6,6 +6,8 @@ import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.*;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
+
 /**
  * Service interface for authentication and registration operations.
  */
@@ -41,6 +43,13 @@ public interface AuthService {
      * @return {@link AccountResponse} containing the current account's details
      */
     AccountResponse getCurrentProfile();
+
+    /**
+     * Retrieves current authenticated account permissions for frontend access control.
+     *
+     * @return raw permission codes without PERM_ prefix
+     */
+    List<String> getCurrentPermissions();
 
     /**
      * Creates a new inactive account, generates a registration OTP,

@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.AccountRoleAssignment;
 import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
+import com.hoandev.pinedrink.service.PermissionCacheService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Loads user details from the database during authentication.
@@ -24,11 +26,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository assignmentRepository;
+    private final PermissionCacheService permissionCacheService;
 
     public CustomUserDetailsService(AccountRepository accountRepository,
-                                    AccountRoleAssignmentRepository assignmentRepository) {
+                                    AccountRoleAssignmentRepository assignmentRepository,
+                                    PermissionCacheService permissionCacheService) {
         this.accountRepository = accountRepository;
         this.assignmentRepository = assignmentRepository;
+        this.permissionCacheService = permissionCacheService;
     }
 
     /**
@@ -39,11 +44,34 @@ public class CustomUserDetailsService implements UserDetailsService {
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        List<GrantedAuthority> authorities = assignmentRepository
+        return buildPrincipal(account);
+    }
+
+    public UserPrincipal loadPrincipalById(String userId) throws UsernameNotFoundException {
+        return buildPrincipal(loadAccountById(userId));
+    }
+
+    public Account loadAccountById(String userId) throws UsernameNotFoundException {
+        return accountRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+    }
+
+    public UserPrincipal buildPrincipal(Account account) {
+        List<String> roleAuthorities = assignmentRepository
                 .findActiveRoleCodesByAccountId(account.getId(), LocalDateTime.now())
                 .stream()
-                .map(roleCode -> new SimpleGrantedAuthority("ROLE_" + roleCode))
+                .map(roleCode -> "ROLE_" + roleCode)
                 .distinct()
+                .toList();
+
+        return buildPrincipal(account, roleAuthorities);
+    }
+
+    public UserPrincipal buildPrincipal(Account account, List<String> roleAuthorities) {
+        List<String> permissionAuthorities = permissionCacheService.getPermissionAuthorities(account.getId());
+
+        List<GrantedAuthority> authorities = Stream.concat(roleAuthorities.stream(), permissionAuthorities.stream())
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
         return new UserPrincipal(
@@ -60,19 +88,6 @@ public class CustomUserDetailsService implements UserDetailsService {
      * @throws UsernameNotFoundException if the user is not found
      */
     public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
-        Account account = accountRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
-
-        List<GrantedAuthority> authorities = assignmentRepository
-                .findActiveRoleCodesByAccountId(account.getId(), LocalDateTime.now())
-                .stream()
-                .map(roleCode -> new SimpleGrantedAuthority("ROLE_" + roleCode))
-                .distinct()
-                .collect(Collectors.toList());
-
-        return new UserPrincipal(
-                account.getId(), account.getUsername(), account.getEmail(),
-                account.getPassword(), account.getStatus(), authorities
-        );
+        return loadPrincipalById(userId);
     }
 }

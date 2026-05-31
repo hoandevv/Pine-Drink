@@ -44,9 +44,7 @@ public class JwtTokenProvider {
     public String generateAccessToken(UserPrincipal principal) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpirationSeconds * 1000);
-        List<String> roles = principal.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
+        List<String> roles = principal.getRoleAuthorities();
 
         return Jwts.builder()
                 .subject(principal.getId())

@@ -3,6 +3,7 @@ package com.hoandev.pinedrink.service.impl;
 import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.Brand;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
@@ -12,6 +13,7 @@ import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.BranchMapper;
 import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.repository.BrandRepository;
+import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +34,13 @@ public class BranchServiceImpl implements BranchService {
     private final BrandRepository brandRepository;
     private final BranchMapper branchMapper;
     private final CodeGenerator codeGenerator;
+    private final AccessScopeService accessScopeService;
 
     @Override
     @Transactional
     public BranchResponse create(CreateBranchRequest request) {
+        accessScopeService.assertCanManageBrand(request.getBrandId());
+
         // Verify brand exists
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
@@ -59,6 +64,8 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public BranchResponse update(String id, UpdateBranchRequest request) {
+        accessScopeService.assertCanManageBranch(id);
+
         Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
 
@@ -71,7 +78,24 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     @Transactional
+    public BranchResponse updateStatus(String id, UpdateBranchStatusRequest request) {
+        accessScopeService.assertCanManageBranch(id);
+
+        Branch branch = branchRepository.findById(id)
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+
+        branch.setStatus(request.getStatus());
+        branch = branchRepository.save(branch);
+
+        log.info("Branch status updated: id={}, code={}, status={}", branch.getId(), branch.getCode(), branch.getStatus());
+        return branchMapper.toResponse(branch);
+    }
+
+    @Override
+    @Transactional
     public void delete(String id) {
+        accessScopeService.assertCanDeleteBranch(id);
+
         Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
 
@@ -89,6 +113,8 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public BranchResponse getById(String id) {
+        accessScopeService.assertCanAccessBranch(id);
+
         Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
 
@@ -98,6 +124,8 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BranchResponse> getAllByBrandId(String brandId, Pageable pageable) {
+        accessScopeService.assertCanAccessBrand(brandId);
+
         // Verify brand exists
         brandRepository.findById(brandId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
@@ -114,6 +142,8 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BranchResponse> getAllActiveByBrandId(String brandId, Pageable pageable) {
+        accessScopeService.assertCanAccessBrand(brandId);
+
         // Verify brand exists
         brandRepository.findById(brandId)
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));

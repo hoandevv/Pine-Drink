@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for managing branches.
- * Requires ADMIN or MANAGER role for most operations.
+ * Requires branch permissions for back-office operations.
  */
 @RestController
 @RequestMapping("/api/v1/branches")
@@ -36,7 +37,7 @@ public class BranchController {
      * @return the created branch
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_CREATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> create(@Valid @RequestBody CreateBranchRequest request) {
         log.info("Creating branch for brandId={}", request.getBrandId());
         BranchResponse response = branchService.create(request);
@@ -52,7 +53,7 @@ public class BranchController {
      * @return the updated branch
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateBranchRequest request) {
@@ -62,13 +63,30 @@ public class BranchController {
     }
 
     /**
+     * Updates branch status.
+     *
+     * @param id the branch ID
+     * @param request the status update request
+     * @return the updated branch
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
+    public ResponseEntity<BaseResponse<BranchResponse>> updateStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateBranchStatusRequest request) {
+        log.info("Updating branch status: id={}, status={}", id, request.getStatus());
+        BranchResponse response = branchService.updateStatus(id, request);
+        return ResponseEntity.ok(BaseResponse.success(response, "Branch status updated successfully"));
+    }
+
+    /**
      * Deletes a branch (soft delete).
      *
      * @param id the branch ID
      * @return success response
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_DELETE')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String id) {
         log.info("Deleting branch: id={}", id);
         branchService.delete(id);
@@ -82,6 +100,7 @@ public class BranchController {
      * @return the branch
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchResponse>> getById(@PathVariable String id) {
         log.info("Getting branch: id={}", id);
         BranchResponse response = branchService.getById(id);
@@ -95,6 +114,7 @@ public class BranchController {
      * @return list of branches
      */
     @GetMapping("/brand/{brandId}")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllByBrandId(
             @PathVariable String brandId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -110,6 +130,7 @@ public class BranchController {
      * @return list of active branches
      */
     @GetMapping("/brand/{brandId}/active")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActiveByBrandId(
             @PathVariable String brandId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

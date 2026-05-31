@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 /**
  * Repository for managing {@link Role} entities.
@@ -19,4 +20,11 @@ public interface RoleRepository extends JpaRepository<Role, String> {
      * @return an {@link Optional} containing the role if found
      */
     Optional<Role> findByCode(String code);
+    /**
+     * Finds all roles with the specified status, ordered by code.
+     *
+     * @param status the status of the roles to find
+     * @return a list of roles with the specified status
+     */
+    List<Role> findByStatusOrderByCodeAsc(String status);
 }

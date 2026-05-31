@@ -126,4 +126,13 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
      * @return a list of role assignments for the role
      */
     List<AccountRoleAssignment> findByRoleId(String roleId);
+
+    @Query("""
+            select distinct a.account.id
+            from AccountRoleAssignment a
+            where a.role.id = :roleId
+              and a.status = 'ACTIVE'
+              and (a.expiresAt is null or a.expiresAt > :now)
+            """)
+    List<String> findActiveAccountIdsByRoleId(String roleId, LocalDateTime now);
 }

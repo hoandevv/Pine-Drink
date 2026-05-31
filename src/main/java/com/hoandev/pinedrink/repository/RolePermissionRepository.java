@@ -10,8 +10,23 @@ import java.util.List;
 
 @Repository
 public interface RolePermissionRepository extends JpaRepository<RolePermission, String> {
+    /**
+     * Finds all role permissions for the specified role ID.
+     *
+     * @param roleId the ID of the role
+     * @return a list of role permissions for the specified role ID
+     */
     List<RolePermission> findByRoleId(String roleId);
+
+    /**
+     * Finds all role permissions for the specified permission ID.
+     *
+     * @param permissionId the ID of the permission
+     * @return a list of role permissions for the specified permission ID
+     */
     List<RolePermission> findByPermissionId(String permissionId);
+
+    List<RolePermission> findByRoleIdAndStatus(String roleId, String status);
 
     @Query("""
             select distinct p.code
@@ -27,4 +42,16 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
             order by p.code asc
             """)
     List<String> findActivePermissionCodesByAccountId(String accountId, LocalDateTime now);
+
+    @Query("""
+            select rp
+            from RolePermission rp
+            join fetch rp.role r
+            join fetch rp.permission p
+            where rp.status = 'ACTIVE'
+              and r.status = 'ACTIVE'
+              and p.status = 'ACTIVE'
+            order by r.code asc, p.code asc
+            """)
+    List<RolePermission> findActiveMatrixEntries();
 }

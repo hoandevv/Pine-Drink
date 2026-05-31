@@ -19,6 +19,7 @@ import com.hoandev.pinedrink.repository.RefreshTokenRepository;
 import com.hoandev.pinedrink.repository.RoleRepository;
 import com.hoandev.pinedrink.repository.ScopeRepository;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
+import com.hoandev.pinedrink.security.CustomUserDetailsService;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
@@ -33,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,6 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link AuthService}.
@@ -73,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
     private final StringRedisTemplate stringRedisTemplate;
     private final EventPublisher eventPublisher;
     private final AuthMapper authMapper;
+    private final CustomUserDetailsService customUserDetailsService;
 
     private static final String OTP_KEY_PREFIX = "otp:register:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
@@ -248,12 +248,7 @@ public class AuthServiceImpl implements AuthService {
         }
         validateAccountStatus(account);
 
-        List<String> roles = loadActiveRoleCodes(account.getId());
-        UserPrincipal principal = new UserPrincipal(
-                account.getId(), account.getUsername(), account.getEmail(),
-                account.getPassword(), account.getStatus(),
-                roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList())
-        );
+        UserPrincipal principal = customUserDetailsService.buildPrincipal(account);
 
         String accessToken = jwtTokenProvider.generateAccessToken(principal);
         String refreshToken = jwtTokenProvider.generateRefreshToken();
@@ -289,12 +284,7 @@ public class AuthServiceImpl implements AuthService {
         Account account = storedToken.getAccount();
         validateAccountStatus(account);
 
-        List<String> roles = loadActiveRoleCodes(account.getId());
-        UserPrincipal principal = new UserPrincipal(
-                account.getId(), account.getUsername(), account.getEmail(),
-                account.getPassword(), account.getStatus(),
-                roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList())
-        );
+        UserPrincipal principal = customUserDetailsService.buildPrincipal(account);
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(principal);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken();
@@ -375,17 +365,6 @@ public class AuthServiceImpl implements AuthService {
         if (!Constants.STATUS_ACTIVE.equals(status)) {
             throw new BaseException(ErrorCode.AUTH_006, "Account is inactive");
         }
-    }
-
-    /**
-     * Loads active (non-expired) role codes assigned to the account.
-     */
-    private List<String> loadActiveRoleCodes(String accountId) {
-        return assignmentRepository.findActiveRoleCodesByAccountId(accountId, LocalDateTime.now())
-                .stream()
-                .map(code -> "ROLE_" + code)
-                .distinct()
-                .toList();
     }
 
     /**

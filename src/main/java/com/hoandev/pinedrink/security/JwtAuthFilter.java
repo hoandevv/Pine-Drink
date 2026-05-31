@@ -1,11 +1,15 @@
 package com.hoandev.pinedrink.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -14,6 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Filters incoming requests to extract and validate JWT tokens
@@ -25,11 +30,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final ObjectMapper objectMapper;
 
     public JwtAuthFilter(JwtTokenProvider jwtTokenProvider,
-                         CustomUserDetailsService customUserDetailsService) {
+                         CustomUserDetailsService customUserDetailsService,
+                         ObjectMapper objectMapper) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.customUserDetailsService = customUserDetailsService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -58,10 +66,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         log.debug("Reset token validated for userId: {}", userId);
                         userPrincipal = (UserPrincipal) customUserDetailsService.loadUserById(userId);
                     } else {
-                        // Regular access token: has username claim
-                        String username = claims.get("username", String.class);
-                        log.debug("Access token validated for username: {}", username);
-                        userPrincipal = (UserPrincipal) customUserDetailsService.loadUserByUsername(username);
+                        // Regular access token: use accountId from subject and roles from claims.
+                        String accountId = claims.getSubject();
+                        @SuppressWarnings("unchecked")
+                        List<String> roleAuthorities = claims.get("roles", List.class);
+
+                        if (roleAuthorities == null || roleAuthorities.isEmpty()) {
+                            throw new IllegalStateException("Access token does not contain roles claim");
+                        }
+
+                        log.debug("Access token validated for accountId: {}", accountId);
+                        userPrincipal = customUserDetailsService.buildPrincipal(
+                                customUserDetailsService.loadAccountById(accountId),
+                                roleAuthorities
+                        );
+                    }
+
+                    if (!userPrincipal.isEnabled()) {
+                        log.warn("Rejected token for disabled account: accountId={}, status={}",
+                                userPrincipal.getId(), userPrincipal.getStatus());
+                        writeAuthError(response, ErrorCode.AUTH_006, HttpServletResponse.SC_FORBIDDEN);
+                        return;
                     }
 
                     UsernamePasswordAuthenticationToken authentication =
@@ -80,6 +105,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void writeAuthError(HttpServletResponse response, ErrorCode errorCode, int status) throws IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(
+                BaseResponse.error(errorCode.getCode(), errorCode.getMessage())
+        ));
     }
 
     /**

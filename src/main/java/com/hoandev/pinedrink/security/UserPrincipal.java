@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class UserPrincipal implements UserDetails {
@@ -40,6 +41,22 @@ public class UserPrincipal implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
+    }
+
+    public List<String> getRoleAuthorities() {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getPermissionAuthorities() {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("PERM_"))
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -33,7 +33,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<AccountListItemResponse>>> searchAccounts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
@@ -46,14 +46,14 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_VIEW')")
     public ResponseEntity<BaseResponse<AccountDetailResponse>> getAccountDetail(@PathVariable String id) {
         log.info("Getting account detail: id={}", id);
         return ResponseEntity.ok(BaseResponse.success(accountService.getAccountDetail(id), "Account retrieved successfully"));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_CREATE')")
     public ResponseEntity<BaseResponse<AccountDetailResponse>> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         log.info("Creating account: username={}", request.getUsername());
         AccountDetailResponse response = accountService.createAccount(request);
@@ -62,7 +62,7 @@ public class AccountController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_UPDATE')")
     public ResponseEntity<BaseResponse<AccountDetailResponse>> updateAccount(
             @PathVariable String id,
             @Valid @RequestBody UpdateAccountRequest request) {
@@ -71,7 +71,7 @@ public class AccountController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_CHANGE_STATUS')")
     public ResponseEntity<BaseResponse<AccountDetailResponse>> updateAccountStatus(
             @PathVariable String id,
             @Valid @RequestBody UpdateAccountStatusRequest request) {
@@ -80,7 +80,7 @@ public class AccountController {
     }
 
     @PostMapping("/{id}/reset-password")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_RESET_PASSWORD')")
     public ResponseEntity<BaseResponse<Void>> adminResetPassword(
             @PathVariable String id,
             @Valid @RequestBody AdminResetPasswordRequest request) {
@@ -90,14 +90,14 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/roles")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_ROLE_VIEW')")
     public ResponseEntity<BaseResponse<List<AccountRoleAssignmentResponse>>> getAccountRoles(@PathVariable String id) {
         log.info("Getting account roles: id={}", id);
         return ResponseEntity.ok(BaseResponse.success(accountService.getAccountRoles(id), "Account roles retrieved successfully"));
     }
 
     @PostMapping("/{id}/roles")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_ROLE_ASSIGN')")
     public ResponseEntity<BaseResponse<List<AccountRoleAssignmentResponse>>> assignRole(
             @PathVariable String id,
             @Valid @RequestBody AssignRoleRequest request) {
@@ -107,7 +107,7 @@ public class AccountController {
     }
 
     @DeleteMapping("/{id}/roles/{assignmentId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ACCOUNT_ROLE_REVOKE')")
     public ResponseEntity<BaseResponse<Void>> revokeRole(@PathVariable String id, @PathVariable String assignmentId) {
         log.info("Revoking role assignment: accountId={}, assignmentId={}", id, assignmentId);
         accountService.revokeRole(id, assignmentId);

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for managing branches.
- * Requires ADMIN or MANAGER role for most operations.
+ * Requires branch permissions for back-office operations.
  */
 @RestController
 @RequestMapping("/api/v1/branches")
@@ -36,7 +36,7 @@ public class BranchController {
      * @return the created branch
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_CREATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> create(@Valid @RequestBody CreateBranchRequest request) {
         log.info("Creating branch for brandId={}", request.getBrandId());
         BranchResponse response = branchService.create(request);
@@ -52,7 +52,7 @@ public class BranchController {
      * @return the updated branch
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateBranchRequest request) {
@@ -68,7 +68,7 @@ public class BranchController {
      * @return success response
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_DELETE')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String id) {
         log.info("Deleting branch: id={}", id);
         branchService.delete(id);
@@ -82,6 +82,7 @@ public class BranchController {
      * @return the branch
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchResponse>> getById(@PathVariable String id) {
         log.info("Getting branch: id={}", id);
         BranchResponse response = branchService.getById(id);
@@ -95,6 +96,7 @@ public class BranchController {
      * @return list of branches
      */
     @GetMapping("/brand/{brandId}")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllByBrandId(
             @PathVariable String brandId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -110,6 +112,7 @@ public class BranchController {
      * @return list of active branches
      */
     @GetMapping("/brand/{brandId}/active")
+    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActiveByBrandId(
             @PathVariable String brandId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

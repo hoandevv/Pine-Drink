@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
+import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.utils.Constants;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,15 @@ import java.util.Set;
 public class AccessScopeServiceImpl implements AccessScopeService {
 
     private final AccountRoleAssignmentRepository assignmentRepository;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AccessScopeContext resolveCurrentScope() {
+        return resolveAccessScope();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -56,6 +66,66 @@ public class AccessScopeServiceImpl implements AccessScopeService {
         assertCanAccessBranch(branchId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCanAccessAccount(String targetAccountId) {
+        AccessScopeContext accessScope = resolveAccessScope();
+        if (accessScope.fullAccess()) {
+            return;
+        }
+        if (hasSharedBranchScope(targetAccountId, accessScope.branchIds())) {
+            return;
+        }
+        throw new BaseException(ErrorCode.AUTH_007);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCanAccessScope(Scope scope) {
+        AccessScopeContext accessScope = resolveAccessScope();
+        if (accessScope.fullAccess()) {
+            return;
+        }
+        if (scope.getBranch() == null || !accessScope.branchIds().contains(scope.getBranch().getId())) {
+            throw new BaseException(ErrorCode.AUTH_007);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCanManageTargetScope(String scopeType, String branchId) {
+        AccessScopeContext accessScope = resolveAccessScope();
+        if (accessScope.fullAccess()) {
+            return;
+        }
+        if (!Constants.SCOPE_BRANCH.equals(normalizeScopeType(scopeType))) {
+            throw new BaseException(ErrorCode.AUTH_007);
+        }
+        String normalizedBranchId = normalizeNullable(branchId);
+        if (normalizedBranchId == null || !accessScope.branchIds().contains(normalizedBranchId)) {
+            throw new BaseException(ErrorCode.AUTH_007);
+        }
+    }
+
+    /**
+     * Checks whether a target account has at least one active BRANCH scope shared with the caller.
+     *
+     * @param targetAccountId account being accessed
+     * @param allowedBranchIds branch IDs granted to the current caller
+     * @return true when target account belongs to one allowed branch
+     */
+    private boolean hasSharedBranchScope(String targetAccountId, Set<String> allowedBranchIds) {
+        if (allowedBranchIds.isEmpty()) {
+            return false;
+        }
+        return assignmentRepository.findActiveAssignmentsByAccountId(targetAccountId, LocalDateTime.now()).stream()
+                .map(AccountRoleAssignment::getScope)
+                .filter(scope -> Constants.SCOPE_BRANCH.equals(scope.getScopeType()))
+                .filter(scope -> scope.getBranch() != null)
+                .map(scope -> scope.getBranch().getId())
+                .anyMatch(allowedBranchIds::contains);
+    }
+
     private AccessScopeContext resolveAccessScope() {
         UserPrincipal principal = getCurrentPrincipal();
         List<AccountRoleAssignment> assignments = assignmentRepository.findActiveAssignmentsByAccountId(
@@ -86,6 +156,23 @@ public class AccessScopeServiceImpl implements AccessScopeService {
         return principal;
     }
 
-    private record AccessScopeContext(boolean fullAccess, Set<String> branchIds) {
+    private String normalizeScopeType(String scopeType) {
+        String normalized = normalizeNullable(scopeType);
+        if (normalized == null) {
+            return Constants.SCOPE_SYSTEM;
+        }
+        String upper = normalized.toUpperCase();
+        if (!Constants.SCOPE_SYSTEM.equals(upper) && !Constants.SCOPE_BRANCH.equals(upper)) {
+            throw new BaseException(ErrorCode.COM_004, "Unsupported scope type: " + scopeType);
+        }
+        return upper;
+    }
+
+    private String normalizeNullable(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

@@ -27,7 +27,9 @@
     import com.hoandev.pinedrink.repository.ScopeRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.AccountService;
+import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.PermissionCacheService;
+import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.utils.Constants;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
@@ -44,7 +46,6 @@ import com.hoandev.pinedrink.utils.Constants;
     import jakarta.persistence.criteria.Subquery;
     import java.time.LocalDateTime;
     import java.util.ArrayList;
-    import java.util.HashSet;
     import java.util.List;
     import java.util.Locale;
     import java.util.Map;
@@ -66,6 +67,7 @@ import com.hoandev.pinedrink.utils.Constants;
         private final PasswordEncoder passwordEncoder;
         private final AccountManagementMapper accountManagementMapper;
         private final PermissionCacheService permissionCacheService;
+        private final AccessScopeService accessScopeService;
     
         @Override
         @Transactional(readOnly = true)
@@ -73,7 +75,7 @@ import com.hoandev.pinedrink.utils.Constants;
                                                                     String status,
                                                                     String roleCode,
                                                                     Pageable pageable) {
-            AccessScopeContext accessScope = resolveAccessScope();
+            AccessScopeContext accessScope = accessScopeService.resolveCurrentScope();
             Specification<Account> specification = buildSearchSpecification(keyword, status, roleCode, accessScope);
             Page<Account> page = accountRepository.findAll(specification, pageable);
     
@@ -92,14 +94,15 @@ import com.hoandev.pinedrink.utils.Constants;
         @Transactional(readOnly = true)
         public AccountDetailResponse getAccountDetail(String id) {
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
+            accessScopeService.assertCanAccessAccount(account.getId());
             return buildAccountDetail(account);
         }
     
         @Override
         @Transactional
         public AccountDetailResponse createAccount(CreateAccountRequest request) {
-            assertCanManageTargetScope(request.getScopeType(), null, request.getScopeBranchId(), null);
+            validateRoleScopePolicy(request.getRoleCode(), request.getScopeType(), request.getScopeBranchId());
+            accessScopeService.assertCanManageTargetScope(request.getScopeType(), request.getScopeBranchId());
     
             validateUniqueConstraints(
                     normalizeUsername(request.getUsername()),
@@ -128,7 +131,7 @@ import com.hoandev.pinedrink.utils.Constants;
         @Transactional
         public AccountDetailResponse updateAccount(String id, UpdateAccountRequest request) {
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
+            accessScopeService.assertCanAccessAccount(account.getId());
     
             String email = normalizeEmail(request.getEmail());
             String phone = normalizeNullable(request.getPhone());
@@ -168,7 +171,7 @@ import com.hoandev.pinedrink.utils.Constants;
             }
     
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
+            accessScopeService.assertCanAccessAccount(account.getId());
             account.setStatus(normalizeStatus(request.getStatus()));
             accountRepository.save(account);
     
@@ -184,7 +187,7 @@ import com.hoandev.pinedrink.utils.Constants;
         @Transactional
         public void adminResetPassword(String id, AdminResetPasswordRequest request) {
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
+            accessScopeService.assertCanAccessAccount(account.getId());
             account.setPassword(passwordEncoder.encode(request.getNewPassword()));
             accountRepository.save(account);
             refreshTokenRepository.deleteByAccountId(account.getId());
@@ -195,7 +198,7 @@ import com.hoandev.pinedrink.utils.Constants;
         @Transactional(readOnly = true)
         public List<AccountRoleAssignmentResponse> getAccountRoles(String id) {
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
+            accessScopeService.assertCanAccessAccount(account.getId());
             return assignmentRepository.findDetailedByAccountId(id).stream()
                     .map(accountManagementMapper::toRoleAssignmentResponse)
                     .toList();
@@ -205,8 +208,9 @@ import com.hoandev.pinedrink.utils.Constants;
         @Transactional
         public List<AccountRoleAssignmentResponse> assignRole(String id, AssignRoleRequest request) {
             Account account = getAccountOrThrow(id);
-            assertCanAccessAccount(account);
-            assertCanManageTargetScope(request.getScopeType(), null, request.getBranchId(), null);
+            accessScopeService.assertCanAccessAccount(account.getId());
+            validateRoleScopePolicy(request.getRoleCode(), request.getScopeType(), request.getBranchId());
+            accessScopeService.assertCanManageTargetScope(request.getScopeType(), request.getBranchId());
             createAssignment(account, request.getRoleCode(), request.getScopeType(), request.getBranchId(), request.getExpiresAt());
             permissionCacheService.invalidateUserCache(account.getId());
             log.info("Role assigned by admin: accountId={}, roleCode={}", id, request.getRoleCode());
@@ -228,8 +232,8 @@ import com.hoandev.pinedrink.utils.Constants;
                 throw new BaseException(ErrorCode.COM_004, "Role assignment does not belong to the specified account");
             }
     
-            assertCanAccessAccount(assignment.getAccount());
-            assertCanAccessScope(assignment.getScope());
+            accessScopeService.assertCanAccessAccount(assignment.getAccount().getId());
+            accessScopeService.assertCanAccessScope(assignment.getScope());
     
         assignment.setStatus(Constants.STATUS_INACTIVE);
         assignmentRepository.save(assignment);
@@ -268,7 +272,37 @@ import com.hoandev.pinedrink.utils.Constants;
             assignment.setExpiresAt(expiresAt);
             assignmentRepository.save(assignment);
         }
-    
+
+        /**
+         * Enforces role-to-scope rules before creating or assigning staff accounts.
+         * ADMIN and CUSTOMER stay system-scoped; branch-operated roles must target one branch.
+         *
+         * @param rawRoleCode role code from the request
+         * @param rawScopeType scope type from the request
+         * @param rawBranchId branch ID from the request, required for BRANCH scope
+         */
+        private void validateRoleScopePolicy(String rawRoleCode, String rawScopeType, String rawBranchId) {
+            String roleCode = normalizeNullable(rawRoleCode);
+            if (roleCode == null) {
+                throw new BaseException(ErrorCode.COM_004, "roleCode is required");
+            }
+            roleCode = roleCode.toUpperCase(Locale.ROOT);
+
+            String scopeType = normalizeScopeType(rawScopeType);
+            String branchId = normalizeNullable(rawBranchId);
+
+            if (Constants.ROLE_ADMIN.equals(roleCode) || Constants.ROLE_CUSTOMER.equals(roleCode)) {
+                if (!Constants.SCOPE_SYSTEM.equals(scopeType) || branchId != null) {
+                    throw new BaseException(ErrorCode.COM_004, roleCode + " must use SYSTEM scope without branchId");
+                }
+                return;
+            }
+
+            if (!Constants.SCOPE_BRANCH.equals(scopeType) || branchId == null) {
+                throw new BaseException(ErrorCode.COM_004, roleCode + " must use BRANCH scope with branchId");
+            }
+        }
+     
         private Scope resolveOrCreateScope(String rawScopeType, String rawBranchId) {
             String scopeType = normalizeScopeType(rawScopeType);
             String branchId = normalizeNullable(rawBranchId);
@@ -367,7 +401,26 @@ import com.hoandev.pinedrink.utils.Constants;
                 }
     
                 if (!accessScope.fullAccess()) {
-                    predicates.add(cb.disjunction());
+                    if (accessScope.branchIds().isEmpty()) {
+                        predicates.add(cb.disjunction());
+                    } else {
+                        Subquery<String> branchScopeSubquery = query.subquery(String.class);
+                        var assignmentRoot = branchScopeSubquery.from(AccountRoleAssignment.class);
+                        var scopeJoin = assignmentRoot.join("scope");
+                        var branchJoin = scopeJoin.join("branch");
+                        branchScopeSubquery.select(assignmentRoot.get("account").get("id"));
+                        branchScopeSubquery.where(
+                                cb.equal(assignmentRoot.get("account").get("id"), root.get("id")),
+                                cb.equal(assignmentRoot.get("status"), Constants.STATUS_ACTIVE),
+                                cb.or(
+                                        cb.isNull(assignmentRoot.get("expiresAt")),
+                                        cb.greaterThan(assignmentRoot.get("expiresAt"), LocalDateTime.now())
+                                ),
+                                cb.equal(scopeJoin.get("scopeType"), Constants.SCOPE_BRANCH),
+                                branchJoin.get("id").in(accessScope.branchIds())
+                        );
+                        predicates.add(cb.exists(branchScopeSubquery));
+                    }
                 }
     
                 if (roleCode != null && !roleCode.trim().isEmpty()) {
@@ -404,54 +457,6 @@ import com.hoandev.pinedrink.utils.Constants;
             return accountRepository.findById(id)
                     .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
         }
-    
-        private void assertCanAccessAccount(Account targetAccount) {
-            if (!resolveAccessScope().fullAccess()) {
-                throw new BaseException(ErrorCode.AUTH_007);
-            }
-        }
-
-        private void assertCanManageTargetScope(String scopeType, String ignoredScopeId, String branchId, String ignoredAccountScopeId) {
-            AccessScopeContext accessScope = resolveAccessScope();
-            if (accessScope.fullAccess()) {
-                return;
-            }
-            String normalizedScopeType = normalizeScopeType(scopeType);
-            if (!Constants.SCOPE_BRANCH.equals(normalizedScopeType)) {
-                throw new BaseException(ErrorCode.AUTH_007);
-            }
-            String normalizedBranchId = normalizeNullable(branchId);
-            if (normalizedBranchId == null || !accessScope.branchIds().contains(normalizedBranchId)) {
-                throw new BaseException(ErrorCode.AUTH_007);
-            }
-        }
-
-        private void assertCanAccessScope(Scope scope) {
-            AccessScopeContext accessScope = resolveAccessScope();
-            if (accessScope.fullAccess()) {
-                return;
-            }
-            if (scope.getBranch() == null || !accessScope.branchIds().contains(scope.getBranch().getId())) {
-                throw new BaseException(ErrorCode.AUTH_007);
-            }
-        }
-
-        private AccessScopeContext resolveAccessScope() {
-            UserPrincipal principal = getCurrentPrincipal();
-            List<AccountRoleAssignment> assignments = assignmentRepository.findActiveAssignmentsByAccountId(principal.getId(), LocalDateTime.now());
-            boolean fullAccess = assignments.stream().anyMatch(assignment -> Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType()));
-            if (fullAccess) {
-                return new AccessScopeContext(true, Set.of());
-            }
-            Set<String> branchIds = new HashSet<>();
-            for (AccountRoleAssignment assignment : assignments) {
-                Scope scope = assignment.getScope();
-                if (scope.getBranch() != null && scope.getBranch().getId() != null) {
-                    branchIds.add(scope.getBranch().getId());
-                }
-            }
-            return new AccessScopeContext(false, branchIds);
-        }
 
         private UserPrincipal getCurrentPrincipal() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -460,7 +465,7 @@ import com.hoandev.pinedrink.utils.Constants;
             }
             return principal;
         }
-    
+
         private String normalizeUsername(String username) {
             return username.trim();
         }
@@ -500,8 +505,5 @@ import com.hoandev.pinedrink.utils.Constants;
                 throw new BaseException(ErrorCode.COM_004, "Unsupported scope type: " + scopeType);
             }
             return upper;
-        }
-    
-        private record AccessScopeContext(boolean fullAccess, Set<String> branchIds) {
         }
     }

@@ -56,11 +56,11 @@ Keys/indexes:
 
 Global or branch-specific settings.
 
-Key columns: `branch_id NULL`, generated `scope_key`, `config_key`, `config_value`, `data_type`, `is_runtime_editable`, `status`.
+Key columns: `scope_type`, `branch_id NULL`, `config_key`, `config_value`, `data_type`, `is_runtime_editable`, `status`.
 
 Keys/indexes:
 - FK `branch_id -> ce_branch(id)` cascade
-- `UNIQUE(scope_key, config_key)`
+- `UNIQUE(scope_type, branch_id, config_key)`
 - `INDEX(branch_id)`, `INDEX(config_key)`, `INDEX(status)`
 
 ## Identity And Access
@@ -83,11 +83,11 @@ Supported scope types:
 - `SYSTEM`: all branches
 - `BRANCH`: one branch
 
-Key columns: `scope_type`, `branch_id NULL`, generated `scope_key`, `status`.
+Key columns: `scope_type`, `branch_id NULL`, `status`.
 
 Keys/indexes:
 - FK `branch_id -> ce_branch(id)` cascade
-- `UNIQUE(scope_type, scope_key)`
+- `UNIQUE(scope_type, branch_id)`
 - `INDEX(scope_type, status)`
 - `INDEX(branch_id, status)`
 

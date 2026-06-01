@@ -70,16 +70,17 @@ CREATE TABLE ia_scope (
     id CHAR(36) NOT NULL PRIMARY KEY,
     scope_type VARCHAR(30) NOT NULL,
     branch_id CHAR(36) NULL,
-    scope_key VARCHAR(36) GENERATED ALWAYS AS (COALESCE(branch_id, '__SYSTEM__')) STORED,
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ia_scope_unique (scope_type, scope_key),
-    CONSTRAINT fk_ia_scope_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_ia_scope_unique (scope_type, branch_id),
     INDEX idx_ia_scope_type_status (scope_type, status),
-    INDEX idx_ia_scope_branch_status (branch_id, status)
+    INDEX idx_ia_scope_branch_status (branch_id, status),
+    CONSTRAINT fk_ia_scope_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
+    CHECK (scope_type IN ('SYSTEM', 'BRANCH')),
+    CHECK ((scope_type = 'SYSTEM' AND branch_id IS NULL) OR (scope_type = 'BRANCH' AND branch_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE ia_account_role_assignment (

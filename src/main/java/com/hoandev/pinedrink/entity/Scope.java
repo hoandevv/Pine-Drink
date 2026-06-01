@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "ia_scope", uniqueConstraints = @UniqueConstraint(columnNames = {"scope_type", "scope_key"}))
+@Table(name = "ia_scope", uniqueConstraints = @UniqueConstraint(columnNames = {"scope_type", "branch_id"}))
 @AttributeOverrides({
     @AttributeOverride(name = "updatedAt", column = @Column(name = "updated_at", insertable = false, updatable = false)),
     @AttributeOverride(name = "updatedBy", column = @Column(name = "updated_by", insertable = false, updatable = false))

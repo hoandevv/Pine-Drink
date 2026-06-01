@@ -62,8 +62,8 @@ CREATE TABLE ce_pickup_time_slot (
 
 CREATE TABLE ce_setting (
     id CHAR(36) NOT NULL PRIMARY KEY,
+    scope_type VARCHAR(30) NOT NULL DEFAULT 'SYSTEM',
     branch_id CHAR(36) NULL,
-    scope_key VARCHAR(36) GENERATED ALWAYS AS (COALESCE(branch_id, '__GLOBAL__')) STORED,
     config_key VARCHAR(100) NOT NULL,
     config_value VARCHAR(500) NOT NULL,
     data_type VARCHAR(20) NOT NULL,
@@ -74,9 +74,11 @@ CREATE TABLE ce_setting (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ce_setting_scope_key (scope_key, config_key),
-    CONSTRAINT fk_ce_setting_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_ce_setting_scope_key (scope_type, branch_id, config_key),
     INDEX idx_ce_setting_branch (branch_id),
+    CONSTRAINT fk_ce_setting_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
     INDEX idx_ce_setting_key (config_key),
-    INDEX idx_ce_setting_status (status)
+    INDEX idx_ce_setting_status (status),
+    CHECK (scope_type IN ('SYSTEM', 'BRANCH')),
+    CHECK ((scope_type = 'SYSTEM' AND branch_id IS NULL) OR (scope_type = 'BRANCH' AND branch_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

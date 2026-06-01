@@ -191,7 +191,6 @@ public class ProfileServiceImpl implements ProfileService {
 
         return AccountResponse.builder()
                 .id(account.getId())
-                .brandId(account.getBrand() != null ? account.getBrand().getId() : null)
                 .username(account.getUsername())
                 .fullName(account.getFullName())
                 .email(account.getEmail())

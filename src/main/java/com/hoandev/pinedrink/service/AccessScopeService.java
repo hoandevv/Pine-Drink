@@ -1,10 +1,7 @@
 package com.hoandev.pinedrink.service;
 
 public interface AccessScopeService {
-
-    void assertCanAccessBrand(String brandId);
-
-    void assertCanManageBrand(String brandId);
+    void assertSystemAccess();
 
     void assertCanAccessBranch(String branchId);
 

@@ -26,9 +26,6 @@ public class OutboxEvent extends BaseEntity {
     @Column(name = "aggregate_id", nullable = false, columnDefinition = "CHAR(36)")
     private String aggregateId;
 
-    @Column(name = "brand_id", columnDefinition = "CHAR(36)")
-    private String brandId;
-
     @Column(name = "branch_id", columnDefinition = "CHAR(36)")
     private String branchId;
 

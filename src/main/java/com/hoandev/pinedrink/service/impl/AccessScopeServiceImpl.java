@@ -1,12 +1,10 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.AccountRoleAssignment;
-import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
-import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.utils.Constants;
@@ -26,23 +24,11 @@ import java.util.Set;
 public class AccessScopeServiceImpl implements AccessScopeService {
 
     private final AccountRoleAssignmentRepository assignmentRepository;
-    private final BranchRepository branchRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public void assertCanAccessBrand(String brandId) {
-        AccessScopeContext scope = resolveAccessScope();
-        if (scope.fullAccess() || scope.brandIds().contains(brandId)) {
-            return;
-        }
-        throw new BaseException(ErrorCode.AUTH_007);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public void assertCanManageBrand(String brandId) {
-        AccessScopeContext scope = resolveAccessScope();
-        if (scope.fullAccess() || scope.brandIds().contains(brandId)) {
+    public void assertSystemAccess() {
+        if (resolveAccessScope().fullAccess()) {
             return;
         }
         throw new BaseException(ErrorCode.AUTH_007);
@@ -53,12 +39,6 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     public void assertCanAccessBranch(String branchId) {
         AccessScopeContext scope = resolveAccessScope();
         if (scope.fullAccess() || scope.branchIds().contains(branchId)) {
-            return;
-        }
-
-        Branch branch = getBranchOrThrow(branchId);
-        String brandId = branch.getBrand() != null ? branch.getBrand().getId() : null;
-        if (brandId != null && scope.brandIds().contains(brandId)) {
             return;
         }
         throw new BaseException(ErrorCode.AUTH_007);
@@ -73,17 +53,7 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public void assertCanDeleteBranch(String branchId) {
-        AccessScopeContext scope = resolveAccessScope();
-        if (scope.fullAccess()) {
-            return;
-        }
-
-        Branch branch = getBranchOrThrow(branchId);
-        String brandId = branch.getBrand() != null ? branch.getBrand().getId() : null;
-        if (brandId != null && scope.brandIds().contains(brandId)) {
-            return;
-        }
-        throw new BaseException(ErrorCode.AUTH_007);
+        assertCanAccessBranch(branchId);
     }
 
     private AccessScopeContext resolveAccessScope() {
@@ -95,21 +65,17 @@ public class AccessScopeServiceImpl implements AccessScopeService {
                 Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType())
         );
         if (fullAccess) {
-            return new AccessScopeContext(true, Set.of(), Set.of());
+            return new AccessScopeContext(true, Set.of());
         }
 
-        Set<String> brandIds = new HashSet<>();
         Set<String> branchIds = new HashSet<>();
         for (AccountRoleAssignment assignment : assignments) {
             Scope scope = assignment.getScope();
-            if (scope.getBrand() != null && scope.getBrand().getId() != null) {
-                brandIds.add(scope.getBrand().getId());
-            }
             if (scope.getBranch() != null && scope.getBranch().getId() != null) {
                 branchIds.add(scope.getBranch().getId());
             }
         }
-        return new AccessScopeContext(false, brandIds, branchIds);
+        return new AccessScopeContext(false, branchIds);
     }
 
     private UserPrincipal getCurrentPrincipal() {
@@ -120,11 +86,6 @@ public class AccessScopeServiceImpl implements AccessScopeService {
         return principal;
     }
 
-    private Branch getBranchOrThrow(String branchId) {
-        return branchRepository.findById(branchId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-    }
-
-    private record AccessScopeContext(boolean fullAccess, Set<String> brandIds, Set<String> branchIds) {
+    private record AccessScopeContext(boolean fullAccess, Set<String> branchIds) {
     }
 }

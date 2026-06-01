@@ -2,7 +2,6 @@
 
 CREATE TABLE vc_voucher (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     code VARCHAR(80) NOT NULL,
     name VARCHAR(150) NOT NULL,
     description VARCHAR(500) NULL,
@@ -20,9 +19,8 @@ CREATE TABLE vc_voucher (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_vc_voucher_brand_code (brand_id, code),
-    CONSTRAINT fk_vc_voucher_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
-    INDEX idx_vc_voucher_brand_status_time (brand_id, status, start_at, end_at),
+    UNIQUE KEY uk_vc_voucher_code (code),
+    INDEX idx_vc_voucher_status_time (status, start_at, end_at),
     CHECK (discount_value >= 0),
     CHECK (max_discount_amount IS NULL OR max_discount_amount >= 0),
     CHECK (min_order_amount >= 0),

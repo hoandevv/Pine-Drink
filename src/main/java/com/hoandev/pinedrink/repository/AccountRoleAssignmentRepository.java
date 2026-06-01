@@ -49,7 +49,6 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
             from AccountRoleAssignment a
             join fetch a.role r
             join fetch a.scope s
-            left join fetch s.brand b
             left join fetch s.branch br
             where a.account.id = :accountId
               and a.status = 'ACTIVE'
@@ -67,7 +66,6 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
             join fetch a.account acc
             join fetch a.role r
             join fetch a.scope s
-            left join fetch s.brand b
             left join fetch s.branch br
             where acc.id in :accountIds
               and a.status = 'ACTIVE'
@@ -84,7 +82,6 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
             from AccountRoleAssignment a
             join fetch a.role r
             join fetch a.scope s
-            left join fetch s.brand b
             left join fetch s.branch br
             where a.account.id = :accountId
             order by a.status desc, r.code asc, a.createdAt asc
@@ -99,7 +96,6 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
             from AccountRoleAssignment a
             join fetch a.role r
             join fetch a.scope s
-            left join fetch s.brand b
             left join fetch s.branch br
             where a.id = :assignmentId
             """)

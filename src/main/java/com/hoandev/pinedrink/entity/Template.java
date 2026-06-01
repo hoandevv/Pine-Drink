@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "nt_template", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "template_code", "channel"}))
+@Table(name = "nt_template", uniqueConstraints = @UniqueConstraint(columnNames = {"template_code", "channel"}))
 public class Template extends BaseEntity {
 
     @Column(name = "template_code", nullable = false)
@@ -25,7 +25,4 @@ public class Template extends BaseEntity {
     @Column(columnDefinition = "json")
     private String variables;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id")
-    private Brand brand;
 }

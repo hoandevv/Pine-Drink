@@ -29,8 +29,6 @@ public class ProductResponse {
     private boolean bestSeller;
     private String availableIceLevels;
     private String availableSugarLevels;
-    private String brandId;
-    private String brandName;
     private String categoryId;
     private String categoryName;
     private String status;

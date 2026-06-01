@@ -43,7 +43,6 @@ public class CreateAccountRequest {
 
     private String avatarUrl;
 
-    private String brandId;
 
     @Builder.Default
     private String status = "ACTIVE";
@@ -54,7 +53,6 @@ public class CreateAccountRequest {
     @Builder.Default
     private String scopeType = "SYSTEM";
 
-    private String scopeBrandId;
 
     private String scopeBranchId;
 

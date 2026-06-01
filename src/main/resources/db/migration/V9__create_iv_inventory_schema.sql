@@ -3,7 +3,6 @@
 
 CREATE TABLE iv_ingredient (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(150) NOT NULL,
     unit VARCHAR(30) NOT NULL,
@@ -13,9 +12,8 @@ CREATE TABLE iv_ingredient (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_iv_ingredient_brand_code (brand_id, code),
-    CONSTRAINT fk_iv_ingredient_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
-    INDEX idx_iv_ingredient_brand_status (brand_id, status),
+    UNIQUE KEY uk_iv_ingredient_code (code),
+    INDEX idx_iv_ingredient_status (status),
     CHECK (min_stock_quantity >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

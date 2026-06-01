@@ -48,16 +48,16 @@ public enum ErrorCode {
     CUSTOMER_005("CUSTOMER_005", "Customer already has a default address"),
 
     BRANCH_001("BRANCH_001", "Branch not found"),
-    BRANCH_002("BRANCH_002", "Branch code already exists for this brand"),
-    BRANCH_003("BRANCH_003", "Brand not found"),
+    BRANCH_002("BRANCH_002", "Branch code already exists"),
+    BRANCH_003("BRANCH_003", "Branch scope not found"),
     BRANCH_004("BRANCH_004", "Branch is already inactive"),
 
     PRODUCT_001("PRODUCT_001", "Product not found"),
-    PRODUCT_002("PRODUCT_002", "Product code already exists for this brand"),
-    PRODUCT_003("PRODUCT_003", "Brand not found"),
+    PRODUCT_002("PRODUCT_002", "Product code already exists"),
+    PRODUCT_003("PRODUCT_003", "Product scope not found"),
     PRODUCT_004("PRODUCT_004", "Category not found"),
     PRODUCT_005("PRODUCT_005", "Product is already inactive"),
-    PRODUCT_006("PRODUCT_006", "Category does not belong to the specified brand");
+    PRODUCT_006("PRODUCT_006", "Category does not match product scope");
 
     private final String code;
     private final String message;

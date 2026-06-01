@@ -10,7 +10,7 @@ Examples:
 
 - Admin tables: products, orders, branches, customers, vouchers
 - History/log tables: audit logs, callback logs, outbox events, stock movements
-- Relation lists: branches by brand, orders by customer, products by category
+- Relation lists: orders by customer, products by category, stock by branch
 - Search/filter/sort endpoints
 - Mobile/web list screens and infinite scroll screens
 
@@ -65,9 +65,9 @@ Default values:
 Repository list methods should return `Page<Entity>` and accept `Pageable`.
 
 ```java
-Page<Branch> findByBrandId(String brandId, Pageable pageable);
+Page<Branch> findByStatus(String status, Pageable pageable);
 
-Page<Branch> findByBrandIdAndStatus(String brandId, String status, Pageable pageable);
+Page<Product> findByCategoryId(String categoryId, Pageable pageable);
 ```
 
 Avoid returning `List<Entity>` for DB list endpoints unless data is fixed and small.
@@ -77,7 +77,7 @@ Avoid returning `List<Entity>` for DB list endpoints unless data is fixed and sm
 Service maps entity page content to DTO, then uses `PageResponse.from(page, content)`.
 
 ```java
-Page<Branch> branches = branchRepository.findByBrandId(brandId, pageable);
+Page<Branch> branches = branchRepository.findAll(pageable);
 
 List<BranchResponse> content = branches.getContent()
         .stream()
@@ -106,11 +106,10 @@ return PageResponse.from(branches, content);
 Use `Pageable` directly instead of manual `page`, `size`, `sort` parsing.
 
 ```java
-@GetMapping("/brand/{brandId}")
-public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllByBrandId(
-        @PathVariable String brandId,
+@GetMapping
+public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAll(
         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-    PageResponse<BranchResponse> response = branchService.getAllByBrandId(brandId, pageable);
+    PageResponse<BranchResponse> response = branchService.getAll(pageable);
     return ResponseEntity.ok(BaseResponse.success(response, "Branches retrieved successfully"));
 }
 ```

@@ -1,8 +1,8 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
-import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
@@ -18,11 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-
-/**
- * REST controller for managing branches.
- * Requires branch permissions for back-office operations.
- */
 @RestController
 @RequestMapping("/api/v1/branches")
 @RequiredArgsConstructor
@@ -30,28 +25,15 @@ import org.springframework.web.bind.annotation.*;
 public class BranchController {
     private final BranchService branchService;
 
-    /**
-     * Creates a new branch.
-     *
-     * @param request the create branch request
-     * @return the created branch
-     */
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_BRANCH_CREATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> create(@Valid @RequestBody CreateBranchRequest request) {
-        log.info("Creating branch for brandId={}", request.getBrandId());
+        log.info("Creating branch");
         BranchResponse response = branchService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(response, "Branch created successfully"));
     }
 
-    /**
-     * Updates an existing branch.
-     *
-     * @param id the branch ID
-     * @param request the update branch request
-     * @return the updated branch
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> update(
@@ -62,13 +44,6 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch updated successfully"));
     }
 
-    /**
-     * Updates branch status.
-     *
-     * @param id the branch ID
-     * @param request the status update request
-     * @return the updated branch
-     */
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchResponse>> updateStatus(
@@ -79,12 +54,6 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch status updated successfully"));
     }
 
-    /**
-     * Deletes a branch (soft delete).
-     *
-     * @param id the branch ID
-     * @return success response
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_DELETE')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String id) {
@@ -93,12 +62,6 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(null, "Branch deleted successfully"));
     }
 
-    /**
-     * Retrieves a branch by ID.
-     *
-     * @param id the branch ID
-     * @return the branch
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchResponse>> getById(@PathVariable String id) {
@@ -107,35 +70,21 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch retrieved successfully"));
     }
 
-    /**
-     * Retrieves all branches for a specific brand.
-     *
-     * @param brandId the brand ID
-     * @return list of branches
-     */
-    @GetMapping("/brand/{brandId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
-    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllByBrandId(
-            @PathVariable String brandId,
+    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting all branches for brand: brandId={}", brandId);
-        PageResponse<BranchResponse> responses = branchService.getAllByBrandId(brandId, pageable);
-        return ResponseEntity.ok(BaseResponse.success(responses, "Branches retrieved successfully"));
+        log.info("Getting branches");
+        PageResponse<BranchResponse> response = branchService.getAll(pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Branches retrieved successfully"));
     }
 
-    /**
-     * Retrieves all active branches for a specific brand.
-     *
-     * @param brandId the brand ID
-     * @return list of active branches
-     */
-    @GetMapping("/brand/{brandId}/active")
+    @GetMapping("/active")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
-    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActiveByBrandId(
-            @PathVariable String brandId,
+    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActive(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting all active branches for brand: brandId={}", brandId);
-        PageResponse<BranchResponse> responses = branchService.getAllActiveByBrandId(brandId, pageable);
-        return ResponseEntity.ok(BaseResponse.success(responses, "Active branches retrieved successfully"));
+        log.info("Getting active branches");
+        PageResponse<BranchResponse> response = branchService.getAllActive(pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Active branches retrieved successfully"));
     }
 }

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "vc_voucher", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
+@Table(name = "vc_voucher", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Voucher extends BaseEntity {
 
     @Column(nullable = false)
@@ -48,7 +48,4 @@ public class Voucher extends BaseEntity {
     @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
 }

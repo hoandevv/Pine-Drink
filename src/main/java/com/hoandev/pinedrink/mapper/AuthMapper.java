@@ -32,7 +32,6 @@ public class AuthMapper {
 
         AccountResponse response = new AccountResponse();
         response.setId(account.getId());
-        response.setBrandId(account.getBrand() != null ? account.getBrand().getId() : null);
         response.setUsername(account.getUsername());
         response.setFullName(account.getFullName());
         response.setEmail(account.getEmail());

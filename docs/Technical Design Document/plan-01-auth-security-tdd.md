@@ -20,12 +20,12 @@
 
 ## 2. Overview
 
-Pine Drink là hệ thống order đồ uống online multi-brand/multi-branch. Tài liệu này mô tả chi tiết giải pháp xác thực (authentication) và phân quyền (authorization) cho toàn bộ hệ thống, bao gồm JWT token-based authentication, role-based access control (RBAC), rate limiting, và xử lý exception tập trung.
+Pine Drink là hệ thống order đồ uống online no-brand, branch-first. Tài liệu này mô tả chi tiết giải pháp xác thực (authentication) và phân quyền (authorization) cho toàn bộ hệ thống, bao gồm JWT token-based authentication, role-based access control (RBAC), rate limiting, và xử lý exception tập trung.
 
 Hệ thống hỗ trợ 3 nhóm người dùng chính:
 - **Customer**: Khách hàng đặt đồ uống qua web
 - **Staff/Nhân viên**: Xử lý đơn hàng tại kitchen screen
-- **Admin**: Quản trị hệ thống, brand, chi nhánh
+- **Admin**: Quản trị hệ thống và chi nhánh
 
 ---
 
@@ -53,7 +53,7 @@ Hệ thống hỗ trợ 3 nhóm người dùng chính:
 - OAuth2 / Social login (Google, Facebook)
 - SMS OTP / 2-factor authentication
 - Single Sign-On (SSO)
-- Phân quyền chi tiết cấp brand/branch (sẽ làm ở phase sau)
+- Phân quyền chi tiết cấp system/branch
 
 ---
 
@@ -316,8 +316,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/refresh`
-- `GET /api/v1/public/**` (menu, brand, branch info)
-- `GET /api/v1/brands/**` (công khai)
+- `GET /api/v1/public/**` (menu, branch info)
+- `GET /api/v1/branches/active` (công khai nếu frontend cần danh sách chi nhánh)
 - `GET /api/v1/branches/**` (công khai)
 - `GET /api/v1/products/**` (công khai)
 - `GET /api/v1/categories/**` (công khai)

@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface IngredientRepository extends JpaRepository<Ingredient, String> {
-    List<Ingredient> findByBrandIdAndStatus(String brandId, String status);
+    List<Ingredient> findByStatus(String status);
 }

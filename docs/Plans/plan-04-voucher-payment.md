@@ -1,7 +1,7 @@
 # Plan 4 — Voucher & Payment
 
 ## Mục tiêu
-Xây dựng voucher management (CRUD brand scope, tính discount) và payment integration cho 3 phương thức: Cash, MOMO, VNPAY. Kèm theo RabbitMQ config cho async payment callbacks.
+Xây dựng voucher management (global voucher, optional branch scope, tính discount) và payment integration cho các phương thức: CASH, COD, VNPAY, MOMO, BANK_TRANSFER. Kèm theo RabbitMQ config cho async payment callbacks.
 
 ## Files cần tạo/sửa
 
@@ -25,7 +25,7 @@ Xây dựng voucher management (CRUD brand scope, tính discount) và payment in
 
 ### Voucher Management
 
-#### Voucher CRUD (Brand scope)
+#### Voucher CRUD (Global/Branch scope)
 
 ```java
 @RestController
@@ -317,7 +317,7 @@ public class RabbitMQConfig {
 
 ## Checklist
 
-- [ ] Tạo VoucherController: CRUD voucher với brand scope
+- [ ] Tạo VoucherController: CRUD voucher global, optional branch limitation
 - [ ] Gán voucher cho branch qua VoucherBranch entity
 - [ ] Validate voucher: date range, usage limit, min_order, max_discount
 - [ ] Tính discount: PERCENTAGE (capped) hoặc FIXED_AMOUNT

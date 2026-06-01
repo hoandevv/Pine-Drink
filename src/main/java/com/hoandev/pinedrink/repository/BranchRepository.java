@@ -6,12 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface BranchRepository extends JpaRepository<Branch, String> {
-    Page<Branch> findByBrandId(String brandId, Pageable pageable);
-    Page<Branch> findByBrandIdAndStatus(String brandId, String status, Pageable pageable);
-    Optional<Branch> findByCode(String code);
+    Page<Branch> findByStatus(String status, Pageable pageable);
+
     boolean existsByCode(String code);
 }

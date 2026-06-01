@@ -3,7 +3,6 @@
     import com.hoandev.pinedrink.entity.Account;
     import com.hoandev.pinedrink.entity.AccountRoleAssignment;
     import com.hoandev.pinedrink.entity.Branch;
-    import com.hoandev.pinedrink.entity.Brand;
     import com.hoandev.pinedrink.entity.CustomerProfile;
     import com.hoandev.pinedrink.entity.Role;
     import com.hoandev.pinedrink.entity.Scope;
@@ -22,7 +21,6 @@
     import com.hoandev.pinedrink.repository.AccountRepository;
     import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
     import com.hoandev.pinedrink.repository.BranchRepository;
-    import com.hoandev.pinedrink.repository.BrandRepository;
     import com.hoandev.pinedrink.repository.CustomerProfileRepository;
     import com.hoandev.pinedrink.repository.RefreshTokenRepository;
     import com.hoandev.pinedrink.repository.RoleRepository;
@@ -62,7 +60,6 @@ import com.hoandev.pinedrink.utils.Constants;
         private final AccountRoleAssignmentRepository assignmentRepository;
         private final RoleRepository roleRepository;
         private final ScopeRepository scopeRepository;
-        private final BrandRepository brandRepository;
         private final BranchRepository branchRepository;
         private final CustomerProfileRepository customerProfileRepository;
         private final RefreshTokenRepository refreshTokenRepository;
@@ -73,12 +70,11 @@ import com.hoandev.pinedrink.utils.Constants;
         @Override
         @Transactional(readOnly = true)
         public PageResponse<AccountListItemResponse> searchAccounts(String keyword,
-                                                                   String status,
-                                                                   String roleCode,
-                                                                   String brandId,
-                                                                   Pageable pageable) {
+                                                                    String status,
+                                                                    String roleCode,
+                                                                    Pageable pageable) {
             AccessScopeContext accessScope = resolveAccessScope();
-            Specification<Account> specification = buildSearchSpecification(keyword, status, roleCode, brandId, accessScope);
+            Specification<Account> specification = buildSearchSpecification(keyword, status, roleCode, accessScope);
             Page<Account> page = accountRepository.findAll(specification, pageable);
     
             Map<String, List<String>> rolesByAccountId = loadActiveRoles(page.getContent());
@@ -103,7 +99,7 @@ import com.hoandev.pinedrink.utils.Constants;
         @Override
         @Transactional
         public AccountDetailResponse createAccount(CreateAccountRequest request) {
-            assertCanManageTargetScope(request.getScopeType(), request.getScopeBrandId(), request.getScopeBranchId(), request.getBrandId());
+            assertCanManageTargetScope(request.getScopeType(), null, request.getScopeBranchId(), null);
     
             validateUniqueConstraints(
                     normalizeUsername(request.getUsername()),
@@ -120,10 +116,8 @@ import com.hoandev.pinedrink.utils.Constants;
             account.setPhone(normalizeNullable(request.getPhone()));
             account.setAvatarUrl(normalizeNullable(request.getAvatarUrl()));
             account.setStatus(normalizeStatus(request.getStatus()));
-            account.setBrand(resolveAccountBrand(request.getBrandId(), request.getScopeType(), request.getScopeBrandId(), request.getScopeBranchId()));
-    
             Account savedAccount = accountRepository.save(account);
-            createAssignment(savedAccount, request.getRoleCode(), request.getScopeType(), request.getScopeBrandId(), request.getScopeBranchId(), request.getExpiresAt());
+            createAssignment(savedAccount, request.getRoleCode(), request.getScopeType(), request.getScopeBranchId(), request.getExpiresAt());
             permissionCacheService.invalidateUserCache(savedAccount.getId());
 
             log.info("Account created by admin: id={}, username={}", savedAccount.getId(), savedAccount.getUsername());
@@ -158,10 +152,6 @@ import com.hoandev.pinedrink.utils.Constants;
             if (request.getAvatarUrl() != null) {
                 account.setAvatarUrl(request.getAvatarUrl().trim());
             }
-            if (request.getBrandId() != null) {
-                account.setBrand(resolveBrandOrNull(request.getBrandId()));
-            }
-    
             accountRepository.save(account);
             syncCustomerProfile(account);
     
@@ -216,8 +206,8 @@ import com.hoandev.pinedrink.utils.Constants;
         public List<AccountRoleAssignmentResponse> assignRole(String id, AssignRoleRequest request) {
             Account account = getAccountOrThrow(id);
             assertCanAccessAccount(account);
-            assertCanManageTargetScope(request.getScopeType(), request.getBrandId(), request.getBranchId(), null);
-            createAssignment(account, request.getRoleCode(), request.getScopeType(), request.getBrandId(), request.getBranchId(), request.getExpiresAt());
+            assertCanManageTargetScope(request.getScopeType(), null, request.getBranchId(), null);
+            createAssignment(account, request.getRoleCode(), request.getScopeType(), request.getBranchId(), request.getExpiresAt());
             permissionCacheService.invalidateUserCache(account.getId());
             log.info("Role assigned by admin: accountId={}, roleCode={}", id, request.getRoleCode());
             return getAccountRoles(id);
@@ -259,12 +249,11 @@ import com.hoandev.pinedrink.utils.Constants;
         private void createAssignment(Account account,
                                       String roleCode,
                                       String scopeType,
-                                      String brandId,
                                       String branchId,
                                       LocalDateTime expiresAt) {
             Role role = roleRepository.findByCode(roleCode.trim().toUpperCase(Locale.ROOT))
                     .orElseThrow(() -> new BaseException(ErrorCode.ROLE_NOT_FOUND));
-            Scope scope = resolveOrCreateScope(scopeType, brandId, branchId);
+            Scope scope = resolveOrCreateScope(scopeType, branchId);
     
             if (assignmentRepository.existsActiveValidAssignment(account.getId(), role.getId(), scope.getId(), LocalDateTime.now())) {
                 throw new BaseException(ErrorCode.COM_004, "An active assignment with the same role and scope already exists");
@@ -280,33 +269,13 @@ import com.hoandev.pinedrink.utils.Constants;
             assignmentRepository.save(assignment);
         }
     
-        private Scope resolveOrCreateScope(String rawScopeType, String rawBrandId, String rawBranchId) {
+        private Scope resolveOrCreateScope(String rawScopeType, String rawBranchId) {
             String scopeType = normalizeScopeType(rawScopeType);
-            String brandId = normalizeNullable(rawBrandId);
             String branchId = normalizeNullable(rawBranchId);
-    
             if (Constants.SCOPE_SYSTEM.equals(scopeType)) {
-                return scopeRepository.findByScopeTypeAndBrandIdAndBranchId(Constants.SCOPE_SYSTEM, null, null)
+                return scopeRepository.findByScopeTypeAndBranchId(Constants.SCOPE_SYSTEM, null)
                         .orElseThrow(() -> new BaseException(ErrorCode.SCOPE_NOT_FOUND));
             }
-    
-            if (Constants.SCOPE_BRAND.equals(scopeType)) {
-                if (brandId == null) {
-                    throw new BaseException(ErrorCode.COM_004, "brandId is required for BRAND scope");
-                }
-                Brand brand = brandRepository.findById(brandId)
-                        .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
-                return scopeRepository.findByScopeTypeAndBrandId(Constants.SCOPE_BRAND, brandId)
-                        .orElseGet(() -> {
-                            Scope scope = new Scope();
-                            scope.setScopeType(Constants.SCOPE_BRAND);
-                            scope.setBrand(brand);
-                            scope.setBranch(null);
-                            scope.setStatus(Constants.STATUS_ACTIVE);
-                            return scopeRepository.save(scope);
-                        });
-            }
-    
             if (Constants.SCOPE_BRANCH.equals(scopeType)) {
                 if (branchId == null) {
                     throw new BaseException(ErrorCode.COM_004, "branchId is required for BRANCH scope");
@@ -317,16 +286,14 @@ import com.hoandev.pinedrink.utils.Constants;
                         .orElseGet(() -> {
                             Scope scope = new Scope();
                             scope.setScopeType(Constants.SCOPE_BRANCH);
-                            scope.setBrand(branch.getBrand());
                             scope.setBranch(branch);
                             scope.setStatus(Constants.STATUS_ACTIVE);
                             return scopeRepository.save(scope);
                         });
             }
-    
             throw new BaseException(ErrorCode.COM_004, "Unsupported scope type: " + scopeType);
         }
-    
+
         private void validateUniqueConstraints(String username, String email, String phone, String accountId) {
             if (accountId == null) {
                 if (accountRepository.existsByUsername(username)) {
@@ -381,7 +348,6 @@ import com.hoandev.pinedrink.utils.Constants;
         private Specification<Account> buildSearchSpecification(String keyword,
                                                                 String status,
                                                                 String roleCode,
-                                                                String brandId,
                                                                 AccessScopeContext accessScope) {
             return (root, query, cb) -> {
                 List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
@@ -400,17 +366,8 @@ import com.hoandev.pinedrink.utils.Constants;
                     predicates.add(cb.equal(root.get("status"), status.trim().toUpperCase(Locale.ROOT)));
                 }
     
-                String normalizedBrandId = normalizeNullable(brandId);
-                if (normalizedBrandId != null) {
-                    predicates.add(cb.equal(root.join("brand", JoinType.LEFT).get("id"), normalizedBrandId));
-                }
-    
                 if (!accessScope.fullAccess()) {
-                    if (accessScope.brandIds().isEmpty()) {
-                        predicates.add(cb.disjunction());
-                    } else {
-                        predicates.add(root.join("brand", JoinType.LEFT).get("id").in(accessScope.brandIds()));
-                    }
+                    predicates.add(cb.disjunction());
                 }
     
                 if (roleCode != null && !roleCode.trim().isEmpty()) {
@@ -434,33 +391,6 @@ import com.hoandev.pinedrink.utils.Constants;
             };
         }
     
-        private Brand resolveAccountBrand(String accountBrandId, String scopeType, String scopeBrandId, String scopeBranchId) {
-            String normalizedAccountBrandId = normalizeNullable(accountBrandId);
-            if (normalizedAccountBrandId != null) {
-                return resolveBrandOrNull(normalizedAccountBrandId);
-            }
-    
-            String normalizedScopeType = normalizeScopeType(scopeType);
-            if (Constants.SCOPE_BRAND.equals(normalizedScopeType) && normalizeNullable(scopeBrandId) != null) {
-                return resolveBrandOrNull(scopeBrandId);
-            }
-            if (Constants.SCOPE_BRANCH.equals(normalizedScopeType) && normalizeNullable(scopeBranchId) != null) {
-                Branch branch = branchRepository.findById(scopeBranchId)
-                        .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-                return branch.getBrand();
-            }
-            return null;
-        }
-    
-        private Brand resolveBrandOrNull(String brandId) {
-            String normalized = normalizeNullable(brandId);
-            if (normalized == null) {
-                return null;
-            }
-            return brandRepository.findById(normalized)
-                    .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
-        }
-    
         private void syncCustomerProfile(Account account) {
             customerProfileRepository.findByAccountId(account.getId()).ifPresent(profile -> {
                 profile.setFullName(account.getFullName());
@@ -476,100 +406,53 @@ import com.hoandev.pinedrink.utils.Constants;
         }
     
         private void assertCanAccessAccount(Account targetAccount) {
-            AccessScopeContext accessScope = resolveAccessScope();
-            if (accessScope.fullAccess()) {
-                return;
-            }
-            String targetBrandId = targetAccount.getBrand() != null ? targetAccount.getBrand().getId() : null;
-            if (targetBrandId == null || !accessScope.brandIds().contains(targetBrandId)) {
+            if (!resolveAccessScope().fullAccess()) {
                 throw new BaseException(ErrorCode.AUTH_007);
             }
         }
-    
-        private void assertCanManageTargetScope(String scopeType, String brandId, String branchId, String accountBrandId) {
+
+        private void assertCanManageTargetScope(String scopeType, String ignoredScopeId, String branchId, String ignoredAccountScopeId) {
             AccessScopeContext accessScope = resolveAccessScope();
             if (accessScope.fullAccess()) {
                 return;
             }
-    
             String normalizedScopeType = normalizeScopeType(scopeType);
-            if (Constants.SCOPE_SYSTEM.equals(normalizedScopeType)) {
-                throw new BaseException(ErrorCode.AUTH_007, "Insufficient permissions to manage SYSTEM scope");
+            if (!Constants.SCOPE_BRANCH.equals(normalizedScopeType)) {
+                throw new BaseException(ErrorCode.AUTH_007);
             }
-    
-            String targetBrandId = resolveTargetBrandIdForScope(normalizedScopeType, brandId, branchId, accountBrandId);
-            if (targetBrandId == null || !accessScope.brandIds().contains(targetBrandId)) {
+            String normalizedBranchId = normalizeNullable(branchId);
+            if (normalizedBranchId == null || !accessScope.branchIds().contains(normalizedBranchId)) {
                 throw new BaseException(ErrorCode.AUTH_007);
             }
         }
-    
+
         private void assertCanAccessScope(Scope scope) {
             AccessScopeContext accessScope = resolveAccessScope();
             if (accessScope.fullAccess()) {
                 return;
             }
-    
-            if (Constants.SCOPE_SYSTEM.equals(scope.getScopeType())) {
-                throw new BaseException(ErrorCode.AUTH_007, "Insufficient permissions to manage SYSTEM scope");
-            }
-    
-            String targetBrandId = null;
-            if (scope.getBrand() != null) {
-                targetBrandId = scope.getBrand().getId();
-            } else if (scope.getBranch() != null && scope.getBranch().getBrand() != null) {
-                targetBrandId = scope.getBranch().getBrand().getId();
-            }
-    
-            if (targetBrandId == null || !accessScope.brandIds().contains(targetBrandId)) {
+            if (scope.getBranch() == null || !accessScope.branchIds().contains(scope.getBranch().getId())) {
                 throw new BaseException(ErrorCode.AUTH_007);
             }
         }
-    
-        private String resolveTargetBrandIdForScope(String scopeType, String brandId, String branchId, String accountBrandId) {
-            String normalizedAccountBrandId = normalizeNullable(accountBrandId);
-            if (normalizedAccountBrandId != null) {
-                return normalizedAccountBrandId;
-            }
-    
-            String normalizedBrandId = normalizeNullable(brandId);
-            if (Constants.SCOPE_BRAND.equals(scopeType)) {
-                return normalizedBrandId;
-            }
-            if (Constants.SCOPE_BRANCH.equals(scopeType)) {
-                String normalizedBranchId = normalizeNullable(branchId);
-                if (normalizedBranchId == null) {
-                    return null;
-                }
-                Branch branch = branchRepository.findById(normalizedBranchId)
-                        .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-                return branch.getBrand() != null ? branch.getBrand().getId() : null;
-            }
-            return normalizedBrandId;
-        }
-    
+
         private AccessScopeContext resolveAccessScope() {
             UserPrincipal principal = getCurrentPrincipal();
             List<AccountRoleAssignment> assignments = assignmentRepository.findActiveAssignmentsByAccountId(principal.getId(), LocalDateTime.now());
-    
-            boolean fullAccess = assignments.stream().anyMatch(assignment ->
-                    Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType())
-            );
+            boolean fullAccess = assignments.stream().anyMatch(assignment -> Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType()));
             if (fullAccess) {
                 return new AccessScopeContext(true, Set.of());
             }
-    
-            Set<String> brandIds = new HashSet<>();
+            Set<String> branchIds = new HashSet<>();
             for (AccountRoleAssignment assignment : assignments) {
                 Scope scope = assignment.getScope();
-                if (scope.getBrand() != null && scope.getBrand().getId() != null) {
-                    brandIds.add(scope.getBrand().getId());
-                } else if (scope.getBranch() != null && scope.getBranch().getBrand() != null) {
-                    brandIds.add(scope.getBranch().getBrand().getId());
+                if (scope.getBranch() != null && scope.getBranch().getId() != null) {
+                    branchIds.add(scope.getBranch().getId());
                 }
             }
-            return new AccessScopeContext(false, brandIds);
+            return new AccessScopeContext(false, branchIds);
         }
-    
+
         private UserPrincipal getCurrentPrincipal() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
@@ -613,12 +496,12 @@ import com.hoandev.pinedrink.utils.Constants;
                 return Constants.SCOPE_SYSTEM;
             }
             String upper = normalized.toUpperCase(Locale.ROOT);
-            if (!Set.of(Constants.SCOPE_SYSTEM, Constants.SCOPE_BRAND, Constants.SCOPE_BRANCH).contains(upper)) {
+            if (!Set.of(Constants.SCOPE_SYSTEM, Constants.SCOPE_BRANCH).contains(upper)) {
                 throw new BaseException(ErrorCode.COM_004, "Unsupported scope type: " + scopeType);
             }
             return upper;
         }
     
-        private record AccessScopeContext(boolean fullAccess, Set<String> brandIds) {
+        private record AccessScopeContext(boolean fullAccess, Set<String> branchIds) {
         }
     }

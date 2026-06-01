@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ToppingRepository extends JpaRepository<Topping, String> {
-    List<Topping> findByBrandIdAndStatus(String brandId, String status);
+    List<Topping> findByStatus(String status);
 }

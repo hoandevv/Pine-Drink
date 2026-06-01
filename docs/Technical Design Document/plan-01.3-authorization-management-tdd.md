@@ -114,7 +114,7 @@ Response data:
     "code": "BRANCH_VIEW",
     "name": "View branches",
     "module": "BRANCH",
-    "description": "View branch detail and branch list by brand",
+    "description": "View branch detail and branch list",
     "status": "ACTIVE"
   },
   {
@@ -162,7 +162,7 @@ Response data:
       "code": "BRANCH_VIEW",
       "name": "View branches",
       "module": "BRANCH",
-      "description": "View branch detail and branch list by brand",
+      "description": "View branch detail and branch list",
       "status": "ACTIVE"
     }
   ],

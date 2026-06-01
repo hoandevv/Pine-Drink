@@ -10,17 +10,13 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
-    boolean existsByBrandIdAndCode(String brandId, String code);
+    boolean existsByCode(String code);
 
-    boolean existsByBrandIdAndCodeAndIdNot(String brandId, String code, String id);
+    boolean existsByCodeAndIdNot(String code, String id);
 
-    List<Product> findByBrandIdAndStatus(String brandId, String status);
+    List<Product> findByStatus(String status);
 
     List<Product> findByCategoryId(String categoryId);
 
-    Page<Product> findByBrandId(String brandId, Pageable pageable);
-
     Page<Product> findByCategoryId(String categoryId, Pageable pageable);
-
-    Page<Product> findByBrandIdAndCategoryId(String brandId, String categoryId, Pageable pageable);
 }

@@ -8,7 +8,6 @@ import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
-
     ProductResponse create(CreateProductRequest request);
 
     ProductResponse update(String id, UpdateProductRequest request);
@@ -19,5 +18,5 @@ public interface ProductService {
 
     ProductResponse getById(String id);
 
-    PageResponse<ProductResponse> getAll(String brandId, String categoryId, Pageable pageable);
+    PageResponse<ProductResponse> getAll(String categoryId, Pageable pageable);
 }

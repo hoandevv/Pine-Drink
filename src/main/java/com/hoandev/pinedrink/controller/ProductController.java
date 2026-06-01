@@ -38,7 +38,7 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")
     public ResponseEntity<BaseResponse<ProductResponse>> create(@Valid @RequestBody CreateProductRequest request) {
-        log.info("Creating product for brandId={}, categoryId={}", request.getBrandId(), request.getCategoryId());
+        log.info("Creating product for categoryId={}", request.getCategoryId());
         ProductResponse response = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(response, "Product created successfully"));
@@ -83,11 +83,10 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
-            @RequestParam(required = false) String brandId,
             @RequestParam(required = false) String categoryId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting products: brandId={}, categoryId={}", brandId, categoryId);
-        PageResponse<ProductResponse> response = productService.getAll(brandId, categoryId, pageable);
+        log.info("Getting products: categoryId={}", categoryId);
+        PageResponse<ProductResponse> response = productService.getAll(categoryId, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Products retrieved successfully"));
     }
 }

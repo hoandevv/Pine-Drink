@@ -1,46 +1,8 @@
--- Pine Drink - Company / Brand / Branch schema
-
-CREATE TABLE ce_brand (
-    id CHAR(36) NOT NULL PRIMARY KEY,
-    code VARCHAR(50) NOT NULL,
-    name VARCHAR(150) NOT NULL,
-    legal_name VARCHAR(200) NULL,
-    tax_code VARCHAR(50) NULL,
-    address VARCHAR(255) NULL,
-    phone VARCHAR(20) NULL,
-    email VARCHAR(150) NULL,
-    timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
-    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by CHAR(36) NULL,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ce_brand_code (code),
-    INDEX idx_ce_brand_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE ce_brand_domain (
-    id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
-    domain VARCHAR(255) NOT NULL,
-    public_key VARCHAR(100) NOT NULL,
-    channel VARCHAR(30) NOT NULL DEFAULT 'WEB',
-    allow_public_register BOOLEAN NOT NULL DEFAULT TRUE,
-    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by CHAR(36) NULL,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ce_brand_domain_domain_public_key (domain, public_key),
-    UNIQUE KEY uk_ce_brand_domain_public_key (public_key),
-    CONSTRAINT fk_ce_brand_domain_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE RESTRICT,
-    INDEX idx_ce_brand_domain_brand_status (brand_id, status),
-    INDEX idx_ce_brand_domain_domain_status (domain, status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Pine Drink - Company / Branch schema
+-- Brand removed: this project is single-brand/multi-branch, not multi-brand.
 
 CREATE TABLE ce_branch (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(150) NOT NULL,
     address VARCHAR(255) NULL,
@@ -57,9 +19,7 @@ CREATE TABLE ce_branch (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ce_branch_brand_code (brand_id, code),
-    CONSTRAINT fk_ce_branch_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
-    INDEX idx_ce_branch_brand_status (brand_id, status),
+    UNIQUE KEY uk_ce_branch_code (code),
     INDEX idx_ce_branch_status (status),
     INDEX idx_ce_branch_location (latitude, longitude)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -102,8 +62,8 @@ CREATE TABLE ce_pickup_time_slot (
 
 CREATE TABLE ce_setting (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NULL,
     branch_id CHAR(36) NULL,
+    scope_key VARCHAR(36) GENERATED ALWAYS AS (COALESCE(branch_id, '__GLOBAL__')) STORED,
     config_key VARCHAR(100) NOT NULL,
     config_value VARCHAR(500) NOT NULL,
     data_type VARCHAR(20) NOT NULL,
@@ -114,9 +74,9 @@ CREATE TABLE ce_setting (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_ce_setting_scope_key (brand_id, branch_id, config_key),
-    CONSTRAINT fk_ce_setting_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_ce_setting_scope_key (scope_key, config_key),
     CONSTRAINT fk_ce_setting_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
+    INDEX idx_ce_setting_branch (branch_id),
     INDEX idx_ce_setting_key (config_key),
     INDEX idx_ce_setting_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

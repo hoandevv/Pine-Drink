@@ -15,7 +15,6 @@ public final class Constants {
     public static final String STATUS_DELETED = "DELETED";
 
     public static final String SCOPE_SYSTEM = "SYSTEM";
-    public static final String SCOPE_BRAND = "BRAND";
     public static final String SCOPE_BRANCH = "BRANCH";
     public static final String TOKEN_TYPE_BEARER = "Bearer";
 }

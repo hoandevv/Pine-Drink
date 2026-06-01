@@ -183,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
         Role customerRole = roleRepository.findByCode(Constants.ROLE_CUSTOMER)
                 .orElseThrow(() -> new BaseException(ErrorCode.ROLE_NOT_FOUND));
 
-        Scope systemScope = scopeRepository.findByScopeTypeAndBrandIdAndBranchId("SYSTEM", null, null)
+        Scope systemScope = scopeRepository.findByScopeTypeAndBranchId("SYSTEM", null)
                 .orElseThrow(() -> new BaseException(ErrorCode.SCOPE_NOT_FOUND));
 
         AccountRoleAssignment assignment = new AccountRoleAssignment();

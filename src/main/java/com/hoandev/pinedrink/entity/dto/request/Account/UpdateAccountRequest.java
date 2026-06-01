@@ -26,5 +26,4 @@ public class UpdateAccountRequest {
 
     private String avatarUrl;
 
-    private String brandId;
 }

@@ -27,8 +27,6 @@ public class ProductMapper {
                 .bestSeller(product.isBestSeller())
                 .availableIceLevels(product.getAvailableIceLevels())
                 .availableSugarLevels(product.getAvailableSugarLevels())
-                .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
-                .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .status(product.getStatus())

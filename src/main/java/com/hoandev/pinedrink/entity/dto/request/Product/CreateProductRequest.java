@@ -52,8 +52,6 @@ public class CreateProductRequest {
     @Size(max = 50, message = "Available sugar levels must be at most 50 characters")
     private String availableSugarLevels = "0,30,50,70,100";
 
-    @NotBlank(message = "Brand ID is required")
-    private String brandId;
 
     @NotBlank(message = "Category ID is required")
     private String categoryId;

@@ -18,7 +18,6 @@ public interface AccountService {
     PageResponse<AccountListItemResponse> searchAccounts(String keyword,
                                                          String status,
                                                          String roleCode,
-                                                         String brandId,
                                                          Pageable pageable);
 
     AccountDetailResponse getAccountDetail(String id);

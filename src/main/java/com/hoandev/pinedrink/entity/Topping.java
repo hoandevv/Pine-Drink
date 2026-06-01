@@ -25,6 +25,9 @@ public class Topping extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "group_name")
+    private String groupName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;

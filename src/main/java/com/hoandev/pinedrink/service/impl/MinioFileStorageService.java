@@ -1,6 +1,6 @@
 package com.hoandev.pinedrink.service.impl;
 
-import com.hoandev.pinedrink.configuration.properties.MinioProperties;
+import com.hoandev.pinedrink.configuration.MinioProperties;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;

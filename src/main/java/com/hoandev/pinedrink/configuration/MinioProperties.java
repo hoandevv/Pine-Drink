@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.configuration.properties;
+package com.hoandev.pinedrink.configuration;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

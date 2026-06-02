@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -44,6 +46,17 @@ public class ProductController {
                 .body(BaseResponse.success(response, "Product created successfully"));
     }
 
+    @PostMapping(consumes = "multipart/form-data")
+    @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")
+    public ResponseEntity<BaseResponse<ProductResponse>> createWithImage(
+            @Valid @RequestPart("request") CreateProductRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        log.info("Creating product with image for categoryId={}", request.getCategoryId());
+        ProductResponse response = productService.create(request, file);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.success(response, "Product created successfully"));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_PRODUCT_UPDATE')")
     public ResponseEntity<BaseResponse<ProductResponse>> update(
@@ -51,6 +64,17 @@ public class ProductController {
             @Valid @RequestBody UpdateProductRequest request) {
         log.info("Updating product: id={}", id);
         ProductResponse response = productService.update(id, request);
+        return ResponseEntity.ok(BaseResponse.success(response, "Product updated successfully"));
+    }
+
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    @PreAuthorize("hasAuthority('PERM_PRODUCT_UPDATE')")
+    public ResponseEntity<BaseResponse<ProductResponse>> updateWithImage(
+            @PathVariable String id,
+            @Valid @RequestPart("request") UpdateProductRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        log.info("Updating product with image: id={}", id);
+        ProductResponse response = productService.update(id, request, file);
         return ResponseEntity.ok(BaseResponse.success(response, "Product updated successfully"));
     }
 

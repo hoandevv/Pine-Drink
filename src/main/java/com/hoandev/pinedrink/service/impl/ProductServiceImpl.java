@@ -7,12 +7,15 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductRequest;
 import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.enums.FileVisibility;
+import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.ProductMapper;
 import com.hoandev.pinedrink.repository.CategoryRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
+import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,36 +38,72 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
+    private final FileStorageService fileStorageService;
 
     @Override
     @Transactional
     public ProductResponse create(CreateProductRequest request) {
+        return create(request, null);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse create(CreateProductRequest request, MultipartFile imageFile) {
         accessScopeService.assertSystemAccess();
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
         String productCode = resolveCreateCode();
         Product product = productMapper.toEntity(request, category);
+        String uploadedImageUrl = uploadProductImage(imageFile);
+        if (uploadedImageUrl != null) {
+            product.setImageUrl(uploadedImageUrl);
+        }
         product.setCode(productCode);
-        product.setStatus(Constants.STATUS_ACTIVE);
-        product = productRepository.save(product);
-        log.info("Product created: id={}, code={}", product.getId(), product.getCode());
-        return productMapper.toResponse(product);
+        product.setStatus(ProductStatus.ACTIVE.getValue());
+        try {
+            product = productRepository.save(product);
+            log.info("Product created: id={}, code={}", product.getId(), product.getCode());
+            return productMapper.toResponse(product);
+        } catch (RuntimeException ex) {
+            deleteManagedProductImage(uploadedImageUrl);
+            throw ex;
+        }
     }
 
     @Override
     @Transactional
     public ProductResponse update(String id, UpdateProductRequest request) {
+        return update(id, request, null);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse update(String id, UpdateProductRequest request, MultipartFile imageFile) {
         accessScopeService.assertSystemAccess();
         Product product = getProductOrThrow(id);
+        String oldImageUrl = product.getImageUrl();
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
             product.setCategory(category);
         }
         productMapper.updateEntity(product, request);
-        product = productRepository.save(product);
-        log.info("Product updated: id={}, code={}", product.getId(), product.getCode());
-        return productMapper.toResponse(product);
+        String uploadedImageUrl = uploadProductImage(imageFile);
+        if (uploadedImageUrl != null) {
+            product.setImageUrl(uploadedImageUrl);
+        }
+        String newImageUrl = product.getImageUrl();
+        try {
+            product = productRepository.save(product);
+            deleteReplacedProductImage(oldImageUrl, newImageUrl);
+            log.info("Product updated: id={}, code={}", product.getId(), product.getCode());
+            return productMapper.toResponse(product);
+        } catch (RuntimeException ex) {
+            if (uploadedImageUrl != null) {
+                deleteManagedProductImage(uploadedImageUrl);
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -71,7 +111,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateStatus(String id, UpdateProductStatusRequest request) {
         accessScopeService.assertSystemAccess();
         Product product = getProductOrThrow(id);
-        product.setStatus(request.getStatus());
+        product.setStatus(request.getStatus().getValue());
         product = productRepository.save(product);
         log.info("Product status updated: id={}, code={}, status={}", product.getId(), product.getCode(), product.getStatus());
         return productMapper.toResponse(product);
@@ -82,10 +122,10 @@ public class ProductServiceImpl implements ProductService {
     public void delete(String id) {
         accessScopeService.assertSystemAccess();
         Product product = getProductOrThrow(id);
-        if (Constants.STATUS_INACTIVE.equals(product.getStatus())) {
+        if (ProductStatus.INACTIVE.getValue().equals(product.getStatus())) {
             throw new BaseException(ErrorCode.PRODUCT_005);
         }
-        product.setStatus(Constants.STATUS_INACTIVE);
+        product.setStatus(ProductStatus.INACTIVE.getValue());
         productRepository.save(product);
         log.info("Product deleted (soft): id={}, code={}", product.getId(), product.getCode());
     }
@@ -120,5 +160,36 @@ public class ProductServiceImpl implements ProductService {
             throw new BaseException(ErrorCode.PRODUCT_002);
         }
         return generatedCode;
+    }
+
+    private String uploadProductImage(MultipartFile imageFile) {
+        if (imageFile == null || imageFile.isEmpty()) {
+            return null;
+        }
+        return fileStorageService.uploadFile(imageFile, "products", FileVisibility.PUBLIC);
+    }
+
+    private void deleteReplacedProductImage(String oldImageUrl, String newImageUrl) {
+        if (oldImageUrl == null || oldImageUrl.isBlank()) {
+            return;
+        }
+        if (oldImageUrl.equals(newImageUrl)) {
+            return;
+        }
+        deleteManagedProductImage(oldImageUrl);
+    }
+
+    private void deleteManagedProductImage(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+        if (!isManagedProductImage(imageUrl)) {
+            return;
+        }
+        fileStorageService.deleteFile(imageUrl);
+    }
+
+    private boolean isManagedProductImage(String imageUrl) {
+        return imageUrl.startsWith("products/") || imageUrl.contains("/products/");
     }
 }

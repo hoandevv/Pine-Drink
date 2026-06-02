@@ -1,4 +1,4 @@
-# Product Code Rule
+# Code ALL PROJECTS
 
 Use this rule for product create/update API design.
 

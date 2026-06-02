@@ -6,11 +6,16 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusReque
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ProductService {
     ProductResponse create(CreateProductRequest request);
 
+    ProductResponse create(CreateProductRequest request, MultipartFile imageFile);
+
     ProductResponse update(String id, UpdateProductRequest request);
+
+    ProductResponse update(String id, UpdateProductRequest request, MultipartFile imageFile);
 
     ProductResponse updateStatus(String id, UpdateProductStatusRequest request);
 

@@ -51,6 +51,9 @@ public enum ErrorCode {
     BRANCH_002("BRANCH_002", "Branch code already exists"),
     BRANCH_003("BRANCH_003", "Branch scope not found"),
     BRANCH_004("BRANCH_004", "Branch is already inactive"),
+    BRANCH_005("BRANCH_005", "Branch hours not found"),
+    BRANCH_006("BRANCH_006", "Branch hours already exists for this day"),
+    BRANCH_007("BRANCH_007", "Open time must be before close time"),
 
     CATEGORY_001("CATEGORY_001", "Category not found"),
     CATEGORY_002("CATEGORY_002", "Category code already exists"),

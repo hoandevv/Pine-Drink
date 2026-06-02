@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.entity.dto.request.Branch;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -20,9 +21,11 @@ public class CreateBranchHoursRequest {
     private int dayOfWeek;
 
     @NotNull(message = "Open time is required")
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime openTime;
 
     @NotNull(message = "Close time is required")
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime closeTime;
 
     @Builder.Default

@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.entity.dto.request.Branch;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.*;
@@ -18,8 +19,10 @@ public class UpdateBranchHoursRequest {
     @Max(value = 7, message = "Day of week must be from 1 to 7")
     private Integer dayOfWeek;
 
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime openTime;
 
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime closeTime;
 
     private Boolean closed;

@@ -52,6 +52,10 @@ public enum ErrorCode {
     BRANCH_003("BRANCH_003", "Branch scope not found"),
     BRANCH_004("BRANCH_004", "Branch is already inactive"),
 
+    CATEGORY_001("CATEGORY_001", "Category not found"),
+    CATEGORY_002("CATEGORY_002", "Category code already exists"),
+    CATEGORY_003("CATEGORY_003", "Category is already inactive"),
+
     PRODUCT_001("PRODUCT_001", "Product not found"),
     PRODUCT_002("PRODUCT_002", "Product code already exists"),
     PRODUCT_003("PRODUCT_003", "Product scope not found"),

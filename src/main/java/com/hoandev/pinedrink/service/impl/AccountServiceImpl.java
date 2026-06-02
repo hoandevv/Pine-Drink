@@ -74,9 +74,10 @@ import com.hoandev.pinedrink.utils.Constants;
         public PageResponse<AccountListItemResponse> searchAccounts(String keyword,
                                                                     String status,
                                                                     String roleCode,
+                                                                    String branchId,
                                                                     Pageable pageable) {
             AccessScopeContext accessScope = accessScopeService.resolveCurrentScope();
-            Specification<Account> specification = buildSearchSpecification(keyword, status, roleCode, accessScope);
+            Specification<Account> specification = buildSearchSpecification(keyword, status, roleCode, branchId, accessScope);
             Page<Account> page = accountRepository.findAll(specification, pageable);
     
             Map<String, List<String>> rolesByAccountId = loadActiveRoles(page.getContent());
@@ -382,6 +383,7 @@ import com.hoandev.pinedrink.utils.Constants;
         private Specification<Account> buildSearchSpecification(String keyword,
                                                                 String status,
                                                                 String roleCode,
+                                                                String branchId,
                                                                 AccessScopeContext accessScope) {
             return (root, query, cb) -> {
                 List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
@@ -438,6 +440,30 @@ import com.hoandev.pinedrink.utils.Constants;
                             cb.equal(cb.upper(roleJoin.get("code")), roleCode.trim().toUpperCase(Locale.ROOT))
                     );
                     predicates.add(cb.exists(subquery));
+                }
+
+                if (branchId != null && !branchId.trim().isEmpty()) {
+                    String normalizedBranchId = branchId.trim();
+                    if (!accessScope.fullAccess() && !accessScope.branchIds().contains(normalizedBranchId)) {
+                        predicates.add(cb.disjunction());
+                    } else {
+                        Subquery<String> branchFilterSubquery = query.subquery(String.class);
+                        var assignmentRoot = branchFilterSubquery.from(AccountRoleAssignment.class);
+                        var scopeJoin = assignmentRoot.join("scope");
+                        var branchJoin = scopeJoin.join("branch", JoinType.LEFT);
+                        branchFilterSubquery.select(assignmentRoot.get("account").get("id"));
+                        branchFilterSubquery.where(
+                                cb.equal(assignmentRoot.get("account").get("id"), root.get("id")),
+                                cb.equal(assignmentRoot.get("status"), Constants.STATUS_ACTIVE),
+                                cb.or(
+                                        cb.isNull(assignmentRoot.get("expiresAt")),
+                                        cb.greaterThan(assignmentRoot.get("expiresAt"), LocalDateTime.now())
+                                ),
+                                cb.equal(scopeJoin.get("scopeType"), Constants.SCOPE_BRANCH),
+                                cb.equal(branchJoin.get("id"), normalizedBranchId)
+                        );
+                        predicates.add(cb.exists(branchFilterSubquery));
+                    }
                 }
     
                 return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));

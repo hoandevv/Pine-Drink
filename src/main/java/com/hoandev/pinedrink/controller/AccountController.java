@@ -38,9 +38,10 @@ public class AccountController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String roleCode,
+            @RequestParam(required = false) String branchId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Searching accounts with keyword={}, status={}, roleCode={}", keyword, status, roleCode);
-        PageResponse<AccountListItemResponse> response = accountService.searchAccounts(keyword, status, roleCode, pageable);
+        log.info("Searching accounts with keyword={}, status={}, roleCode={}, branchId={}", keyword, status, roleCode, branchId);
+        PageResponse<AccountListItemResponse> response = accountService.searchAccounts(keyword, status, roleCode, branchId, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Accounts retrieved successfully"));
     }
 

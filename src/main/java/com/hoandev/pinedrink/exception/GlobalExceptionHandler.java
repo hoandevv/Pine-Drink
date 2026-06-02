@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
                 || code.equals("ROOM_001") || code.equals("TEACHER_001")) {
             return HttpStatus.NOT_FOUND;
         }
-        if (code.equals("PRODUCT_001") || code.equals("PRODUCT_003") || code.equals("PRODUCT_004")) {
+        if (code.equals("PRODUCT_001") || code.equals("PRODUCT_003") || code.equals("PRODUCT_004") || code.equals("PRODUCT_007")) {
             return HttpStatus.NOT_FOUND;
         }
         if (code.equals("CATEGORY_001")) {

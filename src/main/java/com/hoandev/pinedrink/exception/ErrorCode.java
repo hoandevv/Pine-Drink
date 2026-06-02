@@ -61,7 +61,11 @@ public enum ErrorCode {
     PRODUCT_003("PRODUCT_003", "Product scope not found"),
     PRODUCT_004("PRODUCT_004", "Category not found"),
     PRODUCT_005("PRODUCT_005", "Product is already inactive"),
-    PRODUCT_006("PRODUCT_006", "Category does not match product scope");
+    PRODUCT_006("PRODUCT_006", "Category does not match product scope"),
+    PRODUCT_007("PRODUCT_007", "Product variant not found"),
+    PRODUCT_008("PRODUCT_008", "Product variant code already exists"),
+    PRODUCT_009("PRODUCT_009", "Product variant is already inactive"),
+    PRODUCT_010("PRODUCT_010", "Product variant does not belong to product");
 
     private final String code;
     private final String message;

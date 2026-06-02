@@ -8,5 +8,9 @@ import java.util.List;
 
 @Repository
 public interface ProductToppingRepository extends JpaRepository<ProductTopping, String> {
+    boolean existsByProductIdAndToppingId(String productId, String toppingId);
+
     List<ProductTopping> findByProductId(String productId);
+
+    List<ProductTopping> findByProductIdAndStatus(String productId, String status);
 }

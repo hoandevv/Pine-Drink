@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface ToppingRepository extends JpaRepository<Topping, String> {
+    boolean existsByCode(String code);
+
     List<Topping> findByStatus(String status);
 }

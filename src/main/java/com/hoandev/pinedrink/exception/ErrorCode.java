@@ -56,6 +56,14 @@ public enum ErrorCode {
     CATEGORY_002("CATEGORY_002", "Category code already exists"),
     CATEGORY_003("CATEGORY_003", "Category is already inactive"),
 
+    TOPPING_001("TOPPING_001", "Topping not found"),
+    TOPPING_002("TOPPING_002", "Topping code already exists"),
+    TOPPING_003("TOPPING_003", "Topping is already inactive"),
+    TOPPING_004("TOPPING_004", "Product topping not found"),
+    TOPPING_005("TOPPING_005", "Product topping already exists"),
+    TOPPING_006("TOPPING_006", "Product topping is already inactive"),
+    TOPPING_007("TOPPING_007", "Product topping does not belong to product"),
+
     PRODUCT_001("PRODUCT_001", "Product not found"),
     PRODUCT_002("PRODUCT_002", "Product code already exists"),
     PRODUCT_003("PRODUCT_003", "Product scope not found"),

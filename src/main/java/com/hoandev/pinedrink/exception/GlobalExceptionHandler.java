@@ -105,6 +105,9 @@ public class GlobalExceptionHandler {
         if (code.equals("CATEGORY_001")) {
             return HttpStatus.NOT_FOUND;
         }
+        if (code.equals("TOPPING_001") || code.equals("TOPPING_004")) {
+            return HttpStatus.NOT_FOUND;
+        }
         if (code.equals("RATE_001")) return HttpStatus.TOO_MANY_REQUESTS;
         if (code.startsWith("CFG_")) return HttpStatus.CONFLICT;
         if (code.equals("COM_002")) return HttpStatus.INTERNAL_SERVER_ERROR;

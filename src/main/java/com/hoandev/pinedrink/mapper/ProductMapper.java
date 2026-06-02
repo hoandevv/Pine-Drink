@@ -41,7 +41,6 @@ public class ProductMapper {
         }
 
         Product product = new Product();
-        product.setCode(request.getCode());
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setImageUrl(request.getImageUrl());
@@ -60,9 +59,6 @@ public class ProductMapper {
             return;
         }
 
-        if (request.getCode() != null) {
-            product.setCode(request.getCode());
-        }
         if (request.getName() != null) {
             product.setName(request.getName());
         }

@@ -20,9 +20,6 @@ import java.math.BigDecimal;
 @Builder
 public class UpdateProductRequest {
 
-    @Size(max = 50, message = "Product code must be at most 50 characters")
-    private String code;
-
     @Size(max = 255, message = "Product name must be at most 255 characters")
     private String name;
 

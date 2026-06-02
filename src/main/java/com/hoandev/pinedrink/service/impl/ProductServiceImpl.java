@@ -41,7 +41,7 @@ public class ProductServiceImpl implements ProductService {
         accessScopeService.assertSystemAccess();
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
-        String productCode = resolveCreateCode(request.getCode());
+        String productCode = resolveCreateCode();
         Product product = productMapper.toEntity(request, category);
         product.setCode(productCode);
         product.setStatus(Constants.STATUS_ACTIVE);
@@ -59,9 +59,6 @@ public class ProductServiceImpl implements ProductService {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
             product.setCategory(category);
-        }
-        if (request.getCode() != null && productRepository.existsByCodeAndIdNot(request.getCode(), id)) {
-            throw new BaseException(ErrorCode.PRODUCT_002);
         }
         productMapper.updateEntity(product, request);
         product = productRepository.save(product);
@@ -117,14 +114,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findById(id).orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_001));
     }
 
-    private String resolveCreateCode(String requestedCode) {
-        if (requestedCode != null && !requestedCode.isBlank()) {
-            String code = requestedCode.trim();
-            if (productRepository.existsByCode(code)) {
-                throw new BaseException(ErrorCode.PRODUCT_002);
-            }
-            return code;
-        }
+    private String resolveCreateCode() {
         String generatedCode = codeGenerator.generate("PR", "PRODUCT");
         if (productRepository.existsByCode(generatedCode)) {
             throw new BaseException(ErrorCode.PRODUCT_002);

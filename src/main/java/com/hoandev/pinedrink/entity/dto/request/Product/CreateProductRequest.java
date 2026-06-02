@@ -22,9 +22,6 @@ import java.math.BigDecimal;
 @Builder
 public class CreateProductRequest {
 
-    @Size(max = 50, message = "Product code must be at most 50 characters")
-    private String code;
-
     @NotBlank(message = "Product name is required")
     @Size(max = 255, message = "Product name must be at most 255 characters")
     private String name;

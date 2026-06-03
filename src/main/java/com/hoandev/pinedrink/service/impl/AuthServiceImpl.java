@@ -490,8 +490,7 @@ public class AuthServiceImpl implements AuthService {
                 PasswordResetEmailEvent event = PasswordResetEmailEvent.of(
                         finalEmail,
                         finalOtp,
-                        (int) OTP_TTL.toMinutes()
-                );
+                        (int) OTP_TTL.toMinutes());
                 eventPublisher.publish(event);
                 log.info("Forgot password OTP email event published for: {}", finalEmail);
             }

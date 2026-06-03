@@ -21,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hoandev.pinedrink.security.scope.AccessScopeContext;
+
 import java.util.List;
 
 @Service
@@ -92,8 +94,10 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BranchResponse> getAll(Pageable pageable) {
-        accessScopeService.assertSystemAccess();
-        Page<Branch> branches = branchRepository.findAll(pageable);
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findAll(pageable)
+                : findScopedBranches(scope, pageable);
         List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
         return PageResponse.from(branches, content);
     }
@@ -101,10 +105,26 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BranchResponse> getAllActive(Pageable pageable) {
-        accessScopeService.assertSystemAccess();
-        Page<Branch> branches = branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable);
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
+                : findScopedActiveBranches(scope, pageable);
         List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
         return PageResponse.from(branches, content);
+    }
+
+    private Page<Branch> findScopedBranches(AccessScopeContext scope, Pageable pageable) {
+        if (scope.branchIds().isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return branchRepository.findByIdIn(scope.branchIds(), pageable);
+    }
+
+    private Page<Branch> findScopedActiveBranches(AccessScopeContext scope, Pageable pageable) {
+        if (scope.branchIds().isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return branchRepository.findByIdInAndStatus(scope.branchIds(), BranchStatus.ACTIVE.getValue(), pageable);
     }
 
     private Branch getBranchOrThrow(String id) {

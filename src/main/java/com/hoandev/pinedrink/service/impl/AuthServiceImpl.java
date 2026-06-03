@@ -250,6 +250,7 @@ public class AuthServiceImpl implements AuthService {
         }
         validateAccountStatus(account);
 
+        permissionCacheService.invalidateUserCache(account.getId());
         UserPrincipal principal = customUserDetailsService.buildPrincipal(account);
 
         String accessToken = jwtTokenProvider.generateAccessToken(principal);

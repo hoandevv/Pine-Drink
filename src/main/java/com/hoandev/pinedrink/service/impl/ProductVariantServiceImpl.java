@@ -2,11 +2,11 @@ package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.Product;
 import com.hoandev.pinedrink.entity.ProductVariant;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.CreateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.UpdateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.UpdateProductVariantStatusRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
-import com.hoandev.pinedrink.entity.dto.response.ProductVariant.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.entity.enums.ProductVariantStatus;
 import com.hoandev.pinedrink.exception.BaseException;

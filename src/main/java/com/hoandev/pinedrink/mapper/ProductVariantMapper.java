@@ -2,9 +2,9 @@ package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.Product;
 import com.hoandev.pinedrink.entity.ProductVariant;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.CreateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.UpdateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.response.ProductVariant.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

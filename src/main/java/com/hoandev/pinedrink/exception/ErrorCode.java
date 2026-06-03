@@ -54,6 +54,11 @@ public enum ErrorCode {
     BRANCH_005("BRANCH_005", "Branch hours not found"),
     BRANCH_006("BRANCH_006", "Branch hours already exists for this day"),
     BRANCH_007("BRANCH_007", "Open time must be before close time"),
+    BRANCH_008("BRANCH_008", "Branch product availability not found"),
+    BRANCH_009("BRANCH_009", "Branch product availability already exists"),
+    BRANCH_010("BRANCH_010", "Branch topping availability not found"),
+    BRANCH_011("BRANCH_011", "Branch topping availability already exists"),
+    BRANCH_012("BRANCH_012", "Available from must be before available to"),
 
     CATEGORY_001("CATEGORY_001", "Category not found"),
     CATEGORY_002("CATEGORY_002", "Category code already exists"),

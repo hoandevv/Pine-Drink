@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.entity.dto.response.ProductTopping;
+package com.hoandev.pinedrink.entity.dto.response.Product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

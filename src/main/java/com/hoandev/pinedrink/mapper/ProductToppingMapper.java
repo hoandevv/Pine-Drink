@@ -5,7 +5,7 @@ import com.hoandev.pinedrink.entity.ProductTopping;
 import com.hoandev.pinedrink.entity.Topping;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
-import com.hoandev.pinedrink.entity.dto.response.ProductTopping.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
 import org.springframework.stereotype.Component;
 
 @Component

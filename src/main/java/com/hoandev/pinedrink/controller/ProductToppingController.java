@@ -4,7 +4,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductTopp
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
-import com.hoandev.pinedrink.entity.dto.response.ProductTopping.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
 import com.hoandev.pinedrink.service.ProductToppingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.entity.dto.request.Topping;
+package com.hoandev.pinedrink.entity.dto.request.ProductTopping;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;

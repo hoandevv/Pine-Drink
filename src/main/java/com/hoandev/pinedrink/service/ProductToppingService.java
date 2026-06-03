@@ -3,7 +3,7 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingStatusRequest;
-import com.hoandev.pinedrink.entity.dto.response.ProductTopping.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
 
 import java.util.List;
 

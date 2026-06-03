@@ -1,11 +1,11 @@
 package com.hoandev.pinedrink.controller;
 
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.CreateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.UpdateProductVariantRequest;
-import com.hoandev.pinedrink.entity.dto.request.ProductVariant.UpdateProductVariantStatusRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
-import com.hoandev.pinedrink.entity.dto.response.ProductVariant.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

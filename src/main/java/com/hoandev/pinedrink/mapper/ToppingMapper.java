@@ -1,9 +1,9 @@
 package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.Topping;
-import com.hoandev.pinedrink.entity.dto.request.Topping.CreateToppingRequest;
-import com.hoandev.pinedrink.entity.dto.request.Topping.UpdateToppingRequest;
-import com.hoandev.pinedrink.entity.dto.response.Topping.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateToppingRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingRequest;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
 import org.springframework.stereotype.Component;
 
 @Component

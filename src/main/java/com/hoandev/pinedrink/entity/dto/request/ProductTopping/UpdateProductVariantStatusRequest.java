@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.entity.dto.request.ProductVariant;
+package com.hoandev.pinedrink.entity.dto.request.ProductTopping;
 
 import com.hoandev.pinedrink.entity.enums.ProductVariantStatus;
 import jakarta.validation.constraints.NotNull;

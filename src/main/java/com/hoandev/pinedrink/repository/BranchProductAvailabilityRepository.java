@@ -12,4 +12,7 @@ public interface BranchProductAvailabilityRepository extends JpaRepository<Branc
     List<BranchProductAvailability> findByBranchId(String branchId);
     List<BranchProductAvailability> findByProductId(String productId);
     Optional<BranchProductAvailability> findByBranchIdAndProductId(String branchId, String productId);
+    Optional<BranchProductAvailability> findByIdAndBranchId(String id, String branchId);
+    boolean existsByBranchIdAndProductId(String branchId, String productId);
+    boolean existsByBranchIdAndProductIdAndIdNot(String branchId, String productId, String id);
 }

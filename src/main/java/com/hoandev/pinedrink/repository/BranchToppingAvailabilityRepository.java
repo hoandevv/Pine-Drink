@@ -5,8 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BranchToppingAvailabilityRepository extends JpaRepository<BranchToppingAvailability, String> {
     List<BranchToppingAvailability> findByBranchId(String branchId);
+    List<BranchToppingAvailability> findByToppingId(String toppingId);
+    Optional<BranchToppingAvailability> findByBranchIdAndToppingId(String branchId, String toppingId);
+    Optional<BranchToppingAvailability> findByIdAndBranchId(String id, String branchId);
+    boolean existsByBranchIdAndToppingId(String branchId, String toppingId);
+    boolean existsByBranchIdAndToppingIdAndIdNot(String branchId, String toppingId, String id);
 }

@@ -1,10 +1,10 @@
 package com.hoandev.pinedrink.service;
 
-import com.hoandev.pinedrink.entity.dto.request.Topping.CreateToppingRequest;
-import com.hoandev.pinedrink.entity.dto.request.Topping.UpdateToppingRequest;
-import com.hoandev.pinedrink.entity.dto.request.Topping.UpdateToppingStatusRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateToppingRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingRequest;
+import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
-import com.hoandev.pinedrink.entity.dto.response.Topping.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 

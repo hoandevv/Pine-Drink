@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.entity.dto.response.Topping;
+package com.hoandev.pinedrink.entity.dto.response.Product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,14 +16,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ToppingResponse {
+public class ProductVariantResponse {
 
     private String id;
-    private String code;
-    private String name;
-    private BigDecimal price;
-    private String imageUrl;
-    private String groupName;
+    private String productId;
+    private String productCode;
+    private String productName;
+    private String variantCode;
+    private String variantName;
+    private String sizeLabel;
+    private BigDecimal priceDelta;
+    private BigDecimal finalPrice;
+    private int displayOrder;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

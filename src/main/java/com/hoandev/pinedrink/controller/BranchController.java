@@ -80,7 +80,6 @@ public class BranchController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActive(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting active branches");

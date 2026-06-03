@@ -100,6 +100,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/forgot-password/verify-otp",
+                                "/api/v1/branches/active",
+                                "/api/v1/branches/*/hours",
                                 "/api/v1/files/private/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

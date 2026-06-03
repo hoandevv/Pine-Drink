@@ -61,7 +61,6 @@ public class BranchHoursController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<List<BranchHoursResponse>>> getByBranch(@PathVariable String branchId) {
         log.info("Getting branch hours: branchId={}", branchId);
         List<BranchHoursResponse> response = branchHoursService.getByBranch(branchId);

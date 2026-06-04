@@ -122,6 +122,7 @@ public class AuthServiceImpl implements AuthService {
         account.setUsername(username);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setAuthProvider(Constants.AUTH_PROVIDER_LOCAL);
+        account.setHasLocalPassword(true);
         account.setFullName(request.getFullName());
         account.setEmail(email);
         account.setPhone(phone);
@@ -343,6 +344,7 @@ public class AuthServiceImpl implements AuthService {
         account.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         account.setAuthProvider(Constants.AUTH_PROVIDER_GOOGLE);
         account.setProviderId(googleUser.getSubject());
+        account.setHasLocalPassword(false);
         account.setFullName(resolveGoogleFullName(googleUser));
         account.setEmail(email);
         account.setAvatarUrl(googleUser.getPicture());

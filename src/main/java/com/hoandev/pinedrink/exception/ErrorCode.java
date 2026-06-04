@@ -34,6 +34,8 @@ public enum ErrorCode {
     AUTH_022("AUTH_022", "Invalid registration site"),
     AUTH_023("AUTH_023", "Public registration is disabled for this site"),
     AUTH_024("AUTH_024", "Center domain already exists"),
+    AUTH_025("AUTH_025", "Local password is already set"),
+    AUTH_026("AUTH_026", "Local password is not set"),
     AUTH_027("AUTH_027", "Passwords do not match"),
     AUTH_GOOGLE_001("AUTH_GOOGLE_001", "Google ID token is required"),
     AUTH_GOOGLE_002("AUTH_GOOGLE_002", "Google ID token is invalid"),

@@ -5,7 +5,7 @@
 | **Document ID** | TDD-PINE-AUTH-004 |
 | **Project** | Pine Drink - Hệ thống order đồ uống online |
 | **Module** | Authentication |
-| **Version** | 1.0 |
+| **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Pine Drink Dev Team |
 | **Last Updated** | 2026-06-03 |
@@ -188,6 +188,8 @@ Response thành công:
 | Thiếu `idToken` | 400 | `AUTH_GOOGLE_001` | Request không có token |
 | ID token không hợp lệ | 401 | `AUTH_GOOGLE_002` | Token sai chữ ký, hết hạn hoặc audience sai |
 | Email chưa verify | 401 | `AUTH_GOOGLE_003` | Google email chưa được xác thực |
+| Email đã dùng bởi provider khác | 409 | `AUTH_GOOGLE_004` | Account đã có authProvider != LOCAL |
+| Google sub không khớp | 401 | `AUTH_GOOGLE_005` | ProviderId không khớp với Google sub |
 | Account bị khóa | 403 | `AUTH_005` | Account `LOCKED` |
 | Account chưa active | 403 | `AUTH_006` | Account `INACTIVE` |
 | Thiếu role/scope seed | 500 | `ROLE_NOT_FOUND`/`SCOPE_NOT_FOUND` | Seed data chưa đầy đủ |
@@ -312,49 +314,62 @@ LoginResponse googleLogin(String idToken);
 
 ### 10.7 Service Flow
 
+Sơ đồ sequence dưới đây mô tả chi tiết luồng xử lý khi frontend gửi ID token:
+
 ```text
-googleLogin(idToken)
-  payload = googleTokenVerifier.verify(idToken)
-  nếu payload null -> throw invalid token
-  nếu email_verified != true -> throw email not verified
-
-  email = lowercase(payload.email)
-  account = accountRepository.findByEmail(email)
-      hoặc tạo Google account mới
-
-  validateAccountStatus(account)
-  permissionCacheService.invalidateUserCache(account.id)
-  principal = customUserDetailsService.buildPrincipal(account)
-  accessToken = jwtTokenProvider.generateAccessToken(principal)
-  refreshToken = jwtTokenProvider.generateRefreshToken()
-  saveRefreshToken(account, refreshToken)
-  account.lastLoginAt = now
-  save account
-  return authMapper.toLoginResponse(accessToken, refreshToken, account)
-```
-
-### 10.8 GoogleTokenVerifier Component
-
-Component đề xuất: `GoogleTokenVerifier`.
-
-Nhiệm vụ:
-
-- Đọc `app.oauth2.google.client-id`.
-- Verify token bằng `GoogleIdTokenVerifier`.
-- Trả payload đã validate.
-- Không log raw token.
-
-Pseudo-code:
-
-```java
-GoogleIdToken idToken = verifier.verify(rawIdToken);
-if (idToken == null) {
-    throw new BaseException(ErrorCode.AUTH_GOOGLE_002);
-}
-Payload payload = idToken.getPayload();
-if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-    throw new BaseException(ErrorCode.AUTH_GOOGLE_003);
-}
+FRONTEND                    BACKEND                      GOOGLE           DATABASE
+    |                           |                           |                |
+    | POST /api/v1/auth/google  |                           |                |
+    | { idToken }               |                           |                |
+    |-------------------------->|                           |                |
+    |                           | verifyIdToken(idToken)    |                |
+    |                           |-------------------------->|                |
+    |                           |    payload | null         |                |
+    |                           |<--------------------------|                |
+    |                           |                           |                |
+    |    [Token invalid]        |                           |                |
+    |<-- 401 AUTH_GOOGLE_002    |                           |                |
+    |                           |                           |                |
+    |    [Email not verified]   |                           |                |
+    |<-- 401 AUTH_GOOGLE_003    |                           |                |
+    |                           |                           |                |
+    |    [Token hợp lệ]         |                           |                |
+    |                           | findByProvider(GOOGLE,sub)|                |
+    |                           |------------------------------------------>|
+    |                           |   Optional<Account>      |                |
+    |                           |<------------------------------------------|
+    |                           |                           |                |
+    |    [Có Google account]    | validateAccountStatus()   |                |
+    |                           |------------------------------------------>|
+    |    [Chưa có]              |                           |                |
+    |                           | findByEmail(email)        |                |
+    |                           |------------------------------------------>|
+    |                           |   Optional<Account>      |                |
+    |                           |<------------------------------------------|
+    |                           |                           |                |
+    |    [Email tồn tại]        | validateGoogleLink()     |                |
+    |    [AuthProvider GOOGLE]  | check sub mismatch        |                |
+    |    [AuthProvider LOCAL]   | cho link                  |                |
+    |    [Provider khác]        | throw AUTH_GOOGLE_004     |                |
+    |<-- 409/401                |                           |                |
+    |                           |                           |                |
+    |    [Email mới]            | createGoogleAccount()    |                |
+    |                           | assignCustomerRole()     |                |
+    |                           | createCustomerProfile()   |                |
+    |                           |------------------------------------------>|
+    |                           |                           |                |
+    |                           | Sau khi xác định account: |                |
+    |                           | set auth_provider (nếu chưa có)          |
+    |                           | set provider_id (nếu chưa có)             |
+    |                           | set avatar (nếu null)     |                |
+    |                           |                           |                |
+    |                           | invalidatePermissionCache |                |
+    |                           | buildPrincipal()          |                |
+    |                           | generateAccessToken()     |                |
+    |                           | generateRefreshToken()    |                |
+    |                           | saveRefreshToken()        |                |
+    |                           | update lastLoginAt        |                |
+    |<-- 200 LoginResponse      |                           |                |
 ```
 
 ---
@@ -378,7 +393,7 @@ Khi email chưa tồn tại:
 Gán role mặc định:
 
 - Role code: `CUSTOMER`.
-- Scope: `SYSTEM` với `branch_id=null`.
+- Scope: `SYSTEM` với `branch_id=null` (dùng `findByScopeTypeAndBranchIdIsNull`).
 - Status: `ACTIVE`.
 - Assigned at: `LocalDateTime.now()`.
 
@@ -412,7 +427,151 @@ john_doe exists -> john_doe_a1b2c3
 
 ---
 
-## 12. Hướng Dẫn Frontend
+## 12. Luồng Chi Tiết & Quyết Định Nghiệp Vụ
+
+### 12.1 Decision Tree - Xác Định Account
+
+Khi backend nhận được ID token hợp lệ, luồng quyết định account như sau:
+
+```text
+                         ID TOKEN HỢP LỆ
+                       email_verified = true
+                               |
+                     Normalize email: lowercase
+                               |
+              ___________________________________
+             |                                  |
+             |      findByAuthProviderAnd        |
+             |      ProviderId(GOOGLE, sub)      |
+             |                                  |
+         [FOUND]                            [NOT FOUND]
+             |                                  |
+             |                           findByEmail(email)
+             |                                  |
+             |                     ________________|________________
+             |                    |                |                |
+             |                [FOUND]          [NOT FOUND]      [ERROR]
+             |                    |                |                |
+             |            validateGoogleLink   TẠO MỚI       400 BAD
+             |                    |                |
+             |          __________|__________      |
+             |         |         |          |      |
+             |    GOOGLE     LOCAL      KHÁC      |
+             |    cùng sub   /null     provider   |
+             |         |         |          |     |
+             |      [OK]      [OK]     [CONFLICT]  |
+             |         |         |     AUTH_...004 |
+             |         |         |          |     |
+             |         |    LINK GOOGLE     |     |
+             |         |    (set provider)  |     |
+             |         |         |          |     |
+             └─────────┴─────────┴──────────┴─────┘
+                               |
+                    VALIDATE ACCOUNT STATUS
+                    (ACTIVE mới cho qua)
+                               |
+                    UPDATE/LINK GOOGLE INFO
+                    (auth_provider, provider_id, avatar)
+                               |
+                    BUILD PRINCIPAL + JWT
+                               |
+                    LOGIN RESPONSE
+```
+
+### 12.2 Bảy Trường Hợp Nghiệp Vụ
+
+| # | Tình Huống | Kết Quả | Giải Thích |
+|---|------------|---------|------------|
+| 1 | `sub` mới, `email` mới | Tạo account Google mới | Người dùng chưa từng có account ở Pine Drink |
+| 2 | `sub` mới, `email` trùng account `LOCAL` | Link Google vào account local | User trước đó dùng password, giờ login bằng Google |
+| 3 | `sub` mới, `email` trùng account `GOOGLE` cùng `sub` | Login account đó | Bản ghi có sẵn, không thay đổi |
+| 4 | `sub` mới, `email` trùng account `GOOGLE` khác `sub` | Throw `AUTH_GOOGLE_005` | Google sub không khớp, không cho login |
+| 5 | `sub` mới, `email` trùng account provider khác (FACEBOOK) | Throw `AUTH_GOOGLE_004` | Email đã dùng bởi provider khác, không thể link |
+| 6 | `sub` có sẵn, account `LOCKED`/`INACTIVE` | Throw `AUTH_005`/`AUTH_006` | Tài khoản bị khóa hoặc chưa active |
+| 7 | `sub` có sẵn, account `ACTIVE` | Login bình thường | Luồng happy case, update lastLogin |
+
+### 12.3 Quy Tắc Link Account
+
+**Có thể link Google vào account khi:**
+
+- `auth_provider` là `null` hoặc blank (dữ liệu cũ chưa có provider).
+- `auth_provider` là `LOCAL` (account đăng ký bằng username/password).
+- `auth_provider` là `GOOGLE` và `provider_id` khớp với `sub` (không thay đổi).
+
+**Không thể link Google vào account khi:**
+
+- `auth_provider` là `GOOGLE` và `provider_id` khác `sub`.
+- `auth_provider` không phải `LOCAL`, không phải `null` (ví dụ `FACEBOOK`).
+
+**Những gì thay đổi trên account khi link:**
+
+- `auth_provider` = `GOOGLE` (nếu chưa có).
+- `provider_id` = Google `sub` (nếu chưa có).
+- `avatar_url` = Google `picture` (nếu chưa có avatar).
+
+### 12.4 Thứ Tự Validate Quan Trọng
+
+Thứ tự các bước kiểm tra trong `googleLogin()` rất quan trọng:
+
+```text
+  1. Verify token với Google            [fail → AUTH_GOOGLE_002/003]
+  2. Xác định account (findOrCreate)     [fail → AUTH_GOOGLE_004/005]
+  3. Kiểm tra trạng thái account        [fail → AUTH_005/006]
+  4. Link/provider update               [thay đổi DB]
+  5. Invalidate permission cache
+  6. Build principal & JWT
+```
+
+Lý do của thứ tự này:
+
+- **Bước 3 trước bước 4**: Nếu account bị `LOCKED`, DB sẽ được rollback nhờ `@Transactional`, tránh ghi thông tin provider vào account không hợp lệ.
+- **Bước 4 chỉ thay đổi DB sau khi chắc chắn được phép login**: Đây là điểm bảo mật quan trọng, tránh "cướp" account bị khóa.
+
+### 12.5 Các Điểm Cần Lưu Ý Khi Review Code
+
+| File | Dòng | Điểm Quan Trọng |
+|------|------|-----------------|
+| `AuthServiceImpl.googleLogin()` | - | Luồng đã tách `findOrCreateGoogleAccount()` riêng |
+| `AuthServiceImpl.findOrCreateGoogleAccount()` | - | Ưu tiên `providerId` trước, fallback `email` sau |
+| `AuthServiceImpl.validateGoogleLink()` | - | Chặn provider conflict (FACEBOOK, sub mismatch) |
+| `AuthServiceImpl.canLinkGoogle()` | - | Chỉ cho phép link với `LOCAL` hoặc null |
+| `ScopeRepository.findByScopeTypeAndBranchIdIsNull()` | - | Tránh null JPA query bug |
+| `AccountRepository.findByAuthProviderAndProviderId()` | - | Tìm nhanh account tồn tại của Google |
+| `AuthMapper.toLoginResponse()` | - | Tái sử dụng response format, giữ đồng bộ |
+| `Constants.AUTH_PROVIDER_GOOGLE` | - | Dùng constant, không hardcode |
+| `GlobalExceptionHandler` | `AUTH_GOOGLE_004` | Phải trả 409 CONFLICT để frontend xử lý đúng |
+
+### 12.6 Xử Lý Race Condition
+
+| Rủi Ro | Mức Độ | Giải Pháp Hiện Tại | Giải Pháp Chuẩn |
+|--------|--------|--------------------|-----------------|
+| `generateUniqueUsername()` - hai request cùng lúc sinh username trùng | Thấp | DB unique constraint bắt | Bắt `DataIntegrityViolationException` + retry |
+| `findOrCreateGoogleAccount()` - hai request Google cùng lúc với `sub` mới | Trung bình | Transaction + unique constraint | Có thể thêm `SELECT ... FOR UPDATE` |
+| `validateAccountStatus()` + `setProviderId()` bị rollback nếu throw | Thấp | `@Transactional` rollback tự động | Không cần thay đổi |
+| Link provider vào account bị LOCKED rồi rollback | Thấp | Đã đảo validateStatus trước setProviderId | OK |
+
+### 12.7 Luồng Extension Cho Provider Khác
+
+Khi thêm Facebook/Apple login trong tương lai:
+
+```text
+AuthService
+  ├── login()              -> username/password
+  ├── googleLogin()        -> GOOGLE
+  ├── facebookLogin()      -> FACEBOOK   (thêm sau)
+  ├── appleLogin()         -> APPLE      (thêm sau)
+  └── ...
+
+Mỗi provider cần:
+  1. TokenVerifier riêng (vd: FacebookTokenVerifier)
+  2. findOrCreate theo (provider, providerId)
+  3. validateLink với canLink rules
+  4. Tái sử dụng assignCustomerRole, createCustomerProfile
+```
+
+---
+
+## 13. Hướng Dẫn Frontend
 
 Frontend dùng Google Identity Services:
 
@@ -440,7 +599,7 @@ Frontend không cần biết Google access token. Frontend chỉ lưu Pine Drink
 
 ---
 
-## 13. Cấu Hình Google Cloud
+## 14. Cấu Hình Google Cloud
 
 1. Tạo project trong Google Cloud Console.
 2. Vào APIs & Services -> OAuth consent screen.
@@ -465,27 +624,32 @@ Ghi chú: Flow ID token từ frontend sang backend không cần redirect URI n�
 
 ---
 
-## 14. Chiến Lược Test
+## 15. Chiến Lược Test
 
-### 14.1 Unit Test
+### 15.1 Unit Test
 
 | Test | Expected |
 |------|----------|
 | Google payload hợp lệ, email mới | Tạo account, role, profile, trả token |
-| Google payload hợp lệ, email tồn tại | Login account hiện có |
+| Google payload hợp lệ, email tồn tại (LOCAL) | Link Google, login thành công |
+| Google payload hợp lệ, email tồn tại (GOOGLE cùng sub) | Login account đó |
+| Google payload hợp lệ, email tồn tại (GOOGLE khác sub) | Throw `AUTH_GOOGLE_005` |
+| Google payload hợp lệ, email tồn tại (FACEBOOK) | Throw `AUTH_GOOGLE_004` |
 | Invalid token | Throw `AUTH_GOOGLE_002` |
 | Email not verified | Throw `AUTH_GOOGLE_003` |
 | Locked account | Throw `AUTH_005` |
+| Inactive account | Throw `AUTH_006` |
 | Username collision | Sinh username mới không trùng |
 
-### 14.2 Integration Test
+### 15.2 Integration Test
 
 - Mock `GoogleTokenVerifier` để trả payload hợp lệ.
 - Gọi `POST /api/v1/auth/google`.
 - Assert response có `accessToken`, `refreshToken`, `account.email`.
 - Assert DB có account, role assignment, customer profile.
+- Test case: email mới, email trùng local, email trùng Google cùng sub, email trùng Google khác sub.
 
-### 14.3 Manual Test
+### 15.3 Manual Test
 
 1. Cấu hình `GOOGLE_CLIENT_ID`.
 2. Chạy backend.
@@ -497,7 +661,7 @@ Ghi chú: Flow ID token từ frontend sang backend không cần redirect URI n�
 
 ---
 
-## 15. Rủi Ro Và Giảm Thiểu
+## 16. Rủi Ro Và Giảm Thiểu
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -506,10 +670,12 @@ Ghi chú: Flow ID token từ frontend sang backend không cần redirect URI n�
 | Password placeholder | User không thể login password nếu chưa set | Thêm flow set password sau này |
 | Google service outage | Google login unavailable | Login password vẫn hoạt động |
 | Token bị log | Lộ thông tin nhạy cảm | Không log raw ID token |
+| Race condition username | Tạo account thất bại | Unique constraint DB + retry |
+| Provider conflict (FACEBOOK) | Link sai account | CanLink check + AUTH_GOOGLE_004 |
 
 ---
 
-## 16. Kế Hoạch Rollout
+## 17. Kế Hoạch Rollout
 
 1. Thêm dependency, config, DTO, verifier, service, controller.
 2. Permit endpoint `/api/v1/auth/google`.
@@ -522,22 +688,25 @@ Ghi chú: Flow ID token từ frontend sang backend không cần redirect URI n�
 
 ---
 
-## 17. Acceptance Criteria
+## 18. Acceptance Criteria
 
 - `POST /api/v1/auth/google` nhận Google ID token hợp lệ và trả `LoginResponse`.
 - Account mới từ Google có status `ACTIVE`, role `CUSTOMER`, scope `SYSTEM`.
 - Account đã tồn tại theo email có thể login bằng Google nếu status hợp lệ.
 - Account `LOCKED`/`INACTIVE` bị chặn.
 - Google ID token invalid/expired/audience sai bị từ chối.
+- Email dùng bởi provider khác (FACEBOOK) bị từ chối với 409.
+- Google sub không khớp account hiện có bị từ chối.
 - Response token đúng format với login password hiện tại.
 - Không lưu/log raw Google ID token.
 
 ---
 
-## 18. Future Enhancements
+## 19. Future Enhancements
 
-- Thêm `auth_provider` và `provider_id` vào `ia_account`.
+- Thêm `auth_provider` và `provider_id` vào `ia_account`. (Đã làm trong v1.0)
 - Thêm account linking/unlinking trong profile.
 - Thêm Facebook/Apple login với provider abstraction.
 - Cho user set password sau khi tạo account bằng Google.
 - Thêm audit log chi tiết cho social login.
+- Xử lý race condition mạnh hơn (retry pattern cho username).

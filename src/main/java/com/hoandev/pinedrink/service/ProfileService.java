@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service;
 
 import com.hoandev.pinedrink.entity.dto.request.Profile.ChangePasswordRequest;
+import com.hoandev.pinedrink.entity.dto.request.Profile.SetPasswordRequest;
 import com.hoandev.pinedrink.entity.dto.request.Profile.UpdateProfileRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.FileUploadResponse;
@@ -34,6 +35,14 @@ public interface ProfileService {
      * @param request containing currentPassword, newPassword, and confirmPassword
      */
     void changePassword(ChangePasswordRequest request);
+
+    /**
+     * Sets the first local password for social-login accounts.
+     * Does not require current password because no real local password exists yet.
+     *
+     * @param request containing newPassword and confirmPassword
+     */
+    void setPassword(SetPasswordRequest request);
 
     /**
      * Uploads a new avatar for the currently authenticated user.

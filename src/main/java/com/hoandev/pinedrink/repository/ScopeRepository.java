@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface ScopeRepository extends JpaRepository<Scope, String> {
     Optional<Scope> findByScopeTypeAndBranchId(String scopeType, String branchId);
+
+    Optional<Scope> findByScopeTypeAndBranchIdIsNull(String scopeType);
 }

@@ -17,4 +17,7 @@ public final class Constants {
     public static final String SCOPE_SYSTEM = "SYSTEM";
     public static final String SCOPE_BRANCH = "BRANCH";
     public static final String TOKEN_TYPE_BEARER = "Bearer";
+
+    public static final String AUTH_PROVIDER_LOCAL = "LOCAL";
+    public static final String AUTH_PROVIDER_GOOGLE = "GOOGLE";
 }

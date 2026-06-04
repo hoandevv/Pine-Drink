@@ -159,6 +159,10 @@ app:
     count-ttl-hours: ${OTP_COUNT_TTL_HOURS:24}
     max-send-per-day: ${OTP_MAX_SEND_PER_DAY:10}
 
+  oauth2:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+
   outbox:
     poll-interval: ${APP_OUTBOX_POLL_INTERVAL:5000}
     batch-size: ${APP_OUTBOX_BATCH_SIZE:50}

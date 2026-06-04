@@ -20,6 +20,7 @@ import com.hoandev.pinedrink.repository.RoleRepository;
 import com.hoandev.pinedrink.repository.ScopeRepository;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.CustomUserDetailsService;
+import com.hoandev.pinedrink.security.GoogleTokenVerifier;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
@@ -51,6 +52,7 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link AuthService}.
@@ -75,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthMapper authMapper;
     private final CustomUserDetailsService customUserDetailsService;
     private final PermissionCacheService permissionCacheService;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     private static final String OTP_KEY_PREFIX = "otp:register:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
@@ -118,6 +121,7 @@ public class AuthServiceImpl implements AuthService {
         Account account = new Account();
         account.setUsername(username);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
+        account.setAuthProvider(Constants.AUTH_PROVIDER_LOCAL);
         account.setFullName(request.getFullName());
         account.setEmail(email);
         account.setPhone(phone);
@@ -262,6 +266,161 @@ public class AuthServiceImpl implements AuthService {
         log.info("Account logged in: {}", account.getUsername());
 
         return authMapper.toLoginResponse(accessToken, refreshToken, account);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse googleLogin(String idToken) {
+        GoogleTokenVerifier.GoogleUserInfo googleUser = googleTokenVerifier.verify(idToken);
+        String email = googleUser.getEmail().trim().toLowerCase();
+        Account account = findOrCreateGoogleAccount(googleUser, email);
+
+        validateAccountStatus(account);
+        if (account.getProviderId() == null || account.getProviderId().isBlank()) {
+            account.setAuthProvider(Constants.AUTH_PROVIDER_GOOGLE);
+            account.setProviderId(googleUser.getSubject());
+        }
+        if (account.getAvatarUrl() == null && googleUser.getPicture() != null) {
+            account.setAvatarUrl(googleUser.getPicture());
+        }
+
+        permissionCacheService.invalidateUserCache(account.getId());
+        UserPrincipal principal = customUserDetailsService.buildPrincipal(account);
+
+        String accessToken = jwtTokenProvider.generateAccessToken(principal);
+        String refreshToken = jwtTokenProvider.generateRefreshToken();
+        saveRefreshToken(account, refreshToken);
+
+        account.setLastLoginAt(LocalDateTime.now());
+        accountRepository.save(account);
+        log.info("Google account logged in: accountId={}, email={}", account.getId(), account.getEmail());
+
+        return authMapper.toLoginResponse(accessToken, refreshToken, account);
+    }
+
+    private Account findOrCreateGoogleAccount(GoogleTokenVerifier.GoogleUserInfo googleUser, String email) {
+        Optional<Account> googleAccount = accountRepository.findByAuthProviderAndProviderId(
+                Constants.AUTH_PROVIDER_GOOGLE, googleUser.getSubject());
+        if (googleAccount.isPresent()) {
+            return googleAccount.get();
+        }
+
+        Optional<Account> existingByEmail = accountRepository.findByEmail(email);
+        if (existingByEmail.isEmpty()) {
+            return createGoogleAccount(googleUser, email);
+        }
+
+        Account account = existingByEmail.get();
+        validateGoogleLink(account, googleUser);
+        return account;
+    }
+
+    private void validateGoogleLink(Account account, GoogleTokenVerifier.GoogleUserInfo googleUser) {
+        if (Constants.AUTH_PROVIDER_GOOGLE.equals(account.getAuthProvider())) {
+            if (account.getProviderId() == null || account.getProviderId().isBlank()) {
+                return;
+            }
+            if (!account.getProviderId().equals(googleUser.getSubject())) {
+                throw new BaseException(ErrorCode.AUTH_GOOGLE_005);
+            }
+            return;
+        }
+
+        if (!canLinkGoogle(account)) {
+            throw new BaseException(ErrorCode.AUTH_GOOGLE_004);
+        }
+    }
+
+    private boolean canLinkGoogle(Account account) {
+        return account.getAuthProvider() == null
+                || account.getAuthProvider().isBlank()
+                || Constants.AUTH_PROVIDER_LOCAL.equals(account.getAuthProvider());
+    }
+
+    private Account createGoogleAccount(GoogleTokenVerifier.GoogleUserInfo googleUser, String email) {
+        Account account = new Account();
+        account.setUsername(generateUniqueUsername(email));
+        account.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        account.setAuthProvider(Constants.AUTH_PROVIDER_GOOGLE);
+        account.setProviderId(googleUser.getSubject());
+        account.setFullName(resolveGoogleFullName(googleUser));
+        account.setEmail(email);
+        account.setAvatarUrl(googleUser.getPicture());
+        account.setStatus(Constants.STATUS_ACTIVE);
+        account = accountRepository.save(account);
+
+        assignCustomerRole(account);
+        createCustomerProfile(account);
+
+        log.info("Google account provisioned: accountId={}, email={}", account.getId(), account.getEmail());
+        return account;
+    }
+
+    private void assignCustomerRole(Account account) {
+        Role customerRole = roleRepository.findByCode(Constants.ROLE_CUSTOMER)
+                .orElseThrow(() -> new BaseException(ErrorCode.ROLE_NOT_FOUND));
+        Scope systemScope = scopeRepository.findByScopeTypeAndBranchIdIsNull(Constants.SCOPE_SYSTEM)
+                .orElseThrow(() -> new BaseException(ErrorCode.SCOPE_NOT_FOUND));
+
+        AccountRoleAssignment assignment = new AccountRoleAssignment();
+        assignment.setAccount(account);
+        assignment.setRole(customerRole);
+        assignment.setScope(systemScope);
+        assignment.setAssignedAt(LocalDateTime.now());
+        assignment.setStatus(Constants.STATUS_ACTIVE);
+        assignmentRepository.save(assignment);
+    }
+
+    private void createCustomerProfile(Account account) {
+        if (customerProfileRepository.findByAccountId(account.getId()).isPresent()) {
+            return;
+        }
+        CustomerProfile profile = new CustomerProfile();
+        profile.setFullName(account.getFullName());
+        profile.setPhone(account.getPhone());
+        profile.setEmail(account.getEmail());
+        profile.setAccount(account);
+        profile.setCustomerCode(codeGenerator.generate("KH"));
+        profile.setStatus(Constants.STATUS_ACTIVE);
+        customerProfileRepository.save(profile);
+    }
+
+    private String resolveGoogleFullName(GoogleTokenVerifier.GoogleUserInfo googleUser) {
+        if (googleUser.getName() != null && !googleUser.getName().isBlank()) {
+            return googleUser.getName().trim();
+        }
+        return googleUser.getEmail().substring(0, googleUser.getEmail().indexOf('@'));
+    }
+
+    private String generateUniqueUsername(String email) {
+        String base = email.substring(0, email.indexOf('@'))
+                .toLowerCase()
+                .replaceAll("[^a-z0-9_]", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_|_$", "");
+
+        if (base.isBlank()) {
+            base = "user";
+        }
+        if (base.length() < 3) {
+            base = base + randomSuffix(3);
+        }
+        String username = base;
+        while (accountRepository.existsByUsername(username)) {
+            username = base + "_" + randomSuffix(6);
+        }
+        return username;
+    }
+
+    private String randomSuffix(int length) {
+        String alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder suffix = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            suffix.append(alphabet.charAt(SECURE_RANDOM.nextInt(alphabet.length())));
+        }
+
+        return suffix.toString();
     }
 
     /**

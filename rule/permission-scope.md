@@ -34,28 +34,30 @@ Permission alone is not enough. Scope alone is not enough.
 
 ## Scope Meaning
 
-- `SYSTEM`: all brands and branches
-- `BRAND`: selected brand and all branches under that brand
+- `SYSTEM`: full app access across all branches
 - `BRANCH`: selected branch only
+
+There is no `BRAND` scope. Pine Drink is branch-first and no-brand.
 
 ## Service Rules
 
 Use `AccessScopeService` in service layer for target-data checks:
 
 ```java
-assertCanAccessBrand(String brandId)
-assertCanManageBrand(String brandId)
+assertSystemAccess()
 assertCanAccessBranch(String branchId)
 assertCanManageBranch(String branchId)
 assertCanDeleteBranch(String branchId)
 ```
 
 Default behavior:
-- View brand data: `SYSTEM` or matching `BRAND`
-- Create branch: `SYSTEM` or matching `BRAND`
-- View branch: `SYSTEM`, matching `BRAND`, or matching `BRANCH`
-- Update branch: `SYSTEM`, matching `BRAND`, or matching `BRANCH`
-- Delete branch: `SYSTEM` or matching `BRAND` only
+- View global catalog data: any user with matching `PERM_*` permission
+- Manage global catalog data: `SYSTEM` scope
+- Create branch: `SYSTEM` scope
+- View branch: `SYSTEM` or matching `BRANCH`
+- Update branch: `SYSTEM` or matching `BRANCH`
+- Delete branch: `SYSTEM` or matching `BRANCH`
+- View/manage order, stock, availability: `SYSTEM` or matching `BRANCH`
 
 ## JWT Rule
 
@@ -75,8 +77,9 @@ Default behavior:
 
 When migrating a controller:
 
-1. Add/verify permissions in `V11__seed_permissions_and_role_permissions.sql`.
+1. Add/verify permissions in migration seed files.
 2. Replace role checks with `PERM_*` checks in controller.
-3. Add scope check in service before data mutation/read.
-4. Compile with `./mvnw -q -DskipTests compile`.
-5. Test both permission denial and out-of-scope denial.
+3. Add branch scope check in service before branch-scoped data mutation/read.
+4. Use `assertSystemAccess()` for global admin-only operations.
+5. Compile with `./mvnw -q -DskipTests compile`.
+6. Test both permission denial and out-of-scope denial.

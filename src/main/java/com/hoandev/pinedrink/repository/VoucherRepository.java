@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, String> {
-    Optional<Voucher> findByBrandIdAndCode(String brandId, String code);
-    List<Voucher> findByBrandIdAndStatus(String brandId, String status);
+    Optional<Voucher> findByCode(String code);
+
+    List<Voucher> findByStatus(String status);
 }

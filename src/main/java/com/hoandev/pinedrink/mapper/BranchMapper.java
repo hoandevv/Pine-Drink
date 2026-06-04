@@ -1,7 +1,6 @@
 package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.Branch;
-import com.hoandev.pinedrink.entity.Brand;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
@@ -37,8 +36,6 @@ public class BranchMapper {
                 .supportsPickup(branch.isSupportsPickup())
                 .supportsDelivery(branch.isSupportsDelivery())
                 .averagePreparationMinutes(branch.getAveragePreparationMinutes())
-                .brandId(branch.getBrand() != null ? branch.getBrand().getId() : null)
-                .brandName(branch.getBrand() != null ? branch.getBrand().getName() : null)
                 .status(branch.getStatus())
                 .createdAt(branch.getCreatedAt())
                 .updatedAt(branch.getUpdatedAt())
@@ -49,10 +46,9 @@ public class BranchMapper {
      * Maps CreateBranchRequest to Branch entity.
      *
      * @param request the create branch request
-     * @param brand the brand entity
      * @return the branch entity
      */
-    public Branch toEntity(CreateBranchRequest request, Brand brand) {
+    public Branch toEntity(CreateBranchRequest request) {
         if (request == null) {
             return null;
         }
@@ -69,7 +65,6 @@ public class BranchMapper {
         branch.setSupportsPickup(request.isSupportsPickup());
         branch.setSupportsDelivery(request.isSupportsDelivery());
         branch.setAveragePreparationMinutes(request.getAveragePreparationMinutes());
-        branch.setBrand(brand);
         return branch;
     }
 

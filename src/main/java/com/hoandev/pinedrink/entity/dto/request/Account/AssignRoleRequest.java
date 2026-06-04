@@ -20,7 +20,6 @@ public class AssignRoleRequest {
     @Builder.Default
     private String scopeType = "SYSTEM";
 
-    private String brandId;
 
     private String branchId;
 

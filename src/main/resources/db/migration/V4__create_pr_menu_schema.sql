@@ -2,7 +2,6 @@
 
 CREATE TABLE pr_category (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(150) NOT NULL,
     description VARCHAR(255) NULL,
@@ -13,14 +12,12 @@ CREATE TABLE pr_category (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_pr_category_brand_code (brand_id, code),
-    CONSTRAINT fk_pr_category_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
-    INDEX idx_pr_category_brand_status_order (brand_id, status, display_order)
+    UNIQUE KEY uk_pr_category_code (code),
+    INDEX idx_pr_category_status_order (status, display_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE pr_product (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     category_id CHAR(36) NOT NULL,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(150) NOT NULL,
@@ -30,17 +27,18 @@ CREATE TABLE pr_product (
     preparation_minutes INT NOT NULL DEFAULT 10,
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     is_best_seller BOOLEAN NOT NULL DEFAULT FALSE,
+    available_ice_levels VARCHAR(50) NOT NULL DEFAULT '0,30,50,70,100',
+    available_sugar_levels VARCHAR(50) NOT NULL DEFAULT '0,30,50,70,100',
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_pr_product_brand_code (brand_id, code),
-    CONSTRAINT fk_pr_product_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_pr_product_code (code),
     CONSTRAINT fk_pr_product_category FOREIGN KEY (category_id) REFERENCES pr_category(id) ON DELETE RESTRICT,
     INDEX idx_pr_product_category_status (category_id, status),
-    INDEX idx_pr_product_brand_status (brand_id, status),
-    INDEX idx_pr_product_featured (brand_id, is_featured, status),
+    INDEX idx_pr_product_status (status),
+    INDEX idx_pr_product_featured (is_featured, status),
     CHECK (base_price >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -64,19 +62,18 @@ CREATE TABLE pr_product_variant (
 
 CREATE TABLE pr_topping (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(150) NOT NULL,
     price DECIMAL(12,2) NOT NULL,
     image_url VARCHAR(500) NULL,
+    group_name VARCHAR(100) NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_pr_topping_brand_code (brand_id, code),
-    CONSTRAINT fk_pr_topping_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
-    INDEX idx_pr_topping_brand_status (brand_id, status),
+    UNIQUE KEY uk_pr_topping_code (code),
+    INDEX idx_pr_topping_status (status),
     CHECK (price >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

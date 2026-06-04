@@ -3,7 +3,6 @@
 CREATE TABLE nt_notification (
     id CHAR(36) NOT NULL PRIMARY KEY,
     recipient_account_id CHAR(36) NULL,
-    brand_id CHAR(36) NULL,
     branch_id CHAR(36) NULL,
     notification_type VARCHAR(80) NOT NULL,
     title VARCHAR(180) NOT NULL,
@@ -20,7 +19,6 @@ CREATE TABLE nt_notification (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
     CONSTRAINT fk_nt_notification_account FOREIGN KEY (recipient_account_id) REFERENCES ia_account(id) ON DELETE CASCADE,
-    CONSTRAINT fk_nt_notification_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
     CONSTRAINT fk_nt_notification_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE CASCADE,
     INDEX idx_nt_notification_recipient_status_created (recipient_account_id, status, created_at),
     INDEX idx_nt_notification_reference (reference_type, reference_id),
@@ -29,7 +27,6 @@ CREATE TABLE nt_notification (
 
 CREATE TABLE nt_template (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NULL,
     template_code VARCHAR(100) NOT NULL,
     channel VARCHAR(30) NOT NULL,
     subject VARCHAR(180) NULL,
@@ -40,14 +37,12 @@ CREATE TABLE nt_template (
     created_by CHAR(36) NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    UNIQUE KEY uk_nt_template_brand_code_channel (brand_id, template_code, channel),
-    CONSTRAINT fk_nt_template_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_nt_template_code_channel (template_code, channel),
     INDEX idx_nt_template_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE rp_export_request (
     id CHAR(36) NOT NULL PRIMARY KEY,
-    brand_id CHAR(36) NOT NULL,
     branch_id CHAR(36) NULL,
     requested_by CHAR(36) NOT NULL,
     report_type VARCHAR(80) NOT NULL,
@@ -61,11 +56,10 @@ CREATE TABLE rp_export_request (
     completed_at DATETIME NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by CHAR(36) NULL,
-    CONSTRAINT fk_rp_export_brand FOREIGN KEY (brand_id) REFERENCES ce_brand(id) ON DELETE CASCADE,
     CONSTRAINT fk_rp_export_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE SET NULL,
     CONSTRAINT fk_rp_export_requested_by FOREIGN KEY (requested_by) REFERENCES ia_account(id) ON DELETE RESTRICT,
     INDEX idx_rp_export_requested_status (requested_by, status, requested_at),
-    INDEX idx_rp_export_brand_type (brand_id, report_type, requested_at)
+    INDEX idx_rp_export_type_requested (report_type, requested_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE pf_outbox_event (
@@ -73,7 +67,6 @@ CREATE TABLE pf_outbox_event (
     event_type VARCHAR(120) NOT NULL,
     aggregate_type VARCHAR(80) NOT NULL,
     aggregate_id CHAR(36) NOT NULL,
-    brand_id CHAR(36) NULL,
     branch_id CHAR(36) NULL,
     routing_key VARCHAR(150) NOT NULL,
     payload JSON NOT NULL,

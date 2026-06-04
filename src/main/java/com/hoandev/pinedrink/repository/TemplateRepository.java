@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface TemplateRepository extends JpaRepository<Template, String> {
-    Optional<Template> findByBrandIdAndTemplateCodeAndChannel(String brandId, String templateCode, String channel);
+    Optional<Template> findByTemplateCodeAndChannel(String templateCode, String channel);
 }

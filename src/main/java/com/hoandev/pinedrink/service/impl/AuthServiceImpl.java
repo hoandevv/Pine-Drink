@@ -183,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
         Role customerRole = roleRepository.findByCode(Constants.ROLE_CUSTOMER)
                 .orElseThrow(() -> new BaseException(ErrorCode.ROLE_NOT_FOUND));
 
-        Scope systemScope = scopeRepository.findByScopeTypeAndBrandIdAndBranchId("SYSTEM", null, null)
+        Scope systemScope = scopeRepository.findByScopeTypeAndBranchId("SYSTEM", null)
                 .orElseThrow(() -> new BaseException(ErrorCode.SCOPE_NOT_FOUND));
 
         AccountRoleAssignment assignment = new AccountRoleAssignment();
@@ -250,6 +250,7 @@ public class AuthServiceImpl implements AuthService {
         }
         validateAccountStatus(account);
 
+        permissionCacheService.invalidateUserCache(account.getId());
         UserPrincipal principal = customUserDetailsService.buildPrincipal(account);
 
         String accessToken = jwtTokenProvider.generateAccessToken(principal);
@@ -490,8 +491,7 @@ public class AuthServiceImpl implements AuthService {
                 PasswordResetEmailEvent event = PasswordResetEmailEvent.of(
                         finalEmail,
                         finalOtp,
-                        (int) OTP_TTL.toMinutes()
-                );
+                        (int) OTP_TTL.toMinutes());
                 eventPublisher.publish(event);
                 log.info("Forgot password OTP email event published for: {}", finalEmail);
             }

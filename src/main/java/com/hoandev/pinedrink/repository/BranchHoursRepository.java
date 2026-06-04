@@ -5,8 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BranchHoursRepository extends JpaRepository<BranchHours, String> {
     List<BranchHours> findByBranchId(String branchId);
+
+    Optional<BranchHours> findByIdAndBranchId(String id, String branchId);
+
+    boolean existsByBranchIdAndDayOfWeek(String branchId, int dayOfWeek);
+
+    boolean existsByBranchIdAndDayOfWeekAndIdNot(String branchId, int dayOfWeek, String id);
 }

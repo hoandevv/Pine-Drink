@@ -39,9 +39,6 @@ public class ExportRequest extends BaseEntity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")

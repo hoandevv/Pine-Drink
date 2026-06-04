@@ -32,7 +32,7 @@ public class Ingredient {
     private String name;           // tên
     private String unit;           // kg, lít, ml, gram, cái
     private Double minStockQuantity; // ngưỡng cảnh báo tồn tối thiểu
-    private UUID brandId;          // thuộc brand nào
+    private String code;           // unique global
 }
 ```
 
@@ -213,7 +213,7 @@ public void checkLowStock() {
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| GET | `/ingredients?brandId=` | Danh sách ingredients |
+| GET | `/ingredients` | Danh sách ingredients |
 | POST | `/ingredients` | Tạo ingredient mới |
 | PUT | `/ingredients/{id}` | Cập nhật ingredient |
 | DELETE | `/ingredients/{id}` | Xóa ingredient |

@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "pr_product", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
+@Table(name = "pr_product", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Product extends BaseEntity {
 
     @Column(nullable = false)
@@ -36,9 +36,11 @@ public class Product extends BaseEntity {
     @Column(name = "is_best_seller", nullable = false)
     private boolean isBestSeller = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    @Column(name = "available_ice_levels", nullable = false)
+    private String availableIceLevels = "0,30,50,70,100";
+
+    @Column(name = "available_sugar_levels", nullable = false)
+    private String availableSugarLevels = "0,30,50,70,100";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)

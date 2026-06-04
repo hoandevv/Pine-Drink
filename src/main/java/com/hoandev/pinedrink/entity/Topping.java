@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "pr_topping", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
+@Table(name = "pr_topping", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Topping extends BaseEntity {
 
     @Column(nullable = false)
@@ -25,9 +25,9 @@ public class Topping extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    @Column(name = "group_name")
+    private String groupName;
+
 
     @OneToMany(mappedBy = "topping")
     private List<ProductTopping> productToppings;

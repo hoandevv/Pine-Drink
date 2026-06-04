@@ -16,7 +16,6 @@ public class AccountManagementMapper {
     public AccountListItemResponse toListItem(Account account, List<String> roles) {
         return AccountListItemResponse.builder()
                 .id(account.getId())
-                .brandId(account.getBrand() != null ? account.getBrand().getId() : null)
                 .username(account.getUsername())
                 .fullName(account.getFullName())
                 .email(account.getEmail())
@@ -35,7 +34,6 @@ public class AccountManagementMapper {
                                           List<AccountRoleAssignmentResponse> roleAssignments) {
         return AccountDetailResponse.builder()
                 .id(account.getId())
-                .brandId(account.getBrand() != null ? account.getBrand().getId() : null)
                 .username(account.getUsername())
                 .fullName(account.getFullName())
                 .email(account.getEmail())
@@ -59,7 +57,6 @@ public class AccountManagementMapper {
                 .roleName(assignment.getRole().getName())
                 .scopeId(assignment.getScope().getId())
                 .scopeType(assignment.getScope().getScopeType())
-                .scopeBrandId(assignment.getScope().getBrand() != null ? assignment.getScope().getBrand().getId() : null)
                 .scopeBranchId(assignment.getScope().getBranch() != null ? assignment.getScope().getBranch().getId() : null)
                 .status(assignment.getStatus())
                 .assignedAt(assignment.getAssignedAt())

@@ -25,8 +25,6 @@ public class BranchResponse {
     private boolean supportsPickup;
     private boolean supportsDelivery;
     private int averagePreparationMinutes;
-    private String brandId;
-    private String brandName;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

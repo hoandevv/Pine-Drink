@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface SettingRepository extends JpaRepository<Setting, String> {
-    Optional<Setting> findByBrandIdAndConfigKey(String brandId, String configKey);
+    Optional<Setting> findByConfigKey(String configKey);
+
     Optional<Setting> findByBranchIdAndConfigKey(String branchId, String configKey);
 }

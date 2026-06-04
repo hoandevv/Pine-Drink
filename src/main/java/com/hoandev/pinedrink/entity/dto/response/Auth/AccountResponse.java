@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,7 +15,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccountResponse {
     private String id;
-    private String brandId;
     private String username;
     private String fullName;
     private String email;
@@ -24,4 +24,18 @@ public class AccountResponse {
     private LocalDateTime lastLoginAt;
     private LocalDate dateOfBirth;
     private String gender;
+    private ScopeAccessResponse scope;
+
+    /**
+     * Branch access summary for UI filtering.
+     * SYSTEM means all branches; BRANCH means only listed branch IDs.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ScopeAccessResponse {
+        private String type;
+        private List<String> branchIds;
+    }
 }

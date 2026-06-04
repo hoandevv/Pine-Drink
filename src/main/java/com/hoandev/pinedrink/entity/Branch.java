@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Entity
-@Table(name = "ce_branch", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "code"}))
+@Table(name = "ce_branch", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Branch extends BaseEntity {
 
     @Column(nullable = false)
@@ -42,7 +42,4 @@ public class Branch extends BaseEntity {
     @Column(name = "average_preparation_minutes", nullable = false)
     private int averagePreparationMinutes = 15;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
 }

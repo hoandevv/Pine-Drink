@@ -9,6 +9,7 @@ import com.hoandev.pinedrink.entity.dto.response.FileUploadResponse;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
+import com.hoandev.pinedrink.mapper.AuthMapper;
 import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
@@ -36,6 +37,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final CustomerProfileRepository customerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final AuthMapper authMapper;
 
     /**
      * {@inheritDoc}
@@ -191,7 +193,6 @@ public class ProfileServiceImpl implements ProfileService {
 
         return AccountResponse.builder()
                 .id(account.getId())
-                .brandId(account.getBrand() != null ? account.getBrand().getId() : null)
                 .username(account.getUsername())
                 .fullName(account.getFullName())
                 .email(account.getEmail())
@@ -201,6 +202,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .lastLoginAt(account.getLastLoginAt())
                 .dateOfBirth(customerProfile != null ? customerProfile.getDateOfBirth() : null)
                 .gender(customerProfile != null ? customerProfile.getGender() : null)
+                .scope(authMapper.buildScopeAccess(account.getId()))
                 .build();
     }
 

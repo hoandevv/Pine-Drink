@@ -18,7 +18,6 @@ public class AccountRoleAssignmentResponse {
     private String roleName;
     private String scopeId;
     private String scopeType;
-    private String scopeBrandId;
     private String scopeBranchId;
     private String status;
     private LocalDateTime assignedAt;

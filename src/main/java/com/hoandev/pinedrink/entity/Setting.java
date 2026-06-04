@@ -7,8 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "ce_setting", uniqueConstraints = @UniqueConstraint(columnNames = {"brand_id", "branch_id", "config_key"}))
+@Table(name = "ce_setting", uniqueConstraints = @UniqueConstraint(columnNames = {"scope_type", "branch_id", "config_key"}))
 public class Setting extends BaseEntity {
+
+    @Column(name = "scope_type", nullable = false)
+    private String scopeType = "SYSTEM";
 
     @Column(name = "config_key", nullable = false)
     private String configKey;
@@ -24,9 +27,6 @@ public class Setting extends BaseEntity {
     @Column(name = "is_runtime_editable", nullable = false)
     private boolean isRuntimeEditable = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id")
-    private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")

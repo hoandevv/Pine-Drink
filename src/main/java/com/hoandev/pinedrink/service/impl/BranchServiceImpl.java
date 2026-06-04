@@ -1,10 +1,9 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.Branch;
-import com.hoandev.pinedrink.entity.Brand;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
-import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.BranchStatus;
@@ -12,7 +11,6 @@ import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.BranchMapper;
 import com.hoandev.pinedrink.repository.BranchRepository;
-import com.hoandev.pinedrink.repository.BrandRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
@@ -23,15 +21,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hoandev.pinedrink.security.scope.AccessScopeContext;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
-    private final BrandRepository brandRepository;
     private final BranchMapper branchMapper;
     private final CodeGenerator codeGenerator;
     private final AccessScopeService accessScopeService;
@@ -39,25 +37,15 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public BranchResponse create(CreateBranchRequest request) {
-        accessScopeService.assertCanManageBrand(request.getBrandId());
-
-        // Verify brand exists
-        Brand brand = brandRepository.findById(request.getBrandId())
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
-
-        // Generate branch code
-        String branchCode = codeGenerator.generate("BR", request.getBrandId());
-        
-        // Check if generated code already exists (race condition protection)
+        accessScopeService.assertSystemAccess();
+        String branchCode = codeGenerator.generate("BR", "BRANCH");
         if (branchRepository.existsByCode(branchCode)) {
             throw new BaseException(ErrorCode.BRANCH_002);
         }
-
-        Branch branch = branchMapper.toEntity(request, brand);
+        Branch branch = branchMapper.toEntity(request);
         branch.setCode(branchCode);
         branch = branchRepository.save(branch);
-
-        log.info("Branch created: id={}, code={}, brandId={}", branch.getId(), branch.getCode(), brand.getId());
+        log.info("Branch created: id={}, code={}", branch.getId(), branch.getCode());
         return branchMapper.toResponse(branch);
     }
 
@@ -65,13 +53,9 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     public BranchResponse update(String id, UpdateBranchRequest request) {
         accessScopeService.assertCanManageBranch(id);
-
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-
+        Branch branch = getBranchOrThrow(id);
         branchMapper.updateEntity(branch, request);
         branch = branchRepository.save(branch);
-
         log.info("Branch updated: id={}, code={}", branch.getId(), branch.getCode());
         return branchMapper.toResponse(branch);
     }
@@ -80,13 +64,9 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     public BranchResponse updateStatus(String id, UpdateBranchStatusRequest request) {
         accessScopeService.assertCanManageBranch(id);
-
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-
+        Branch branch = getBranchOrThrow(id);
         branch.setStatus(request.getStatus());
         branch = branchRepository.save(branch);
-
         log.info("Branch status updated: id={}, code={}, status={}", branch.getId(), branch.getCode(), branch.getStatus());
         return branchMapper.toResponse(branch);
     }
@@ -95,18 +75,12 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     public void delete(String id) {
         accessScopeService.assertCanDeleteBranch(id);
-
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-
+        Branch branch = getBranchOrThrow(id);
         if (BranchStatus.INACTIVE.getValue().equals(branch.getStatus())) {
             throw new BaseException(ErrorCode.BRANCH_004);
         }
-
-        // Soft delete
         branch.setStatus(BranchStatus.INACTIVE.getValue());
         branchRepository.save(branch);
-
         log.info("Branch deleted (soft): id={}, code={}", branch.getId(), branch.getCode());
     }
 
@@ -114,46 +88,46 @@ public class BranchServiceImpl implements BranchService {
     @Transactional(readOnly = true)
     public BranchResponse getById(String id) {
         accessScopeService.assertCanAccessBranch(id);
-
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-
-        return branchMapper.toResponse(branch);
+        return branchMapper.toResponse(getBranchOrThrow(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<BranchResponse> getAllByBrandId(String brandId, Pageable pageable) {
-        accessScopeService.assertCanAccessBrand(brandId);
-
-        // Verify brand exists
-        brandRepository.findById(brandId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
-
-        Page<Branch> branches = branchRepository.findByBrandId(brandId, pageable);
-
-        List<BranchResponse> content = branches.getContent().stream()
-                .map(branchMapper::toResponse)
-                .collect(Collectors.toList());
-
+    public PageResponse<BranchResponse> getAll(Pageable pageable) {
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findAll(pageable)
+                : findScopedBranches(scope, pageable);
+        List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
         return PageResponse.from(branches, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<BranchResponse> getAllActiveByBrandId(String brandId, Pageable pageable) {
-        accessScopeService.assertCanAccessBrand(brandId);
-
-        // Verify brand exists
-        brandRepository.findById(brandId)
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_003));
-
-        Page<Branch> branches = branchRepository.findByBrandIdAndStatus(brandId, BranchStatus.ACTIVE.getValue(), pageable);
-
-        List<BranchResponse> content = branches.getContent().stream()
-                .map(branchMapper::toResponse)
-                .collect(Collectors.toList());
-
+    public PageResponse<BranchResponse> getAllActive(Pageable pageable) {
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
+                : findScopedActiveBranches(scope, pageable);
+        List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
         return PageResponse.from(branches, content);
+    }
+
+    private Page<Branch> findScopedBranches(AccessScopeContext scope, Pageable pageable) {
+        if (scope.branchIds().isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return branchRepository.findByIdIn(scope.branchIds(), pageable);
+    }
+
+    private Page<Branch> findScopedActiveBranches(AccessScopeContext scope, Pageable pageable) {
+        if (scope.branchIds().isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return branchRepository.findByIdInAndStatus(scope.branchIds(), BranchStatus.ACTIVE.getValue(), pageable);
+    }
+
+    private Branch getBranchOrThrow(String id) {
+        return branchRepository.findById(id).orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
     }
 }

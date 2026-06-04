@@ -44,6 +44,4 @@ public class CreateBranchRequest {
 
     private int averagePreparationMinutes = 15;
 
-    @NotBlank(message = "Brand ID is required")
-    private String brandId;
 }

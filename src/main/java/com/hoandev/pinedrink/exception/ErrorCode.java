@@ -48,9 +48,40 @@ public enum ErrorCode {
     CUSTOMER_005("CUSTOMER_005", "Customer already has a default address"),
 
     BRANCH_001("BRANCH_001", "Branch not found"),
-    BRANCH_002("BRANCH_002", "Branch code already exists for this brand"),
-    BRANCH_003("BRANCH_003", "Brand not found"),
-    BRANCH_004("BRANCH_004", "Branch is already inactive");
+    BRANCH_002("BRANCH_002", "Branch code already exists"),
+    BRANCH_003("BRANCH_003", "Branch scope not found"),
+    BRANCH_004("BRANCH_004", "Branch is already inactive"),
+    BRANCH_005("BRANCH_005", "Branch hours not found"),
+    BRANCH_006("BRANCH_006", "Branch hours already exists for this day"),
+    BRANCH_007("BRANCH_007", "Open time must be before close time"),
+    BRANCH_008("BRANCH_008", "Branch product availability not found"),
+    BRANCH_009("BRANCH_009", "Branch product availability already exists"),
+    BRANCH_010("BRANCH_010", "Branch topping availability not found"),
+    BRANCH_011("BRANCH_011", "Branch topping availability already exists"),
+    BRANCH_012("BRANCH_012", "Available from must be before available to"),
+
+    CATEGORY_001("CATEGORY_001", "Category not found"),
+    CATEGORY_002("CATEGORY_002", "Category code already exists"),
+    CATEGORY_003("CATEGORY_003", "Category is already inactive"),
+
+    TOPPING_001("TOPPING_001", "Topping not found"),
+    TOPPING_002("TOPPING_002", "Topping code already exists"),
+    TOPPING_003("TOPPING_003", "Topping is already inactive"),
+    TOPPING_004("TOPPING_004", "Product topping not found"),
+    TOPPING_005("TOPPING_005", "Product topping already exists"),
+    TOPPING_006("TOPPING_006", "Product topping is already inactive"),
+    TOPPING_007("TOPPING_007", "Product topping does not belong to product"),
+
+    PRODUCT_001("PRODUCT_001", "Product not found"),
+    PRODUCT_002("PRODUCT_002", "Product code already exists"),
+    PRODUCT_003("PRODUCT_003", "Product scope not found"),
+    PRODUCT_004("PRODUCT_004", "Category not found"),
+    PRODUCT_005("PRODUCT_005", "Product is already inactive"),
+    PRODUCT_006("PRODUCT_006", "Category does not match product scope"),
+    PRODUCT_007("PRODUCT_007", "Product variant not found"),
+    PRODUCT_008("PRODUCT_008", "Product variant code already exists"),
+    PRODUCT_009("PRODUCT_009", "Product variant is already inactive"),
+    PRODUCT_010("PRODUCT_010", "Product variant does not belong to product");
 
     private final String code;
     private final String message;

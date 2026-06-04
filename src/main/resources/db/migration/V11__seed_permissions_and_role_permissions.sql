@@ -25,7 +25,7 @@ VALUES
     ('00000000-0000-0000-0000-000000000208', 'ACCOUNT_ROLE_REVOKE', 'Revoke account roles', 'ACCOUNT', 'Revoke role assignments from an account', 'ACTIVE', NOW(), NULL, NOW(), NULL),
 
     -- BRANCH
-    ('00000000-0000-0000-0000-000000000211', 'BRANCH_VIEW', 'View branches', 'BRANCH', 'View branch detail and branch list by brand', 'ACTIVE', NOW(), NULL, NOW(), NULL),
+    ('00000000-0000-0000-0000-000000000211', 'BRANCH_VIEW', 'View branches', 'BRANCH', 'View branch detail and branch list by branch', 'ACTIVE', NOW(), NULL, NOW(), NULL),
     ('00000000-0000-0000-0000-000000000212', 'BRANCH_CREATE', 'Create branches', 'BRANCH', 'Create new branches', 'ACTIVE', NOW(), NULL, NOW(), NULL),
     ('00000000-0000-0000-0000-000000000213', 'BRANCH_UPDATE', 'Update branches', 'BRANCH', 'Update branch information', 'ACTIVE', NOW(), NULL, NOW(), NULL),
     ('00000000-0000-0000-0000-000000000214', 'BRANCH_DELETE', 'Delete branches', 'BRANCH', 'Soft delete branches', 'ACTIVE', NOW(), NULL, NOW(), NULL),

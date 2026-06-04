@@ -192,7 +192,7 @@ public class AuditLog {
     @Id
     private UUID id;
 
-    private String module;     // BRAND, PRODUCT, ORDER, PAYMENT, ACCOUNT
+    private String module;     // BRANCH, PRODUCT, ORDER, PAYMENT, ACCOUNT
     private String action;     // CREATE, UPDATE, DELETE
     private UUID entityId;
     private String entityType;

@@ -14,7 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 public class AccountListItemResponse {
     private String id;
-    private String brandId;
     private String username;
     private String fullName;
     private String email;

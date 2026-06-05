@@ -170,6 +170,24 @@ app:
     publish-confirm-timeout-seconds: ${APP_OUTBOX_PUBLISH_CONFIRM_TIMEOUT_SECONDS:5}
 
   rabbitmq:
+    stomp:
+      host: ${RABBITMQ_STOMP_HOST:${RABBITMQ_HOST:localhost}}
+      port: ${RABBITMQ_STOMP_PORT:61613}
+      username: ${RABBITMQ_STOMP_USERNAME:${RABBITMQ_DEFAULT_USER:admin}}
+      password: ${RABBITMQ_STOMP_PASSWORD:${RABBITMQ_DEFAULT_PASS:admin123}}
+      virtual-host: ${RABBITMQ_STOMP_VHOST:${RABBITMQ_VHOST:/}}
+      heartbeat-send-interval: ${RABBITMQ_STOMP_HEARTBEAT_SEND_INTERVAL:10000}
+      heartbeat-receive-interval: ${RABBITMQ_STOMP_HEARTBEAT_RECEIVE_INTERVAL:10000}
+
+    realtime:
+      exchange: ${APP_RABBITMQ_REALTIME_EXCHANGE:pine.events}
+      notification-queue: ${APP_RABBITMQ_REALTIME_NOTIFICATION_QUEUE:pine.notification.queue}
+      audit-queue: ${APP_RABBITMQ_REALTIME_AUDIT_QUEUE:pine.audit.queue}
+      chat-queue: ${APP_RABBITMQ_REALTIME_CHAT_QUEUE:pine.chat.queue}
+      webhook-queue: ${APP_RABBITMQ_REALTIME_WEBHOOK_QUEUE:pine.webhook.queue}
+      dlq: ${APP_RABBITMQ_REALTIME_DLQ:pine.events.dlq}
+      dlx: ${APP_RABBITMQ_REALTIME_DLX:pine.events.dlx}
+
     domain-events:
       exchange: ${APP_RABBITMQ_DOMAIN_EVENTS_EXCHANGE:pine-drink.domain-events.exchange}
       queue: ${APP_RABBITMQ_DOMAIN_EVENTS_QUEUE:pine-drink.queue.domain-events.queue}

@@ -1,4 +1,4 @@
--- Pine Drink - Notification, Report and Platform schema
+-- Pine Drink - Notification, Report, Platform and Chat schema
 
 CREATE TABLE nt_notification (
     id CHAR(36) NOT NULL PRIMARY KEY,
@@ -39,6 +39,52 @@ CREATE TABLE nt_template (
     updated_by CHAR(36) NULL,
     UNIQUE KEY uk_nt_template_code_channel (template_code, channel),
     INDEX idx_nt_template_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ch_room (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    room_code VARCHAR(50) NOT NULL,
+    room_type VARCHAR(30) NOT NULL DEFAULT 'CUSTOMER_SUPPORT',
+    customer_account_id CHAR(36) NOT NULL,
+    assigned_staff_account_id CHAR(36) NULL,
+    branch_id CHAR(36) NULL,
+    order_id CHAR(36) NULL,
+    title VARCHAR(150) NULL,
+    last_message_at DATETIME NULL,
+    last_message_preview VARCHAR(255) NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
+    UNIQUE KEY uk_ch_room_code (room_code),
+    UNIQUE KEY uk_ch_room_order_customer (order_id, customer_account_id),
+    INDEX idx_ch_room_customer_status (customer_account_id, status),
+    INDEX idx_ch_room_staff_status (assigned_staff_account_id, status),
+    INDEX idx_ch_room_branch_status (branch_id, status),
+    INDEX idx_ch_room_last_message_at (last_message_at),
+    CONSTRAINT fk_ch_room_customer_account FOREIGN KEY (customer_account_id) REFERENCES ia_account(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ch_room_staff_account FOREIGN KEY (assigned_staff_account_id) REFERENCES ia_account(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ch_room_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ch_room_order FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ch_message (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    room_id CHAR(36) NOT NULL,
+    sender_account_id CHAR(36) NOT NULL,
+    message_type VARCHAR(30) NOT NULL DEFAULT 'TEXT',
+    content TEXT NULL,
+    metadata JSON NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by CHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by CHAR(36) NULL,
+    INDEX idx_ch_message_room_created_at (room_id, created_at),
+    INDEX idx_ch_message_sender_created_at (sender_account_id, created_at),
+    CONSTRAINT fk_ch_message_room FOREIGN KEY (room_id) REFERENCES ch_room(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ch_message_sender_account FOREIGN KEY (sender_account_id) REFERENCES ia_account(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE rp_export_request (

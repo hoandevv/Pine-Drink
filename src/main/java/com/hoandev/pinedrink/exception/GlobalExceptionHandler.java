@@ -91,6 +91,7 @@ public class GlobalExceptionHandler {
         if (errorCode == null) return HttpStatus.BAD_REQUEST;
         String code = errorCode.getCode();
         if (code.startsWith("AUTH_")) {
+            if (code.equals("AUTH_GOOGLE_004")) return HttpStatus.CONFLICT;
             if (code.equals("AUTH_007")) return HttpStatus.FORBIDDEN;
             if (code.equals("AUTH_008")) return HttpStatus.TOO_MANY_REQUESTS;
             return HttpStatus.UNAUTHORIZED;

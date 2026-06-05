@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Profile.ChangePasswordRequest;
+import com.hoandev.pinedrink.entity.dto.request.Profile.SetPasswordRequest;
 import com.hoandev.pinedrink.entity.dto.request.Profile.UpdateProfileRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
@@ -81,6 +82,17 @@ public class ProfileController {
         profileService.changePassword(request);
         return ResponseEntity.ok(
                 BaseResponse.success(null, "Password changed successfully")
+        );
+    }
+
+    @PostMapping("/set-password")
+    public ResponseEntity<BaseResponse<Void>> setPassword(
+            @RequestBody @Valid SetPasswordRequest request
+    ) {
+        log.debug("Set password request received");
+        profileService.setPassword(request);
+        return ResponseEntity.ok(
+                BaseResponse.success(null, "Password set successfully")
         );
     }
 

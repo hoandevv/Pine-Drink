@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Auth.LoginRequest;
+import com.hoandev.pinedrink.entity.dto.request.Auth.GoogleLoginRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RefreshTokenRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.RegisterRequest;
 import com.hoandev.pinedrink.entity.dto.request.Auth.ResendRegisterOtpRequest;
@@ -118,6 +119,17 @@ public class AuthController {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(
                 BaseResponse.success(response, "Login successfully")
+        );
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<BaseResponse<LoginResponse>> googleLogin(
+            @RequestBody @Valid GoogleLoginRequest request
+    ) {
+        log.debug("Google login request received");
+        LoginResponse response = authService.googleLogin(request.getIdToken());
+        return ResponseEntity.ok(
+                BaseResponse.success(response, "Google login successfully")
         );
     }
 

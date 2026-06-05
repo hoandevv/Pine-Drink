@@ -96,6 +96,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/register/verify-otp",
                                 "/api/v1/auth/register/resend-otp",
+                                "/api/v1/auth/google",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/forgot-password",

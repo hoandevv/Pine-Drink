@@ -29,6 +29,8 @@ public interface AccountRepository extends JpaRepository<Account, String>, JpaSp
      */
     Optional<Account> findByEmail(String email);
 
+    Optional<Account> findByAuthProviderAndProviderId(String authProvider, String providerId);
+
     /**
      * Checks whether an account with the given username already exists.
      *

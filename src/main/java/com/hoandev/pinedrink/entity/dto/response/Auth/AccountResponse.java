@@ -21,6 +21,8 @@ public class AccountResponse {
     private String phone;
     private String avatarUrl;
     private String status;
+    private String authProvider;
+    private Boolean hasLocalPassword;
     private LocalDateTime lastLoginAt;
     private LocalDate dateOfBirth;
     private String gender;

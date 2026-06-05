@@ -3,6 +3,7 @@ package com.hoandev.pinedrink.service.impl;
 import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.CustomerProfile;
 import com.hoandev.pinedrink.entity.dto.request.Profile.ChangePasswordRequest;
+import com.hoandev.pinedrink.entity.dto.request.Profile.SetPasswordRequest;
 import com.hoandev.pinedrink.entity.dto.request.Profile.UpdateProfileRequest;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.FileUploadResponse;
@@ -109,6 +110,10 @@ public class ProfileServiceImpl implements ProfileService {
     public void changePassword(ChangePasswordRequest request) {
         Account account = getCurrentAccount();
 
+        if (!Boolean.TRUE.equals(account.getHasLocalPassword())) {
+            throw new BaseException(ErrorCode.AUTH_026);
+        }
+
         // Validate current password
         if (!passwordEncoder.matches(request.getCurrentPassword(), account.getPassword())) {
             throw new BaseException(ErrorCode.AUTH_001);
@@ -129,6 +134,26 @@ public class ProfileServiceImpl implements ProfileService {
         accountRepository.save(account);
 
         log.info("Password changed successfully for account: {}", account.getUsername());
+    }
+
+    @Override
+    @Transactional
+    public void setPassword(SetPasswordRequest request) {
+        Account account = getCurrentAccount();
+
+        if (Boolean.TRUE.equals(account.getHasLocalPassword())) {
+            throw new BaseException(ErrorCode.AUTH_025);
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BaseException(ErrorCode.AUTH_027);
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        account.setHasLocalPassword(true);
+        accountRepository.save(account);
+
+        log.info("Local password set successfully for account: {}", account.getUsername());
     }
 
     /**
@@ -199,6 +224,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .phone(account.getPhone())
                 .avatarUrl(account.getAvatarUrl())
                 .status(account.getStatus())
+                .authProvider(account.getAuthProvider())
+                .hasLocalPassword(Boolean.TRUE.equals(account.getHasLocalPassword()))
                 .lastLoginAt(account.getLastLoginAt())
                 .dateOfBirth(customerProfile != null ? customerProfile.getDateOfBirth() : null)
                 .gender(customerProfile != null ? customerProfile.getGender() : null)

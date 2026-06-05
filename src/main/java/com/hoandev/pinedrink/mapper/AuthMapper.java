@@ -44,6 +44,8 @@ public class AuthMapper {
         response.setPhone(account.getPhone());
         response.setAvatarUrl(account.getAvatarUrl());
         response.setStatus(account.getStatus());
+        response.setAuthProvider(account.getAuthProvider());
+        response.setHasLocalPassword(Boolean.TRUE.equals(account.getHasLocalPassword()));
         response.setLastLoginAt(account.getLastLoginAt());
         response.setScope(buildScopeAccess(account.getId()));
         return response;

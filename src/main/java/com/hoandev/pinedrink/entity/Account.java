@@ -18,6 +18,15 @@ public class Account extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "auth_provider", nullable = false)
+    private String authProvider = "LOCAL";
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Column(name = "has_local_password", nullable = false)
+    private Boolean hasLocalPassword = true;
+
     @Column(name = "full_name", nullable = false)
     private String fullName;
 

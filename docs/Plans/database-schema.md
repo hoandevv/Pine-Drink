@@ -67,12 +67,16 @@ Keys/indexes:
 
 ### `ia_account`
 
-User account. No account brand column.
+User account. Supports both local (`LOCAL`) and OAuth (`GOOGLE`) authentication. No account brand column.
+
+Key columns: `auth_provider DEFAULT 'LOCAL'`, `provider_id NULL`, `has_local_password DEFAULT TRUE`.
 
 Keys/indexes:
 - `UNIQUE(username)`
 - `UNIQUE(email)`
 - `UNIQUE(phone)`
+- `UNIQUE(auth_provider, provider_id)` — allows NULL provider_id for LOCAL accounts
+- `INDEX(auth_provider)`
 - `INDEX(status)`
 
 ### `ia_scope`

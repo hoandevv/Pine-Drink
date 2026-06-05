@@ -23,6 +23,15 @@ public interface AuthService {
     LoginResponse login(LoginRequest request);
 
     /**
+     * Authenticates an account using Google ID token,
+     * then issues access and refresh tokens.
+     *
+     * @param idToken Google ID token
+     * @return {@link LoginResponse} containing access token, refresh token, and account info
+     */
+    LoginResponse googleLogin(String idToken);
+
+    /**
      * Validates a refresh token and issues a new access token pair.
      *
      * @param request containing the refresh token to validate

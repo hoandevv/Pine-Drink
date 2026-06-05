@@ -34,7 +34,14 @@ public enum ErrorCode {
     AUTH_022("AUTH_022", "Invalid registration site"),
     AUTH_023("AUTH_023", "Public registration is disabled for this site"),
     AUTH_024("AUTH_024", "Center domain already exists"),
+    AUTH_025("AUTH_025", "Local password is already set"),
+    AUTH_026("AUTH_026", "Local password is not set"),
     AUTH_027("AUTH_027", "Passwords do not match"),
+    AUTH_GOOGLE_001("AUTH_GOOGLE_001", "Google ID token is required"),
+    AUTH_GOOGLE_002("AUTH_GOOGLE_002", "Google ID token is invalid"),
+    AUTH_GOOGLE_003("AUTH_GOOGLE_003", "Google email is not verified"),
+    AUTH_GOOGLE_004("AUTH_GOOGLE_004", "Email is already used by another provider"),
+    AUTH_GOOGLE_005("AUTH_GOOGLE_005", "Google account does not match existing account"),
 
     RATE_LIMIT_EXCEEDED("RATE_001", "Rate limit exceeded - too many requests"),
 

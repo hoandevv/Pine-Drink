@@ -4,6 +4,9 @@ CREATE TABLE ia_account (
     id CHAR(36) NOT NULL PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    auth_provider VARCHAR(30) NOT NULL DEFAULT 'LOCAL',
+    provider_id VARCHAR(150) NULL,
+    has_local_password BOOLEAN NOT NULL DEFAULT TRUE,
     full_name VARCHAR(150) NOT NULL,
     email VARCHAR(150) NULL,
     phone VARCHAR(20) NULL,
@@ -17,6 +20,8 @@ CREATE TABLE ia_account (
     UNIQUE KEY uk_ia_account_username (username),
     UNIQUE KEY uk_ia_account_email (email),
     UNIQUE KEY uk_ia_account_phone (phone),
+    UNIQUE KEY uk_ia_account_provider (auth_provider, provider_id),
+    INDEX idx_ia_account_auth_provider (auth_provider),
     INDEX idx_ia_account_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

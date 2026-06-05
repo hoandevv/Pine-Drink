@@ -192,6 +192,8 @@ Response thành công:
 | Google sub không khớp | 401 | `AUTH_GOOGLE_005` | ProviderId không khớp với Google sub |
 | Account bị khóa | 403 | `AUTH_005` | Account `LOCKED` |
 | Account chưa active | 403 | `AUTH_006` | Account `INACTIVE` |
+| Local password đã tồn tại | 400 | `AUTH_025` | Gọi `set-password` khi đã có mật khẩu |
+| Local password chưa set | 400 | `AUTH_026` | Gọi `change-password` khi chưa có mật khẩu |
 | Thiếu role/scope seed | 500 | `ROLE_NOT_FOUND`/`SCOPE_NOT_FOUND` | Seed data chưa đầy đủ |
 
 ---
@@ -219,6 +221,8 @@ Nhược điểm: database chưa biết account được tạo từ provider nà
 
 Thêm column vào `ia_account`:
 
+Migration V17:
+
 ```sql
 ALTER TABLE ia_account
     ADD COLUMN auth_provider VARCHAR(30) NOT NULL DEFAULT 'LOCAL',
@@ -226,13 +230,29 @@ ALTER TABLE ia_account
     ADD UNIQUE KEY uk_ia_account_provider (auth_provider, provider_id);
 ```
 
+Migration V18:
+
+```sql
+ALTER TABLE ia_account
+    ADD COLUMN has_local_password BOOLEAN NOT NULL DEFAULT TRUE AFTER provider_id;
+```
+
 | Column | Local Account | Google Account |
 |--------|---------------|----------------|
 | `auth_provider` | `LOCAL` | `GOOGLE` |
 | `provider_id` | null | Google `sub` |
-| `password` | BCrypt password | Random encoded placeholder hoặc nullable nếu đổi schema |
+| `has_local_password` | `true` | `false` (cho đến khi user tự set) |
+| `password` | BCrypt password | Random encoded placeholder |
 
-Khuyến nghị giai đoạn đầu: dùng phương án tối thiểu để giảm rủi ro. Sau đó thêm `auth_provider/provider_id` nếu cần account linking.
+Giá trị `has_local_password` theo từng loại account:
+
+| Account Type | Tình Trạng | `has_local_password` |
+|-------------|------------|---------------------|
+| LOCAL (đăng ký bằng password) | Luôn có mật khẩu thật | `true` |
+| GOOGLE mới tạo | Chưa set mật khẩu lần nào | `false` |
+| GOOGLE đã set mật khẩu | Có mật khẩu thật | `true` |
+
+Cơ chế này cho phép FE phân biệt account `LOCAL` và `GOOGLE`, đồng thời biết account Google đã set mật khẩu local hay chưa để hiển thị flow `Đổi mật khẩu` / `Thiết lập mật khẩu` tương ứng.
 
 ---
 
@@ -387,6 +407,7 @@ Khi email chưa tồn tại:
 - `email` lowercase.
 - `avatarUrl` lấy từ Google `picture`.
 - `status=ACTIVE`.
+- `hasLocalPassword=false`.
 
 ### 11.2 Gán Role
 
@@ -424,6 +445,31 @@ Ví dụ:
 john.doe@gmail.com -> john_doe
 john_doe exists -> john_doe_a1b2c3
 ```
+
+### 11.5 hasLocalPassword Và Set Password
+
+`has_local_password` là cờ quan trọng để phân biệt account có mật khẩu local thật sự hay không.
+
+**Ý nghĩa tồn tại của cờ này:**
+- `password` trong `ia_account` luôn `NOT NULL`, kể cả Google account (lưu placeholder).
+- Không thể dùng `password != null` để biết user có mật khẩu thật.
+- `auth_provider` không đủ, vì Google account có thể set mật khẩu local sau đó.
+
+**Quy tắc nghiệp vụ:**
+
+| API | Điều Kiện | Hành Vi |
+|-----|-----------|---------|
+| `PUT /api/v1/profile/password` | `hasLocalPassword=true` | Đổi mật khẩu, cần `currentPassword` |
+| `POST /api/v1/profile/set-password` | `hasLocalPassword=false` | Thiết lập mật khẩu lần đầu, không cần `currentPassword` |
+
+**Điểm bảo mật cần lưu ý:**
+
+| Tình Huống | Xử Lý |
+|-----------|-------|
+| Google account gọi `changePassword` | Throw `AUTH_026` (local password is not set) |
+| Local account gọi `setPassword` | Throw `AUTH_025` (local password is already set) |
+| set password lần đầu từ Google | Sau khi gọi thành công, `hasLocalPassword` đổi thành `true` |
+| change password trên account local | Giữ nguyên `hasLocalPassword=true` |
 
 ---
 
@@ -540,6 +586,12 @@ Lý do của thứ tự này:
 | `AuthMapper.toLoginResponse()` | - | Tái sử dụng response format, giữ đồng bộ |
 | `Constants.AUTH_PROVIDER_GOOGLE` | - | Dùng constant, không hardcode |
 | `GlobalExceptionHandler` | `AUTH_GOOGLE_004` | Phải trả 409 CONFLICT để frontend xử lý đúng |
+| `ProfileServiceImpl.changePassword()` | - | Kiểm tra `hasLocalPassword=true` trước, nếu không throw `AUTH_026` |
+| `ProfileServiceImpl.setPassword()` | - | Kiểm tra `hasLocalPassword=false` trước, nếu không throw `AUTH_025` |
+| `AuthServiceImpl.createGoogleAccount()` | - | Set `hasLocalPassword=false` khi tạo account Google |
+| `AccountResponse` | `authProvider`, `hasLocalPassword` | Trả 2 field này để FE render đúng UI |
+| `ErrorCode.AUTH_025` | - | "Local password is already set" |
+| `ErrorCode.AUTH_026` | - | "Local password is not set" |
 
 ### 12.6 Xử Lý Race Condition
 
@@ -597,6 +649,31 @@ async function handleGoogleCredential(response) {
 
 Frontend không cần biết Google access token. Frontend chỉ lưu Pine Drink JWT như login thường.
 
+### 13.1 Xử Lý Profile Response
+
+Response từ `GET /api/v1/profile` có 2 field mới:
+
+```json
+{
+  "authProvider": "GOOGLE",
+  "hasLocalPassword": false
+}
+```
+
+FE render button dựa vào các field này:
+
+```javascript
+if (profile.authProvider === 'GOOGLE' && !profile.hasLocalPassword) {
+  // Hiển thị nút "Thiết lập mật khẩu"
+  // → POST /api/v1/profile/set-password
+}
+
+if (profile.hasLocalPassword) {
+  // Hiển thị nút "Đổi mật khẩu"
+  // → PUT /api/v1/profile/password (cần currentPassword)
+}
+```
+
 ---
 
 ## 14. Cấu Hình Google Cloud
@@ -640,6 +717,10 @@ Ghi chú: Flow ID token từ frontend sang backend không cần redirect URI n�
 | Locked account | Throw `AUTH_005` |
 | Inactive account | Throw `AUTH_006` |
 | Username collision | Sinh username mới không trùng |
+| **Set password** khi `hasLocalPassword=false` | Set password thành công, đổi thành `true` |
+| **Set password** khi `hasLocalPassword=true` | Throw `AUTH_025` |
+| **Change password** khi `hasLocalPassword=true` | Đổi password, cần `currentPassword` đúng |
+| **Change password** khi `hasLocalPassword=false` | Throw `AUTH_026` |
 
 ### 15.2 Integration Test
 

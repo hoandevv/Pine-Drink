@@ -16,10 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 /**
  * Controller for managing chat rooms.
@@ -53,6 +55,13 @@ public class ChatRoomController {
         return ResponseEntity.ok(BaseResponse.success(chatRoomService.getMyRooms(user.getId(), pageable)));
     }
 
+    @GetMapping("/staff")
+    public ResponseEntity<BaseResponse<PageResponse<ChatRoomResponse>>> getBranchRooms(
+            @RequestParam(required = false) String branchId,
+            @PageableDefault(size = 20, sort = "lastMessageAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.success(chatRoomService.getBranchRooms(branchId, pageable)));
+    }
+
     @GetMapping("/{roomId}")
     public ResponseEntity<BaseResponse<ChatRoomResponse>> getById(
             @PathVariable String roomId,
@@ -66,5 +75,12 @@ public class ChatRoomController {
             @AuthenticationPrincipal UserPrincipal user,
             @PageableDefault(size = 30, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(BaseResponse.success(chatMessageService.getMessages(roomId, user.getId(), pageable)));
+    }
+
+    @PatchMapping("/{roomId}/assign")
+    public ResponseEntity<BaseResponse<ChatRoomResponse>> assignToMe(
+            @PathVariable String roomId,
+            @AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(BaseResponse.success(chatRoomService.assignToMe(roomId, user.getId())));
     }
 }

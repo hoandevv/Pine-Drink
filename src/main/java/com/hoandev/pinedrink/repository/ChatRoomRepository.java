@@ -28,4 +28,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
      * @return A page of chat rooms matching the criteria
      */
     Page<ChatRoom> findByCustomerAccountIdAndStatusOrderByLastMessageAtDescCreatedAtDesc(String accountId, String status, Pageable pageable);
+
+    Page<ChatRoom> findByBranchIdAndStatusOrderByLastMessageAtDescCreatedAtDesc(String branchId, String status, Pageable pageable);
+
+    Page<ChatRoom> findByStatusOrderByLastMessageAtDescCreatedAtDesc(String status, Pageable pageable);
 }

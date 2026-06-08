@@ -9,4 +9,5 @@ public interface RealtimePublishService {
     <T> void publishOrderEvent(String orderId, RealtimeEvent<T> event);
     <T> void publishBranchOrderEvent(String branchId, RealtimeEvent<T> event);
     <T> void publishChatRoomEvent(String roomId, RealtimeEvent<T> event);
+    <T> void publishBranchChatRoomEvent(String branchId, RealtimeEvent<T> event);
 }

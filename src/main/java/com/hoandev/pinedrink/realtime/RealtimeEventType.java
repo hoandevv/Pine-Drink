@@ -9,6 +9,8 @@ public final class RealtimeEventType {
     public static final String ORDER_CANCELLED = "ORDER_CANCELLED";
     public static final String PAYMENT_STATUS_CHANGED = "PAYMENT_STATUS_CHANGED";
     public static final String CHAT_MESSAGE_SENT = "CHAT_MESSAGE_SENT";
+    public static final String CHAT_ROOM_CREATED = "CHAT_ROOM_CREATED";
+    public static final String CHAT_ROOM_ASSIGNED = "CHAT_ROOM_ASSIGNED";
     public static final String CHAT_TYPING_STARTED = "CHAT_TYPING_STARTED";
     public static final String CHAT_TYPING_STOPPED = "CHAT_TYPING_STOPPED";
     public static final String CHAT_MESSAGE_READ = "CHAT_MESSAGE_READ";

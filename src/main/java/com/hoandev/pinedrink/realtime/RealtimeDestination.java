@@ -22,4 +22,8 @@ public final class RealtimeDestination {
     public static String chatRoomTopic(String roomId) {
         return "/topic/chat/rooms/" + roomId;
     }
+
+    public static String branchChatRoomsTopic(String branchId) {
+        return "/topic/branches/" + branchId + "/chat/rooms";
+    }
 }

@@ -129,6 +129,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             @Override
             public void afterCommit() {
                 realtimePublishService.publishChatRoomEvent(room.getId(), event);
+                if (room.getBranch() != null) {
+                    realtimePublishService.publishBranchChatRoomEvent(room.getBranch().getId(), event);
+                }
                 realtimeEventPublisher.publish("chat.message.sent", event);
             }
         });

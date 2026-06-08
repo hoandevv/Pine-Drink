@@ -52,4 +52,9 @@ public class RealtimePublishServiceImpl implements RealtimePublishService {
     public <T> void publishChatRoomEvent(String roomId, RealtimeEvent<T> event) {
         publishToTopic(RealtimeDestination.chatRoomTopic(roomId), event);
     }
+
+    @Override
+    public <T> void publishBranchChatRoomEvent(String branchId, RealtimeEvent<T> event) {
+        publishToTopic(RealtimeDestination.branchChatRoomsTopic(branchId), event);
+    }
 }

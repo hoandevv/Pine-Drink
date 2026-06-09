@@ -8,8 +8,6 @@ public record ChatRoomResponse(
         String roomType,
         String customerAccountId,
         String customerName,
-        String assignedStaffAccountId,
-        String assignedStaffName,
         String branchId,
         String orderId,
         String title,

@@ -99,24 +99,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return PageResponse.from(rooms, content);
     }
 
-    @Override
-    @Transactional
-    public ChatRoomResponse setPrimaryHandler(String roomId, String staffAccountId) {
-        ChatRoom room = getRoomOrThrow(roomId);
-        if (room.getBranch() != null) {
-            accessScopeService.assertCanAccessBranch(room.getBranch().getId());
-        } else {
-            accessScopeService.assertSystemAccess();
-        }
-        Account staff = accountRepository.findById(staffAccountId)
-                .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
-        room.setAssignedStaffAccount(staff);
-        ChatRoom saved = chatRoomRepository.save(room);
-        ChatRoomResponse response = chatMapper.toRoomResponse(saved);
-        publishBranchRoomEvent(saved, response, staffAccountId, RealtimeEventType.CHAT_ROOM_ASSIGNED);
-        return response;
-    }
-
     private ChatRoom createNewRoom(CreateChatRoomRequest request, String customerAccountId, Branch branch) {
         Account customer = accountRepository.findById(customerAccountId)
                 .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));

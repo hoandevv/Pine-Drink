@@ -737,7 +737,7 @@ Recommended: use both.
 | `/user/queue/**` | Current authenticated user only | Spring user destination |
 | `/topic/orders/{orderId}` | Order owner, assigned branch staff, admin | `OrderAccessService` |
 | `/topic/branches/{branchId}/orders` | Staff/admin with branch access | `AccessScopeService.assertCanAccessBranch` |
-| `/topic/chat/rooms/{roomId}` | Customer owner, assigned staff, branch staff/admin | `ChatAccessService` |
+| `/topic/chat/rooms/{roomId}` | Customer owner, branch staff/admin | `ChatAccessService` |
 | `/app/chat.send` | Room member | message service guard |
 | `/app/orders.status.update` | Staff/admin with branch management | scope + permission guard |
 

@@ -38,19 +38,4 @@ public interface ChatRoomService {
      * @return a page of chat room responses
      */
     PageResponse<ChatRoomResponse> getBranchRooms(String branchId, Pageable pageable);
-    /**
-     * Sets the primary handler for a chat room.
-     *
-     * @param roomId the ID of the chat room
-     * @param staffAccountId the ID of the staff member taking ownership metadata
-     * @return the updated chat room response
-     */
-    ChatRoomResponse setPrimaryHandler(String roomId, String staffAccountId);
-
-    /**
-     * Backward-compatible alias for taking ownership of a chat room.
-     */
-    default ChatRoomResponse assignToMe(String roomId, String staffAccountId) {
-        return setPrimaryHandler(roomId, staffAccountId);
-    }
 }

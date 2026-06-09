@@ -46,7 +46,6 @@ CREATE TABLE ch_room (
     room_code VARCHAR(50) NOT NULL,
     room_type VARCHAR(30) NOT NULL DEFAULT 'CUSTOMER_SUPPORT',
     customer_account_id CHAR(36) NOT NULL,
-    assigned_staff_account_id CHAR(36) NULL,
     branch_id CHAR(36) NULL,
     order_id CHAR(36) NULL,
     title VARCHAR(150) NULL,
@@ -60,11 +59,9 @@ CREATE TABLE ch_room (
     UNIQUE KEY uk_ch_room_code (room_code),
     UNIQUE KEY uk_ch_room_order_customer (order_id, customer_account_id),
     INDEX idx_ch_room_customer_status (customer_account_id, status),
-    INDEX idx_ch_room_staff_status (assigned_staff_account_id, status),
     INDEX idx_ch_room_branch_status (branch_id, status),
     INDEX idx_ch_room_last_message_at (last_message_at),
     CONSTRAINT fk_ch_room_customer_account FOREIGN KEY (customer_account_id) REFERENCES ia_account(id) ON DELETE CASCADE,
-    CONSTRAINT fk_ch_room_staff_account FOREIGN KEY (assigned_staff_account_id) REFERENCES ia_account(id) ON DELETE SET NULL,
     CONSTRAINT fk_ch_room_branch FOREIGN KEY (branch_id) REFERENCES ce_branch(id) ON DELETE SET NULL,
     CONSTRAINT fk_ch_room_order FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

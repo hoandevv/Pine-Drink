@@ -5,7 +5,7 @@
 - Keep exactly one active customer support conversation per `customer + branch` pair.
 - Let branch staff and managers collaborate in the same conversation.
 - Let admins monitor the full system without needing room assignment.
-- Keep room assignment as optional ownership metadata only.
+- Keep staff collaboration simple for MVP without room assignment.
 - Prepare the message model for future AI and system actors.
 
 ## Conversation Model
@@ -26,16 +26,14 @@
 ## Access Rules
 
 - Customer can access their own branch conversation.
-- Assigned staff can access the conversation.
 - Branch-scoped staff and managers can access any conversation in their branch.
 - System-scoped admins can access all conversations.
 
-## Ownership Model
+## MVP Collaboration Model
 
-- `assignedStaffAccountId` is optional metadata.
-- It represents the current primary handler, not the only person allowed to reply.
-- Backend keeps the legacy `PATCH /api/v1/chat/rooms/{roomId}/assign` endpoint for compatibility.
-- Backend also exposes `PATCH /api/v1/chat/rooms/{roomId}/handler/me` as the clearer ownership endpoint.
+- Rooms do not track a primary handler.
+- Any staff or admin with valid scope can open and reply in the room.
+- Backend does not expose room assignment endpoints in MVP.
 
 ## Realtime Topics
 

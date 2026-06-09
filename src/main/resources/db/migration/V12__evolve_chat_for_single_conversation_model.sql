@@ -5,7 +5,6 @@ UPDATE ch_message m
 JOIN ch_room r ON r.id = m.room_id
 SET m.sender_type = CASE
     WHEN m.sender_account_id = r.customer_account_id THEN 'CUSTOMER'
-    WHEN r.assigned_staff_account_id IS NOT NULL AND m.sender_account_id = r.assigned_staff_account_id THEN 'STAFF'
     ELSE 'STAFF'
 END;
 

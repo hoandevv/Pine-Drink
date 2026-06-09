@@ -23,6 +23,7 @@ import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ChatAccessService;
 import com.hoandev.pinedrink.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
+@Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final ChatRoomRepository chatRoomRepository;

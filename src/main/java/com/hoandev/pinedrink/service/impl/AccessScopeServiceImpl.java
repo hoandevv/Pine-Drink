@@ -32,13 +32,19 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public AccessScopeContext resolveCurrentScope() {
-        return resolveAccessScope();
+        return resolveScopeByAccountId(getCurrentPrincipal().getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AccessScopeContext resolveScopeByAccountId(String accountId) {
+        return resolveAccessScope(accountId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public void assertSystemAccess() {
-        if (resolveAccessScope().fullAccess()) {
+        if (resolveCurrentScope().fullAccess()) {
             return;
         }
         throw new BaseException(ErrorCode.AUTH_007);
@@ -47,7 +53,7 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public void assertCanAccessBranch(String branchId) {
-        AccessScopeContext scope = resolveAccessScope();
+        AccessScopeContext scope = resolveCurrentScope();
         if (scope.fullAccess() || scope.branchIds().contains(branchId)) {
             return;
         }
@@ -69,7 +75,7 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public void assertCanAccessAccount(String targetAccountId) {
-        AccessScopeContext accessScope = resolveAccessScope();
+        AccessScopeContext accessScope = resolveCurrentScope();
         if (accessScope.fullAccess()) {
             return;
         }
@@ -82,7 +88,7 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public void assertCanAccessScope(Scope scope) {
-        AccessScopeContext accessScope = resolveAccessScope();
+        AccessScopeContext accessScope = resolveCurrentScope();
         if (accessScope.fullAccess()) {
             return;
         }
@@ -94,7 +100,7 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     @Override
     @Transactional(readOnly = true)
     public void assertCanManageTargetScope(String scopeType, String branchId) {
-        AccessScopeContext accessScope = resolveAccessScope();
+        AccessScopeContext accessScope = resolveCurrentScope();
         if (accessScope.fullAccess()) {
             return;
         }
@@ -126,10 +132,9 @@ public class AccessScopeServiceImpl implements AccessScopeService {
                 .anyMatch(allowedBranchIds::contains);
     }
 
-    private AccessScopeContext resolveAccessScope() {
-        UserPrincipal principal = getCurrentPrincipal();
+    private AccessScopeContext resolveAccessScope(String accountId) {
         List<AccountRoleAssignment> assignments = assignmentRepository.findActiveAssignmentsByAccountId(
-                principal.getId(), LocalDateTime.now());
+                accountId, LocalDateTime.now());
 
         boolean fullAccess = assignments.stream().anyMatch(assignment ->
                 Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType())

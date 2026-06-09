@@ -43,6 +43,7 @@ public class ChatMapper {
                 message.getId(),
                 message.getRoom().getId(),
                 sender != null ? sender.getId() : null,
+                message.getSenderType(),
                 sender != null ? sender.getFullName() : null,
                 message.getMessageType(),
                 message.getContent(),

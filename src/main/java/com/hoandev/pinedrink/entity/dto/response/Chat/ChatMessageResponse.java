@@ -6,6 +6,7 @@ public record ChatMessageResponse(
         String id,
         String roomId,
         String senderAccountId,
+        String senderType,
         String senderName,
         String messageType,
         String content,

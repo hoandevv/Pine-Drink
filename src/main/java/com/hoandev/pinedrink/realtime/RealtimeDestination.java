@@ -12,18 +12,18 @@ public final class RealtimeDestination {
     }
 
     public static String orderTopic(String orderId) {
-        return "/topic/orders/" + orderId;
+        return "/topic/orders." + orderId;
     }
 
     public static String branchOrdersTopic(String branchId) {
-        return "/topic/branches/" + branchId + "/orders";
+        return "/topic/branches." + branchId + ".orders";
     }
 
     public static String chatRoomTopic(String roomId) {
-        return "/topic/chat/rooms/" + roomId;
+        return "/topic/chat.rooms." + roomId;
     }
 
     public static String branchChatRoomsTopic(String branchId) {
-        return "/topic/branches/" + branchId + "/chat/rooms";
+        return "/topic/branches." + branchId + ".chat.rooms";
     }
 }

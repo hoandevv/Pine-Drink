@@ -23,6 +23,9 @@ public class ChatMessage extends BaseEntity {
     @JoinColumn(name = "sender_account_id", nullable = false)
     private Account senderAccount;
 
+    @Column(name = "sender_type", nullable = false)
+    private String senderType = "CUSTOMER";
+
     @Column(name = "message_type", nullable = false)
     private String messageType = "TEXT";
 

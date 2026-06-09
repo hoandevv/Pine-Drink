@@ -81,6 +81,13 @@ public class ChatRoomController {
     public ResponseEntity<BaseResponse<ChatRoomResponse>> assignToMe(
             @PathVariable String roomId,
             @AuthenticationPrincipal UserPrincipal user) {
-        return ResponseEntity.ok(BaseResponse.success(chatRoomService.assignToMe(roomId, user.getId())));
+        return ResponseEntity.ok(BaseResponse.success(chatRoomService.setPrimaryHandler(roomId, user.getId())));
+    }
+
+    @PatchMapping("/{roomId}/handler/me")
+    public ResponseEntity<BaseResponse<ChatRoomResponse>> setPrimaryHandler(
+            @PathVariable String roomId,
+            @AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(BaseResponse.success(chatRoomService.setPrimaryHandler(roomId, user.getId())));
     }
 }

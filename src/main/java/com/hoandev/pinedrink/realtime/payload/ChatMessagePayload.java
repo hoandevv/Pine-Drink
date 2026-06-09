@@ -9,8 +9,11 @@ public record ChatMessagePayload(
         String roomId,
         String messageId,
         String senderId,
+        String senderType,
         String senderName,
+        String messageType,
         String content,
+        String metadata,
         Instant sentAt
 ) {
 }

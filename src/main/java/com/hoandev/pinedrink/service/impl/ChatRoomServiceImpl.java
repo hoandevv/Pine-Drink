@@ -52,12 +52,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     @Transactional
     public ChatRoomResponse create(CreateChatRoomRequest request, String customerAccountId) {
-        if (request.orderId() != null && !request.orderId().isBlank()) {
-            return chatRoomRepository.findByOrderIdAndCustomerAccountId(request.orderId(), customerAccountId)
-                    .map(chatMapper::toRoomResponse)
-                    .orElseGet(() -> chatMapper.toRoomResponse(createNewRoom(request, customerAccountId)));
-        }
-        return chatMapper.toRoomResponse(createNewRoom(request, customerAccountId));
+        Branch branch = resolveConversationBranch(request);
+        return chatRoomRepository.findByCustomerAccountIdAndBranchIdAndStatus(customerAccountId, branch.getId(), "ACTIVE")
+                .map(existingRoom -> chatMapper.toRoomResponse(refreshConversationMetadata(existingRoom, request)))
+                .orElseGet(() -> chatMapper.toRoomResponse(createNewRoom(request, customerAccountId, branch)));
     }
 
     @Override
@@ -103,7 +101,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Override
     @Transactional
-    public ChatRoomResponse assignToMe(String roomId, String staffAccountId) {
+    public ChatRoomResponse setPrimaryHandler(String roomId, String staffAccountId) {
         ChatRoom room = getRoomOrThrow(roomId);
         if (room.getBranch() != null) {
             accessScopeService.assertCanAccessBranch(room.getBranch().getId());
@@ -119,20 +117,15 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return response;
     }
 
-    private ChatRoom createNewRoom(CreateChatRoomRequest request, String customerAccountId) {
+    private ChatRoom createNewRoom(CreateChatRoomRequest request, String customerAccountId, Branch branch) {
         Account customer = accountRepository.findById(customerAccountId)
                 .orElseThrow(() -> new BaseException(ErrorCode.AUTH_012));
 
         ChatRoom room = new ChatRoom();
         room.setRoomCode(codeGenerator.generate("CH", customerAccountId));
         room.setCustomerAccount(customer);
+        room.setBranch(branch);
         room.setTitle(request.title());
-
-        if (request.branchId() != null && !request.branchId().isBlank()) {
-            Branch branch = branchRepository.findById(request.branchId())
-                    .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
-            room.setBranch(branch);
-        }
 
         if (request.orderId() != null && !request.orderId().isBlank()) {
             Order order = orderRepository.findById(request.orderId())
@@ -143,6 +136,34 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         ChatRoom saved = chatRoomRepository.save(room);
         publishBranchRoomEvent(saved, chatMapper.toRoomResponse(saved), customerAccountId, RealtimeEventType.CHAT_ROOM_CREATED);
         return saved;
+    }
+
+    private Branch resolveConversationBranch(CreateChatRoomRequest request) {
+        if (request.branchId() != null && !request.branchId().isBlank()) {
+            return branchRepository.findById(request.branchId())
+                    .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+        }
+        if (request.orderId() != null && !request.orderId().isBlank()) {
+            Order order = orderRepository.findById(request.orderId())
+                    .orElseThrow(() -> new BaseException(ErrorCode.COM_005, "Order not found"));
+            return order.getBranch();
+        }
+        throw new BaseException(ErrorCode.COM_004, "Branch or order is required to start a chat conversation");
+    }
+
+    private ChatRoom refreshConversationMetadata(ChatRoom room, CreateChatRoomRequest request) {
+        boolean changed = false;
+        if ((room.getTitle() == null || room.getTitle().isBlank()) && request.title() != null && !request.title().isBlank()) {
+            room.setTitle(request.title());
+            changed = true;
+        }
+        if (room.getOrder() == null && request.orderId() != null && !request.orderId().isBlank()) {
+            Order order = orderRepository.findById(request.orderId())
+                    .orElseThrow(() -> new BaseException(ErrorCode.COM_005, "Order not found"));
+            room.setOrder(order);
+            changed = true;
+        }
+        return changed ? chatRoomRepository.save(room) : room;
     }
 
     private void publishBranchRoomEvent(ChatRoom room, ChatRoomResponse response, String actorAccountId, String eventType) {

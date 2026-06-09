@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -18,10 +19,18 @@ import java.util.function.Supplier;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
+    private static final String WEBSOCKET_PATH_PATTERN = "/ws/**";
+
     private final ProxyManager<String> proxyManager;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public RateLimitFilter(ProxyManager<String> proxyManager) {
         this.proxyManager = proxyManager;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return pathMatcher.match(WEBSOCKET_PATH_PATTERN, request.getServletPath());
     }
 
     @Override

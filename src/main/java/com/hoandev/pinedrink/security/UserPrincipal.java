@@ -19,7 +19,7 @@ public class UserPrincipal implements UserDetails {
     private final List<GrantedAuthority> authorities;
 
     public UserPrincipal(String id, String username, String email, String password,
-                         String status, List<GrantedAuthority> authorities) {
+                          String status, List<GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;

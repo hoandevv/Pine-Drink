@@ -1,6 +1,5 @@
 package com.hoandev.pinedrink.configuration;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -16,11 +15,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@RequiredArgsConstructor
 @EnableConfigurationProperties(RabbitMqProperties.class)
 public class RabbitMqConfig {
 
     private final RabbitMqProperties properties;
+
+    public RabbitMqConfig(RabbitMqProperties properties) {
+        this.properties = properties;
+    }
 
     @Value("${app.rabbitmq.queue.geocoding:pine-drink.geocoding.queue}")
     private String geocodingQueueName;
@@ -32,6 +34,16 @@ public class RabbitMqConfig {
     @Bean
     public TopicExchange domainEventExchange() {
         return new TopicExchange(properties.domainEvents().exchange());
+    }
+
+    @Bean
+    public TopicExchange realtimeEventExchange() {
+        return new TopicExchange(properties.realtime().exchange(), true, false);
+    }
+
+    @Bean
+    public TopicExchange realtimeDeadLetterExchange() {
+        return new TopicExchange(properties.realtime().dlx(), true, false);
     }
 
     @Bean
@@ -87,6 +99,71 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(domainEventDlq())
                 .to(domainEventExchange())
                 .with(properties.domainEvents().dlqRoutingKey());
+    }
+
+    @Bean
+    public Queue realtimeNotificationQueue() {
+        return realtimeQueue(properties.realtime().notificationQueue());
+    }
+
+    @Bean
+    public Queue realtimeAuditQueue() {
+        return realtimeQueue(properties.realtime().auditQueue());
+    }
+
+    @Bean
+    public Queue realtimeChatQueue() {
+        return realtimeQueue(properties.realtime().chatQueue());
+    }
+
+    @Bean
+    public Queue realtimeWebhookQueue() {
+        return realtimeQueue(properties.realtime().webhookQueue());
+    }
+
+    @Bean
+    public Queue realtimeDlq() {
+        return QueueBuilder.durable(properties.realtime().dlq()).build();
+    }
+
+    @Bean
+    public Binding realtimeNotificationOrderBinding() {
+        return BindingBuilder.bind(realtimeNotificationQueue()).to(realtimeEventExchange()).with("order.*");
+    }
+
+    @Bean
+    public Binding realtimeNotificationPaymentBinding() {
+        return BindingBuilder.bind(realtimeNotificationQueue()).to(realtimeEventExchange()).with("payment.*");
+    }
+
+    @Bean
+    public Binding realtimeNotificationBinding() {
+        return BindingBuilder.bind(realtimeNotificationQueue()).to(realtimeEventExchange()).with("notification.*");
+    }
+
+    @Bean
+    public Binding realtimeAuditBinding() {
+        return BindingBuilder.bind(realtimeAuditQueue()).to(realtimeEventExchange()).with("#");
+    }
+
+    @Bean
+    public Binding realtimeChatBinding() {
+        return BindingBuilder.bind(realtimeChatQueue()).to(realtimeEventExchange()).with("chat.*");
+    }
+
+    @Bean
+    public Binding realtimeWebhookOrderBinding() {
+        return BindingBuilder.bind(realtimeWebhookQueue()).to(realtimeEventExchange()).with("order.*");
+    }
+
+    @Bean
+    public Binding realtimeWebhookPaymentBinding() {
+        return BindingBuilder.bind(realtimeWebhookQueue()).to(realtimeEventExchange()).with("payment.*");
+    }
+
+    @Bean
+    public Binding realtimeDlqBinding() {
+        return BindingBuilder.bind(realtimeDlq()).to(realtimeDeadLetterExchange()).with("failed");
     }
 
     @Bean
@@ -200,10 +277,17 @@ public class RabbitMqConfig {
 
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         MessageConverter messageConverter) {
+                                          MessageConverter messageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setObservationEnabled(true);
         return template;
+    }
+
+    private Queue realtimeQueue(String name) {
+        return QueueBuilder.durable(name)
+                .withArgument("x-dead-letter-exchange", properties.realtime().dlx())
+                .withArgument("x-dead-letter-routing-key", "failed")
+                .build();
     }
 }

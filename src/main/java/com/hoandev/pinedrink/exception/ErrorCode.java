@@ -88,7 +88,12 @@ public enum ErrorCode {
     PRODUCT_007("PRODUCT_007", "Product variant not found"),
     PRODUCT_008("PRODUCT_008", "Product variant code already exists"),
     PRODUCT_009("PRODUCT_009", "Product variant is already inactive"),
-    PRODUCT_010("PRODUCT_010", "Product variant does not belong to product");
+    PRODUCT_010("PRODUCT_010", "Product variant does not belong to product"),
+
+    CHAT_001("CHAT_001", "Chat room not found"),
+    CHAT_002("CHAT_002", "You do not have access to this chat room"),
+    CHAT_003("CHAT_003", "Chat message content is required"),
+    CHAT_004("CHAT_004", "Chat sender is invalid");
 
     private final String code;
     private final String message;

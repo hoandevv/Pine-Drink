@@ -289,7 +289,7 @@ Voucher usage per order/customer.
 
 Payment provider integration and refund records.
 
-## Notification, Report, Platform
+## Notification, Report, Platform, Chat
 
 ### `nt_notification`
 
@@ -302,6 +302,36 @@ Global notification template.
 Keys/indexes:
 - `UNIQUE(template_code, channel)`
 - `INDEX(status)`
+
+### `ch_room`
+
+Chat room MVP cho hội thoại `customer <-> shop/staff`.
+
+Key columns: `room_code`, `room_type`, `customer_account_id`, `assigned_staff_account_id NULL`, `branch_id NULL`, `order_id NULL`, `last_message_at`, `last_message_preview`, `status`.
+
+Keys/indexes:
+- FK `customer_account_id -> ia_account(id)` cascade
+- FK `assigned_staff_account_id -> ia_account(id)` set null
+- FK `branch_id -> ce_branch(id)` set null
+- FK `order_id -> od_order(id)` set null
+- `UNIQUE(room_code)`
+- `UNIQUE(order_id, customer_account_id)`
+- `INDEX(customer_account_id, status)`
+- `INDEX(assigned_staff_account_id, status)`
+- `INDEX(branch_id, status)`
+- `INDEX(last_message_at)`
+
+### `ch_message`
+
+Chat message history. File/image message chỉ lưu metadata trong DB; binary file được lưu ở MinIO.
+
+Key columns: `room_id`, `sender_account_id`, `message_type`, `content`, `metadata`, `status`.
+
+Keys/indexes:
+- FK `room_id -> ch_room(id)` cascade
+- FK `sender_account_id -> ia_account(id)` cascade
+- `INDEX(room_id, created_at)`
+- `INDEX(sender_account_id, created_at)`
 
 ### `rp_export_request`
 
@@ -362,6 +392,7 @@ ce_branch ── od_order ── od_order_item ── od_order_item_topping
 ce_branch ── iv_stock ── iv_ingredient
 ce_branch ── mn_branch_product_availability ── pr_product
 ce_branch ── mn_branch_topping_availability ── pr_topping
+ce_branch ── ch_room ── ch_message
 
 pr_category ── pr_product ── pr_product_variant
 pr_product ── pr_product_topping ── pr_topping
@@ -369,4 +400,6 @@ pr_product ── iv_recipe ── iv_recipe_item ── iv_ingredient
 
 ia_account ── ia_account_role_assignment ── ia_scope ── ce_branch
 ia_role ── ia_role_permission ── ia_permission
+ia_account ── ch_room
+ia_account ── ch_message
 ```

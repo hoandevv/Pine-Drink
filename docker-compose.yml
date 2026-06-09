@@ -37,12 +37,16 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: pine-drink-rabbitmq
     restart: unless-stopped
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_web_stomp && rabbitmq-server"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_STOMP_PORT:-61613}:61613"
       - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+      - "${RABBITMQ_WEB_STOMP_PORT:-15674}:15674"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:

@@ -21,6 +21,8 @@ public class ChatMapper {
                 room.getRoomType(),
                 customer != null ? customer.getId() : null,
                 customer != null ? customer.getFullName() : null,
+                customer != null ? customer.getAvatarUrl() : null,
+                customer != null ? customer.getPhone() : null,
                 room.getBranch() != null ? room.getBranch().getId() : null,
                 room.getOrder() != null ? room.getOrder().getId() : null,
                 room.getTitle(),

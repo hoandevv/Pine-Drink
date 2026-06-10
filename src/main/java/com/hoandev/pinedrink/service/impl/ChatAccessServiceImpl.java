@@ -23,16 +23,15 @@ public class ChatAccessServiceImpl implements ChatAccessService {
 
         boolean isCustomer = room.getCustomerAccount() != null
                 && accountId.equals(room.getCustomerAccount().getId());
-        boolean isAssignedStaff = room.getAssignedStaffAccount() != null
-                && accountId.equals(room.getAssignedStaffAccount().getId());
-
-        boolean isBranchStaff = false;
-        if (!isCustomer && !isAssignedStaff && room.getBranch() != null) {
-            AccessScopeContext scope = accessScopeService.resolveCurrentScope();
-            isBranchStaff = scope.fullAccess() || scope.branchIds().contains(room.getBranch().getId());
+        boolean hasFullAccess = false;
+        boolean hasBranchAccess = false;
+        if (!isCustomer) {
+            AccessScopeContext scope = accessScopeService.resolveScopeByAccountId(accountId);
+            hasFullAccess = scope.fullAccess();
+            hasBranchAccess = room.getBranch() != null && scope.branchIds().contains(room.getBranch().getId());
         }
 
-        if (!isCustomer && !isAssignedStaff && !isBranchStaff) {
+        if (!isCustomer && !hasFullAccess && !hasBranchAccess) {
             throw new BaseException(ErrorCode.CHAT_002);
         }
     }

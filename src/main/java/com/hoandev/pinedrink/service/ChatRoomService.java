@@ -38,12 +38,4 @@ public interface ChatRoomService {
      * @return a page of chat room responses
      */
     PageResponse<ChatRoomResponse> getBranchRooms(String branchId, Pageable pageable);
-    /**
-     * Assigns a chat room to a staff member.
-     *
-     * @param roomId          the ID of the chat room
-     * @param staffAccountId the ID of the staff member to assign
-     * @return the updated chat room response
-     */
-    ChatRoomResponse assignToMe(String roomId, String staffAccountId);
 }

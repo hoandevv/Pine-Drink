@@ -15,15 +15,14 @@ public class ChatMapper {
             return null;
         }
         Account customer = room.getCustomerAccount();
-        Account staff = room.getAssignedStaffAccount();
         return new ChatRoomResponse(
                 room.getId(),
                 room.getRoomCode(),
                 room.getRoomType(),
                 customer != null ? customer.getId() : null,
                 customer != null ? customer.getFullName() : null,
-                staff != null ? staff.getId() : null,
-                staff != null ? staff.getFullName() : null,
+                customer != null ? customer.getAvatarUrl() : null,
+                customer != null ? customer.getPhone() : null,
                 room.getBranch() != null ? room.getBranch().getId() : null,
                 room.getOrder() != null ? room.getOrder().getId() : null,
                 room.getTitle(),
@@ -43,6 +42,7 @@ public class ChatMapper {
                 message.getId(),
                 message.getRoom().getId(),
                 sender != null ? sender.getId() : null,
+                message.getSenderType(),
                 sender != null ? sender.getFullName() : null,
                 message.getMessageType(),
                 message.getContent(),

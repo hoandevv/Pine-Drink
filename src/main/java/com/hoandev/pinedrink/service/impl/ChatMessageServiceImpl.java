@@ -18,9 +18,12 @@ import com.hoandev.pinedrink.realtime.payload.ChatMessagePayload;
 import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.ChatMessageRepository;
 import com.hoandev.pinedrink.repository.ChatRoomRepository;
+import com.hoandev.pinedrink.security.scope.AccessScopeContext;
+import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ChatAccessService;
 import com.hoandev.pinedrink.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,7 +37,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
+@Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final ChatRoomRepository chatRoomRepository;
@@ -42,6 +45,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final AccountRepository accountRepository;
     private final ChatAccessService chatAccessService;
     private final ChatMapper chatMapper;
+    private final AccessScopeService accessScopeService;
     private final RealtimeEventFactory eventFactory;
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventPublisher realtimeEventPublisher;
@@ -59,6 +63,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         ChatMessage message = new ChatMessage();
         message.setRoom(room);
         message.setSenderAccount(sender);
+        message.setSenderType(resolveSenderType(room, senderAccountId));
         message.setMessageType(normalizeMessageType(request.messageType()));
         message.setContent(request.content());
         message.setMetadata(request.metadata());
@@ -114,8 +119,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 response.roomId(),
                 response.id(),
                 response.senderAccountId(),
+                response.senderType(),
                 response.senderName(),
+                response.messageType(),
                 response.content(),
+                response.metadata(),
                 Instant.now()
         );
         RealtimeEvent<ChatMessagePayload> event = eventFactory.create(
@@ -135,5 +143,16 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 realtimeEventPublisher.publish("chat.message.sent", event);
             }
         });
+    }
+
+    private String resolveSenderType(ChatRoom room, String senderAccountId) {
+        if (room.getCustomerAccount() != null && senderAccountId.equals(room.getCustomerAccount().getId())) {
+            return "CUSTOMER";
+        }
+        AccessScopeContext scope = accessScopeService.resolveScopeByAccountId(senderAccountId);
+        if (scope.fullAccess()) {
+            return "ADMIN";
+        }
+        return "STAFF";
     }
 }

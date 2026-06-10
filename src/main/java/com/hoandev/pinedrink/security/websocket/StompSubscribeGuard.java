@@ -16,9 +16,9 @@ public class StompSubscribeGuard {
         if (destination.startsWith("/user/queue/")) {
             requireAuthenticated(principal);
         }
-        if (destination.startsWith("/topic/orders/")
-                || destination.startsWith("/topic/branches/")
-                || destination.startsWith("/topic/chat/rooms/")) {
+        if (destination.startsWith("/topic/orders.")
+                || destination.startsWith("/topic/branches.")
+                || destination.startsWith("/topic/chat.rooms.")) {
             requireAuthenticated(principal);
         }
     }

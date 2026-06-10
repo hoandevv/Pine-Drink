@@ -14,6 +14,13 @@ public interface AccessScopeService {
      * @return scope context for the current account
      */
     AccessScopeContext resolveCurrentScope();
+    /**
+     * Resolves scope grants for a specific account.
+     *
+     * @param accountId the account ID to resolve
+     * @return scope context for the target account
+     */
+    AccessScopeContext resolveScopeByAccountId(String accountId);
     /**Ensures that the current account has SYSTEM-level access.
      *
      */

@@ -9,8 +9,8 @@ Use pagination when endpoint returns data that can grow by user, order, time, or
 Examples:
 
 - Admin tables: products, orders, branches, customers, vouchers
-- History/log tables: audit logs, callback logs, outbox events, stock movements
-- Relation lists: orders by customer, products by category, stock by branch
+- History/log tables: audit logs, callback logs, outbox events, daily stock logs
+- Relation lists: orders by customer, products by category, daily stock by branch
 - Search/filter/sort endpoints
 - Mobile/web list screens and infinite scroll screens
 

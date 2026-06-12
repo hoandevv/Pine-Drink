@@ -96,4 +96,14 @@ public class VoucherController {
         PageResponse<VoucherResponse> response = voucherService.getAll(keyword, status, discountType, branchId, activeAt, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Vouchers retrieved successfully"));
     }
+
+    @GetMapping("/customer/available")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<BaseResponse<PageResponse<VoucherResponse>>> getAvailableForCustomer(
+            @RequestParam String branchId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        log.info("Getting available vouchers for customer: branchId={}", branchId);
+        PageResponse<VoucherResponse> response = voucherService.getAvailableForCustomer(branchId, pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Available vouchers retrieved successfully"));
+    }
 }

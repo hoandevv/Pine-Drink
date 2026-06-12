@@ -4,10 +4,23 @@ import com.hoandev.pinedrink.entity.VoucherBranch;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface VoucherBranchRepository extends JpaRepository<VoucherBranch, String> {
-    List<VoucherBranch> findByVoucherId(String voucherId);
-    List<VoucherBranch> findByBranchId(String branchId);
+    /**
+     * Finds voucher branches by a collection of voucher IDs.
+     *
+     * @param voucherIds the collection of voucher IDs
+     * @return the list of voucher branches
+     */
+    List<VoucherBranch> findByVoucherIdIn(Collection<String> voucherIds);
+
+    /**
+     * Deletes voucher branches by voucher ID.
+     *
+     * @param voucherId the ID of the voucher
+     */
+    void deleteByVoucherId(String voucherId);
 }

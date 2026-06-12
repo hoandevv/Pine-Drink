@@ -8,7 +8,11 @@ import java.util.List;
 
 @Repository
 public interface VoucherUsageRepository extends JpaRepository<VoucherUsage, String> {
-    List<VoucherUsage> findByVoucherId(String voucherId);
-    List<VoucherUsage> findByOrderId(String orderId);
-    List<VoucherUsage> findByCustomerIdAndVoucherId(String customerId, String voucherId);
+    /**
+     * Checks if a voucher usage record exists for the given voucher ID.
+     *
+     * @param voucherId the ID of the voucher
+     * @return true if a usage record exists, false otherwise
+     */
+    boolean existsByVoucherId(String voucherId);
 }

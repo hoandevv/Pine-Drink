@@ -1,250 +1,141 @@
-# Plan 8 — Inventory Management (Optional)
+# Plan 8 - Daily Sellable Stock
 
-## Mục tiêu
-Quản lý nguyên liệu (ingredients), recipe cho sản phẩm, tồn kho theo branch, và tự động trừ/reserve stock khi xử lý đơn hàng.
+## Muc tieu
 
-## Files cần tạo
+Quan ly so luong san pham co the ban theo ngay cho tung chi nhanh. Day khong phai inventory nguyen lieu; khong co ingredient, recipe, hay stock movement theo nguyen lieu.
 
-| File | Mô tả |
-|------|-------|
-| `service/IngredientService.java` | Interface IngredientService |
-| `service/impl/IngredientServiceImpl.java` | Implementation |
-| `service/RecipeService.java` | Interface RecipeService |
-| `service/impl/RecipeServiceImpl.java` | Implementation |
-| `service/StockService.java` | Interface StockService |
-| `service/impl/StockServiceImpl.java` | Implementation |
-| `controller/IngredientController.java` | REST controller cho ingredient CRUD |
-| `controller/RecipeController.java` | REST controller cho recipe CRUD |
-| `controller/StockController.java` | REST controller cho stock management |
+## Business Model
 
-## Chi tiết implementation
+Staff/Admin set quota ban trong ngay:
 
-### 1. Ingredient CRUD
-
-```java
-@Entity
-@Table(name = "in_ingredient")
-public class Ingredient {
-    @Id
-    private UUID id;
-
-    private String code;           // mã nguyên liệu
-    private String name;           // tên
-    private String unit;           // kg, lít, ml, gram, cái
-    private Double minStockQuantity; // ngưỡng cảnh báo tồn tối thiểu
-    private String code;           // unique global
-}
+```text
+Ca phe sua da size M: 100 ly
+Tra dao cam sa size L: 80 ly
+Matcha latte size M: 50 ly
 ```
 
-### 2. Recipe Management
+Client hien thi so luong con lai:
 
-```java
-@Entity
-@Table(name = "in_recipe")
-public class Recipe {
-    @Id
-    private UUID id;
-    private UUID productId; // hoặc variantId
-    private String name;
-    private String description;
-    private Boolean isActive;
-}
-
-@Entity
-@Table(name = "in_recipe_item")
-public class RecipeItem {
-    @Id
-    private UUID id;
-
-    @ManyToOne
-    @JoinColumn(name = "recipe_id")
-    private Recipe recipe;
-
-    @ManyToOne
-    @JoinColumn(name = "ingredient_id")
-    private Ingredient ingredient;
-
-    private Double quantity; // số lượng cần
-}
+```text
+available_quantity = daily_quantity - sold_quantity - reserved_quantity
 ```
 
-### 3. Stock Management
+## Database
 
-```java
-@Entity
-@Table(name = "in_stock")
-public class Stock {
-    @Id
-    private UUID id;
+### `ce_branch_variant_daily_stock`
 
-    private UUID branchId;
-    private UUID ingredientId;
+Daily stock theo branch + product variant.
 
-    private Double quantityOnHand;   // tồn hiện tại
-    private Double reservedQuantity; // đã reserved cho đơn chưa completed
+Key columns:
 
-    @Version
-    private Long version; // optimistic locking
-}
+- `branch_id`: chi nhanh ban hang
+- `variant_id`: variant san pham, da tro ve `pr_product_variant.product_id`
+- `stock_date`: ngay ap dung quota
+- `daily_quantity`: tong so ly co the ban trong ngay
+- `sold_quantity`: so ly da thanh toan/hoan tat
+- `reserved_quantity`: so ly dang giu cho order cho thanh toan
 
-@Entity
-@Table(name = "in_stock_movement")
-public class StockMovement {
-    @Id
-    private UUID id;
+Rule:
 
-    private UUID stockId;
-    private UUID branchId;
-    private UUID ingredientId;
-    private UUID orderId; // nếu liên quan đến đơn
-    private String type;  // IMPORT, EXPORT, ADJUSTMENT, RESERVE, RELEASE
-    private Double quantityBefore;
-    private Double quantityChange;
-    private Double quantityAfter;
-    private String reference;
-    private UUID createdBy;
-}
-```
+- `UNIQUE(branch_id, variant_id, stock_date)`
+- `daily_quantity >= 0`
+- `sold_quantity >= 0`
+- `reserved_quantity >= 0`
+- `sold_quantity + reserved_quantity <= daily_quantity`
 
-### 4. StockService — Reserve & Deduct
+### `ce_branch_variant_stock_log`
 
-```java
-@Service
-@RequiredArgsConstructor
-public class StockServiceImpl implements StockService {
+Audit log cho moi lan thay doi stock.
 
-    private final StockRepository stockRepository;
-    private final StockMovementRepository movementRepository;
-    private final RecipeRepository recipeRepository;
-    private final RecipeItemRepository recipeItemRepository;
+Action types:
 
-    @Override
-    @Transactional
-    public void reserveStock(Order order) {
-        List<RecipeItem> items = getRecipeItemsForOrder(order);
+- `SET_QUOTA`
+- `ADJUST_QUOTA`
+- `RESERVE`
+- `CONSUME`
+- `RELEASE`
 
-        for (RecipeItem item : items) {
-            Stock stock = stockRepository
-                .findByBranchIdAndIngredientId(order.getBranchId(), item.getIngredient().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found"));
+## Files Can Tao
 
-            double needed = item.getQuantity() * getOrderItemQuantity(order, item);
-
-            if (stock.getQuantityOnHand() - stock.getReservedQuantity() < needed) {
-                throw new InsufficientStockException(
-                    "Insufficient stock for ingredient: " + item.getIngredient().getName());
-            }
-
-            stock.setReservedQuantity(stock.getReservedQuantity() + needed);
-            stockRepository.save(stock);
-
-            recordMovement(stock, "RESERVE", needed, order.getId());
-        }
-    }
-
-    @Override
-    @Transactional
-    public void deductStock(Order order) {
-        List<RecipeItem> items = getRecipeItemsForOrder(order);
-
-        for (RecipeItem item : items) {
-            Stock stock = stockRepository
-                .findByBranchIdAndIngredientId(order.getBranchId(), item.getIngredient().getId())
-                .orElseThrow();
-
-            double needed = item.getQuantity() * getOrderItemQuantity(order, item);
-
-            stock.setQuantityOnHand(stock.getQuantityOnHand() - needed);
-            stock.setReservedQuantity(stock.getReservedQuantity() - needed);
-            stockRepository.save(stock);
-
-            recordMovement(stock, "EXPORT", -needed, order.getId());
-        }
-    }
-
-    @Override
-    @Transactional
-    public void releaseReservedStock(Order order) {
-        // Khi order bị cancel, release reserved quantity
-        List<RecipeItem> items = getRecipeItemsForOrder(order);
-
-        for (RecipeItem item : items) {
-            Stock stock = stockRepository
-                .findByBranchIdAndIngredientId(order.getBranchId(), item.getIngredient().getId())
-                .orElseThrow();
-
-            double needed = item.getQuantity() * getOrderItemQuantity(order, item);
-            stock.setReservedQuantity(stock.getReservedQuantity() - needed);
-            stockRepository.save(stock);
-
-            recordMovement(stock, "RELEASE", needed, order.getId());
-        }
-    }
-
-    private void recordMovement(Stock stock, String type, Double change, UUID orderId) {
-        StockMovement movement = StockMovement.builder()
-                .stockId(stock.getId())
-                .branchId(stock.getBranchId())
-                .ingredientId(stock.getIngredientId())
-                .orderId(orderId)
-                .type(type)
-                .quantityBefore(stock.getQuantityOnHand())
-                .quantityChange(change)
-                .quantityAfter(stock.getQuantityOnHand() + change)
-                .build();
-        movementRepository.save(movement);
-    }
-}
-```
-
-### 5. Auto low stock alert
-
-```java
-@Scheduled(cron = "0 0 */6 * * *") // mỗi 6h
-public void checkLowStock() {
-    List<Stock> lowStocks = stockRepository.findLowStock();
-    for (Stock stock : lowStocks) {
-        notificationService.sendLowStockAlert(stock);
-    }
-}
-```
+| File | Mo ta |
+| --- | --- |
+| `entity/BranchVariantDailyStock.java` | Entity daily stock |
+| `entity/BranchVariantStockLog.java` | Entity stock log |
+| `repository/BranchVariantDailyStockRepository.java` | Repository daily stock |
+| `repository/BranchVariantStockLogRepository.java` | Repository stock log |
+| `service/DailyStockService.java` | Interface quan ly stock |
+| `service/impl/DailyStockServiceImpl.java` | Implementation |
+| `controller/DailyStockController.java` | REST API cho staff/admin |
 
 ## API Endpoints
 
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/ingredients` | Danh sách ingredients |
-| POST | `/ingredients` | Tạo ingredient mới |
-| PUT | `/ingredients/{id}` | Cập nhật ingredient |
-| DELETE | `/ingredients/{id}` | Xóa ingredient |
-| GET | `/recipes?productId=` | Danh sách recipes theo product |
-| POST | `/recipes` | Tạo recipe |
-| PUT | `/recipes/{id}` | Cập nhật recipe |
-| DELETE | `/recipes/{id}` | Xóa recipe |
-| GET | `/stocks?branchId=&ingredientId=` | Xem tồn kho theo branch |
-| PATCH | `/stocks/adjust` | Điều chỉnh tồn kho (import/adjust) |
-| GET | `/stocks/movements?branchId=&fromDate=&toDate=` | Lịch sử biến động tồn |
+| Method | Endpoint | Mo ta |
+| --- | --- | --- |
+| GET | `/daily-stocks?branchId=&date=` | Danh sach stock theo branch/date |
+| GET | `/daily-stocks/available?branchId=&variantId=&date=` | Xem available cua variant |
+| PUT | `/daily-stocks/quota` | Set/replace quota trong ngay |
+| PATCH | `/daily-stocks/{id}/adjust` | Dieu chinh quota |
+| GET | `/daily-stocks/{id}/logs?page=&size=` | Lich su thay doi stock |
 
-## Stock Flow theo Order
+## Order Flow
 
+```text
+Khach checkout
+-> reserve stock
+-> reserved_quantity += item quantity
+
+Payment success / order confirmed
+-> consume stock
+-> reserved_quantity -= item quantity
+-> sold_quantity += item quantity
+
+Payment failed / cancel / timeout
+-> release stock
+-> reserved_quantity -= item quantity
 ```
-Order CONFIRMED → reserveStock() → reservedQuantity += needed
-Order COMPLETED → deductStock()  → quantityOnHand -= needed, reservedQuantity -= needed
-Order CANCELLED → releaseReservedStock() → reservedQuantity -= needed
+
+## Atomic Update
+
+Reserve phai atomic de tranh oversell:
+
+```sql
+UPDATE ce_branch_variant_daily_stock
+SET reserved_quantity = reserved_quantity + :quantity
+WHERE id = :id
+  AND daily_quantity - sold_quantity - reserved_quantity >= :quantity;
 ```
+
+Neu affected rows = 0 thi het hang hoac khong du so luong.
+
+## Service Methods
+
+```java
+void setQuota(String branchId, String variantId, LocalDate date, int dailyQuantity);
+void reserve(String branchId, String variantId, LocalDate date, int quantity, String orderId);
+void consume(String branchId, String variantId, LocalDate date, int quantity, String orderId);
+void release(String branchId, String variantId, LocalDate date, int quantity, String orderId);
+int getAvailableQuantity(String branchId, String variantId, LocalDate date);
+```
+
+## Integration Rules
+
+- Product availability van dung `mn_branch_product_availability`.
+- Daily stock chi quan ly so luong ban theo ngay.
+- `variant_id` la source of truth; khong duplicate `product_id` trong daily stock.
+- Product khong co size nen co default variant.
+- Khong co stock row thi API phai quy uoc ro: het hang hoac unlimited. MVP nen coi la het hang de staff bat buoc set quota.
 
 ## Checklist
 
-- [ ] Tạo Ingredient entity + repository
-- [ ] Tạo Recipe + RecipeItem entity + repositories
-- [ ] Tạo Stock entity (branchId, ingredientId, quantityOnHand, reservedQuantity)
-- [ ] Tạo StockMovement entity (ghi log mọi biến động)
-- [ ] Tạo IngredientService + controller (CRUD)
-- [ ] Tạo RecipeService + controller (CRUD)
-- [ ] Tạo StockService + controller
-- [ ] Implement reserveStock khi order CONFIRMED
-- [ ] Implement deductStock khi order COMPLETED
-- [ ] Implement releaseReservedStock khi order CANCELLED
-- [ ] Optimistic locking cho Stock (version field)
-- [ ] Low stock alert scheduling
-- [ ] Ghi StockMovement cho mọi biến động
+- [x] Tao schema `ce_branch_variant_daily_stock`
+- [x] Tao schema `ce_branch_variant_stock_log`
+- [x] Tao entity + repository cho daily stock
+- [x] Tao entity + repository cho stock log
+- [ ] Tao DailyStockService
+- [ ] Tao DailyStockController
+- [ ] Implement set quota
+- [ ] Implement atomic reserve
+- [ ] Implement consume sau payment success
+- [ ] Implement release khi cancel/timeout/payment failed
+- [ ] Them available quantity vao menu response neu can
+- [ ] Them pagination cho stock logs

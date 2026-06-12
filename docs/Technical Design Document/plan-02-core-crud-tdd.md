@@ -22,7 +22,7 @@ ce_branch
   ce_branch_hours
   ce_pickup_time_slot
   od_order
-  iv_stock
+  ce_branch_variant_daily_stock
   mn_branch_product_availability
   mn_branch_topping_availability
 ```

@@ -46,8 +46,8 @@ DELETE /api/v1/products/{id}
 
 ## Data Rule
 
-- Category, product, topping, voucher, ingredient, template are global.
-- Branch, cart, order, delivery, stock, availability are branch-scoped.
+- Category, product, topping, voucher, template are global.
+- Branch, cart, order, delivery, daily stock, availability are branch-scoped.
 - No request/response should expose `brandId`.
 - No repository should use `findByBrand...`.
 

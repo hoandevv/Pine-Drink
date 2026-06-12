@@ -279,7 +279,7 @@ public class AdminController {
 | PATCH | `/notifications/read-all` | Mark all as read |
 | GET | `/reports/orders/export?fromDate=&toDate=` | Export orders XLSX |
 | GET | `/reports/revenue/export?fromDate=&toDate=` | Export revenue XLSX |
-| GET | `/reports/inventory/export?branchId=` | Export inventory XLSX |
+| GET | `/reports/daily-stocks/export?branchId=&date=` | Export daily stock XLSX |
 | GET | `/audit-logs?module=&action=&fromDate=&toDate=` | Xem audit logs |
 | GET | `/admin/dashboard/summary` | Thống kê tổng quan |
 | GET | `/admin/dashboard/top-products?limit=` | Top sản phẩm bán chạy |

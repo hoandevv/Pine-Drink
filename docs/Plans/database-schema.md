@@ -18,7 +18,7 @@ Pine Drink uses a no-brand, branch-first schema. There is no `ce_brand`, `ce_bra
 | `nt_` | Notification/template |
 | `rp_` | Report/export |
 | `pf_` | Platform/outbox/idempotency |
-| `iv_` | Inventory/recipe/stock |
+| `ce_` | Core branch/config/daily stock |
 
 ## Core Branch
 
@@ -345,41 +345,43 @@ Outbox events with optional branch routing context.
 
 Request idempotency storage.
 
-## Inventory
+## Daily Sellable Stock
 
-### `iv_ingredient`
+### `ce_branch_variant_daily_stock`
 
-Global ingredient master data.
+Daily sellable quota per branch and product variant. This replaces ingredient/recipe inventory for MVP.
 
-Keys/indexes:
-- `UNIQUE(code)`
-- `INDEX(status)`
+Available quantity:
 
-### `iv_recipe`, `iv_recipe_item`
-
-Recipe definition per product/variant.
-
-### `iv_stock`
-
-Branch stock per ingredient.
+```text
+daily_quantity - sold_quantity - reserved_quantity
+```
 
 Keys/indexes:
-- FK branch cascade
-- FK ingredient restrict
-- `UNIQUE(branch_id, ingredient_id)`
-- `INDEX(branch_id)`
+- FK `branch_id -> ce_branch(id)` cascade
+- FK `variant_id -> pr_product_variant(id)` cascade
+- `UNIQUE(branch_id, variant_id, stock_date)`
+- `INDEX(branch_id, stock_date)`
+- `INDEX(variant_id, stock_date)`
+- `CHECK(sold_quantity + reserved_quantity <= daily_quantity)`
 
-### `iv_stock_movement`
+### `ce_branch_variant_stock_log`
 
-Stock movement history per branch/ingredient/order.
+Audit history for daily stock changes.
+
+Action types:
+- `SET_QUOTA`
+- `ADJUST_QUOTA`
+- `RESERVE`
+- `CONSUME`
+- `RELEASE`
 
 Keys/indexes:
-- FK branch restrict
-- FK ingredient restrict
-- FK order set null
-- `INDEX(branch_id, ingredient_id, created_at)`
+- FK `daily_stock_id -> ce_branch_variant_daily_stock(id)` cascade
+- FK `order_id -> od_order(id)` set null
+- `INDEX(daily_stock_id, created_at)`
 - `INDEX(order_id)`
-- `INDEX(movement_type, created_at)`
+- `INDEX(action_type, created_at)`
 
 ## Relationship Summary
 
@@ -389,14 +391,14 @@ ce_branch ── ce_pickup_time_slot
 ce_branch ── ca_cart ── ca_cart_item ── ca_cart_item_topping
 ce_branch ── od_order ── od_order_delivery
 ce_branch ── od_order ── od_order_item ── od_order_item_topping
-ce_branch ── iv_stock ── iv_ingredient
+ce_branch ── ce_branch_variant_daily_stock ── ce_branch_variant_stock_log
 ce_branch ── mn_branch_product_availability ── pr_product
 ce_branch ── mn_branch_topping_availability ── pr_topping
 ce_branch ── ch_room ── ch_message
 
 pr_category ── pr_product ── pr_product_variant
 pr_product ── pr_product_topping ── pr_topping
-pr_product ── iv_recipe ── iv_recipe_item ── iv_ingredient
+pr_product ── pr_product_variant ── ce_branch_variant_daily_stock
 
 ia_account ── ia_account_role_assignment ── ia_scope ── ce_branch
 ia_role ── ia_role_permission ── ia_permission

@@ -28,6 +28,9 @@ public class Order extends BaseEntity {
     @Column(name = "order_type", nullable = false)
     private String orderType = "PICKUP";
 
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     @Column(name = "payment_status", nullable = false)
     private String paymentStatus = "UNPAID";
 
@@ -60,11 +63,20 @@ public class Order extends BaseEntity {
     @Column(name = "ready_at")
     private LocalDateTime readyAt;
 
+    @Column(name = "delivering_at")
+    private LocalDateTime deliveringAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 
     @Column(name = "cancel_reason")
     private String cancelReason;
@@ -76,4 +88,13 @@ public class Order extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private CustomerProfile customer;
+
+    @PrePersist
+    @Override
+    protected void prePersist() {
+        super.prePersist();
+        if (getStatus() == null || "ACTIVE".equals(getStatus())) {
+            setStatus("PENDING");
+        }
+    }
 }

@@ -21,7 +21,6 @@ Global catalog/config data does not store `brand_id`:
 - Category
 - Topping
 - Voucher
-- Ingredient
 - Template
 
 Branch-scoped data stores `branch_id`:
@@ -32,8 +31,8 @@ Branch-scoped data stores `branch_id`:
 - Cart
 - Order
 - Order delivery
-- Stock
-- Stock movement
+- Daily stock
+- Daily stock log
 - Product availability
 - Topping availability
 - Notification/report/outbox when branch-specific

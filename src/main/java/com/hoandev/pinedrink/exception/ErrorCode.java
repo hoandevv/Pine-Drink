@@ -90,6 +90,13 @@ public enum ErrorCode {
     PRODUCT_009("PRODUCT_009", "Product variant is already inactive"),
     PRODUCT_010("PRODUCT_010", "Product variant does not belong to product"),
 
+    DAILY_STOCK_001("DAILY_STOCK_001", "Daily stock not found"),
+    DAILY_STOCK_002("DAILY_STOCK_002", "Daily quantity is invalid"),
+    DAILY_STOCK_003("DAILY_STOCK_003", "Insufficient daily stock"),
+    DAILY_STOCK_004("DAILY_STOCK_004", "Invalid stock reservation"),
+
+    ORDER_001("ORDER_001", "Order not found"),
+
     VOUCHER_001("VOUCHER_001", "Voucher not found"),
     VOUCHER_002("VOUCHER_002", "Voucher code already exists"),
     VOUCHER_003("VOUCHER_003", "Voucher date range is invalid"),

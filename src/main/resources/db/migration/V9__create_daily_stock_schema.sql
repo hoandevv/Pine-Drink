@@ -18,7 +18,7 @@ CREATE TABLE ce_branch_variant_daily_stock (
     CONSTRAINT fk_ce_branch_variant_daily_stock_branch
         FOREIGN KEY (branch_id) REFERENCES ce_branch(id),
     CONSTRAINT fk_ce_branch_variant_daily_stock_variant
-        FOREIGN KEY (variant_id) REFERENCES pr_product_variant(id)
+        FOREIGN KEY (variant_id) REFERENCES pr_product_variant(id),
     INDEX idx_ce_branch_variant_daily_stock_branch_date (branch_id, stock_date),
     INDEX idx_ce_branch_variant_daily_stock_variant_date (variant_id, stock_date),
     CHECK (daily_quantity >= 0),
@@ -47,7 +47,7 @@ CREATE TABLE ce_branch_variant_stock_log (
     updated_by CHAR(36) NULL,
     CONSTRAINT fk_ce_branch_variant_stock_log_daily_stock FOREIGN KEY (daily_stock_id) REFERENCES ce_branch_variant_daily_stock(id) ON DELETE CASCADE,
     CONSTRAINT fk_ce_branch_variant_stock_log_order
-        FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE SET NULL
+        FOREIGN KEY (order_id) REFERENCES od_order(id) ON DELETE SET NULL,
     INDEX idx_ce_branch_variant_stock_log_stock_created (daily_stock_id, created_at),
     INDEX idx_ce_branch_variant_stock_log_order (order_id),
     INDEX idx_ce_branch_variant_stock_log_action_created (action_type, created_at),

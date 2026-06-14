@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/customer/addresses")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('CUSTOMER')")
 public class CusAddressController {
     private final CusAddressService cusAddressService;
 

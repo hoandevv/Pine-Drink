@@ -98,7 +98,6 @@ public class VoucherController {
     }
 
     @GetMapping("/customer/available")
-    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<BaseResponse<PageResponse<VoucherResponse>>> getAvailableForCustomer(
             @RequestParam String branchId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

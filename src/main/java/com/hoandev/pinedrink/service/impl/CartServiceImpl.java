@@ -25,6 +25,7 @@ import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
 import com.hoandev.pinedrink.repository.ProductVariantRepository;
 import com.hoandev.pinedrink.repository.ToppingRepository;
+import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -51,6 +53,7 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final ToppingRepository toppingRepository;
+    private final BranchVariantDailyStockService dailyStockService;
     private final CartMapper cartMapper;
 
     @Override
@@ -77,11 +80,12 @@ public class CartServiceImpl implements CartService {
             throw new BaseException(ErrorCode.PRODUCT_002);
         }
 
-        branchProductAvailabilityRepository.findByBranchIdAndProductId(branch.getId(), product.getId())
-                .filter(availability -> ACTIVE.equals(availability.getStatus()) && availability.isAvailable())
-                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_008));
-
         ProductVariant variant = getVariant(request.getVariantId(), product.getId());
+
+        int availableQuantity = dailyStockService.getAvailableQuantity(branch.getId(), variant.getId(), LocalDate.now());
+        if (availableQuantity < request.getQuantity()) {
+            throw new BaseException(ErrorCode.DAILY_STOCK_003);
+        }
 
         Cart cart = cartRepository
                 .findByCustomerIdAndBranchIdAndStatus(customerId, request.getBranchId(), ACTIVE)

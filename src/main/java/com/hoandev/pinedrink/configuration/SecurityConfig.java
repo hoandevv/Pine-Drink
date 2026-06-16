@@ -118,7 +118,11 @@ public class SecurityConfig {
                                 "/api/v1/products/**",
                                 "/api/v1/categories/**",
                                 "/api/v1/toppings/**",
-                                "/api/v1/branches/**"
+                                "/api/v1/branches/active",
+                                "/api/v1/branches/{branchId}/hours",
+                                "/api/v1/branches/{branchId}/daily-stocks",
+                                "/api/v1/branches/{branchId}/availability/products/**",
+                                "/api/v1/branches/{branchId}/availability/toppings/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

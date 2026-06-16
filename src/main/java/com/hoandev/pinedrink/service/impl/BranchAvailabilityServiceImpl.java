@@ -29,6 +29,12 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
     private final BranchAvailabilityMapper branchAvailabilityMapper;
     private final AccessScopeService accessScopeService;
 
+    /**
+     * Creates a new product availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param request the create request
+     * @return the created availability response
+     */
     @Override
     @Transactional
     public BranchProductAvailabilityResponse createProductAvailability(String branchId, CreateBranchProductAvailabilityRequest request) {
@@ -44,7 +50,13 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         log.info("Branch product availability created: id={}, branchId={}, productId={}", availability.getId(), branchId, product.getId());
         return branchAvailabilityMapper.toProductResponse(availability);
     }
-
+    /**
+     * Updates an existing product availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @param request the update request
+     * @return the updated availability response
+     */
     @Override
     @Transactional
     public BranchProductAvailabilityResponse updateProductAvailability(String branchId, String id, UpdateBranchProductAvailabilityRequest request) {
@@ -63,7 +75,11 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         log.info("Branch product availability updated: id={}, branchId={}", availability.getId(), branchId);
         return branchAvailabilityMapper.toProductResponse(availability);
     }
-
+    /**
+     * Deletes a product availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     */
     @Override
     @Transactional
     public void deleteProductAvailability(String branchId, String id) {
@@ -72,24 +88,60 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         branchProductAvailabilityRepository.delete(availability);
         log.info("Branch product availability deleted: id={}, branchId={}", id, branchId);
     }
-
+    /**
+     * Retrieves a product availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @return the availability response
+     */
     @Override
     @Transactional(readOnly = true)
     public BranchProductAvailabilityResponse getProductAvailability(String branchId, String id) {
         accessScopeService.assertCanAccessBranch(branchId);
         return branchAvailabilityMapper.toProductResponse(getProductAvailabilityOrThrow(branchId, id));
     }
-
+    /**
+     * Retrieves all product availability entries for a branch.
+     * @param branchId the ID of the branch
+     * @return a list of availability responses
+     */
     @Override
     @Transactional(readOnly = true)
     public List<BranchProductAvailabilityResponse> getProductAvailabilities(String branchId) {
         accessScopeService.assertCanAccessBranch(branchId);
+        return getPublicProductAvailabilities(branchId);
+    }
+    /**
+     * Retrieves a public product availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @return the availability response
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public BranchProductAvailabilityResponse getPublicProductAvailability(String branchId, String id) {
+        getBranchOrThrow(branchId);
+        return branchAvailabilityMapper.toProductResponse(getProductAvailabilityOrThrow(branchId, id));
+    }
+    /**
+     * Retrieves all public product availability entries for a branch.
+     * @param branchId the ID of the branch
+     * @return a list of availability responses
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<BranchProductAvailabilityResponse> getPublicProductAvailabilities(String branchId) {
         getBranchOrThrow(branchId);
         return branchProductAvailabilityRepository.findByBranchId(branchId).stream()
                 .map(branchAvailabilityMapper::toProductResponse)
                 .toList();
     }
-
+    /**
+     * Creates a new topping availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param request the creation request
+     * @return the created availability response
+     */
     @Override
     @Transactional
     public BranchToppingAvailabilityResponse createToppingAvailability(String branchId, CreateBranchToppingAvailabilityRequest request) {
@@ -104,7 +156,13 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         log.info("Branch topping availability created: id={}, branchId={}, toppingId={}", availability.getId(), branchId, topping.getId());
         return branchAvailabilityMapper.toToppingResponse(availability);
     }
-
+    /**
+     * Updates an existing topping availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @param request the update request
+     * @return the updated availability response
+     */
     @Override
     @Transactional
     public BranchToppingAvailabilityResponse updateToppingAvailability(String branchId, String id, UpdateBranchToppingAvailabilityRequest request) {
@@ -122,7 +180,11 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         log.info("Branch topping availability updated: id={}, branchId={}", availability.getId(), branchId);
         return branchAvailabilityMapper.toToppingResponse(availability);
     }
-
+    /**
+     * Deletes a topping availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     */
     @Override
     @Transactional
     public void deleteToppingAvailability(String branchId, String id) {
@@ -131,24 +193,55 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
         branchToppingAvailabilityRepository.delete(availability);
         log.info("Branch topping availability deleted: id={}, branchId={}", id, branchId);
     }
-
+    /**
+     * Retrieves a topping availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @return the availability response
+     */
     @Override
     @Transactional(readOnly = true)
     public BranchToppingAvailabilityResponse getToppingAvailability(String branchId, String id) {
         accessScopeService.assertCanAccessBranch(branchId);
         return branchAvailabilityMapper.toToppingResponse(getToppingAvailabilityOrThrow(branchId, id));
     }
-
+    /**
+     * Retrieves all topping availability entries for a branch.
+     * @param branchId the ID of the branch
+     * @return a list of availability responses
+     */
     @Override
     @Transactional(readOnly = true)
     public List<BranchToppingAvailabilityResponse> getToppingAvailabilities(String branchId) {
         accessScopeService.assertCanAccessBranch(branchId);
+        return getPublicToppingAvailabilities(branchId);
+    }
+    /**
+     * Retrieves a public topping availability entry for a branch.
+     * @param branchId the ID of the branch
+     * @param id the ID of the availability entry
+     * @return the availability response
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public BranchToppingAvailabilityResponse getPublicToppingAvailability(String branchId, String id) {
+        getBranchOrThrow(branchId);
+        return branchAvailabilityMapper.toToppingResponse(getToppingAvailabilityOrThrow(branchId, id));
+    }
+    /**
+     * Retrieves all public topping availability entries for a branch.
+     * @param branchId the ID of the branch
+     * @return a list of availability responses
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<BranchToppingAvailabilityResponse> getPublicToppingAvailabilities(String branchId) {
         getBranchOrThrow(branchId);
         return branchToppingAvailabilityRepository.findByBranchId(branchId).stream()
                 .map(branchAvailabilityMapper::toToppingResponse)
                 .toList();
     }
-
+    /*------PRIVATE METHOD-------*/
     private Branch getBranchOrThrow(String branchId) {
         return branchRepository.findById(branchId).orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
     }

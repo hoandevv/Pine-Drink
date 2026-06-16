@@ -7,7 +7,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.DailyStock.CopyDailyStockQuotaResponse;
 import com.hoandev.pinedrink.entity.dto.response.DailyStock.DailyStockLogResponse;
 import com.hoandev.pinedrink.entity.dto.response.DailyStock.DailyStockResponse;
-import com.hoandev.pinedrink.entity.dto.response.DailyStock.PublicDailyStockResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import jakarta.validation.Valid;
@@ -44,14 +43,11 @@ public class DailyStockController {
     }
 
     @GetMapping("/branches/{branchId}/daily-stocks")
-    public ResponseEntity<BaseResponse<List<PublicDailyStockResponse>>> getPublicByBranchAndDate(
+    public ResponseEntity<BaseResponse<List<DailyStockResponse>>> getPublicByBranchAndDate(
             @PathVariable String branchId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         LocalDate stockDate = date == null ? LocalDate.now() : date;
-        List<PublicDailyStockResponse> response = dailyStockService.getByBranchAndDate(branchId, stockDate)
-                .stream()
-                .map(this::toPublicResponse)
-                .toList();
+        List<DailyStockResponse> response = dailyStockService.getPublicByBranchAndDate(branchId, stockDate);
         return ResponseEntity.ok(BaseResponse.success(response, "Daily stock availability retrieved successfully"));
     }
 
@@ -90,19 +86,5 @@ public class DailyStockController {
             @RequestParam String orderId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(BaseResponse.success(dailyStockService.getLogsByOrder(orderId, pageable), "Daily stock logs retrieved successfully"));
-    }
-
-    private PublicDailyStockResponse toPublicResponse(DailyStockResponse stock) {
-        return PublicDailyStockResponse.builder()
-                .branchId(stock.getBranchId())
-                .productId(stock.getProductId())
-                .productName(stock.getProductName())
-                .variantId(stock.getVariantId())
-                .variantName(stock.getVariantName())
-                .stockDate(stock.getStockDate())
-                .availableQuantity(stock.getAvailableQuantity())
-                .stockStatus(stock.getStockStatus())
-                .status(stock.getStatus())
-                .build();
     }
 }

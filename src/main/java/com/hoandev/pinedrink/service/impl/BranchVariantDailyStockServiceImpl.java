@@ -11,6 +11,7 @@ import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.BranchVariantStockActionType;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
+import com.hoandev.pinedrink.mapper.DailyStockMapper;
 import com.hoandev.pinedrink.repository.*;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
@@ -34,13 +35,22 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
     private final ProductVariantRepository productVariantRepository;
     private final OrderRepository orderRepository;
     private final AccessScopeService accessScopeService;
+    private final DailyStockMapper dailyStockMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<DailyStockResponse> getByBranchAndDate(String branchId, LocalDate stockDate) {
         accessScopeService.assertCanAccessBranch(branchId);
         return stockRepository.findByBranchIdAndStockDate(branchId, stockDate).stream()
-                .map(this::toResponse)
+                .map(dailyStockMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyStockResponse> getPublicByBranchAndDate(String branchId, LocalDate stockDate) {
+        return stockRepository.findByBranchIdAndStockDate(branchId, stockDate).stream()
+                .map(dailyStockMapper::toResponse)
                 .toList();
     }
 
@@ -64,7 +74,7 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
         stock = stockRepository.save(stock);
         StockSnapshot after = StockSnapshot.from(stock);
         saveLogIfChanged(stock, null, actionType, before, after, request.getReason());
-        return toResponse(stock);
+        return dailyStockMapper.toResponse(stock);
     }
 
     @Override
@@ -78,7 +88,7 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
         stock = stockRepository.save(stock);
         StockSnapshot after = StockSnapshot.from(stock);
         saveLogIfChanged(stock, null, BranchVariantStockActionType.ADJUST, before, after, request.getReason());
-        return toResponse(stock);
+        return dailyStockMapper.toResponse(stock);
     }
     /**
      * Copies daily stock quota from one date to another.
@@ -142,7 +152,7 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
         BranchVariantDailyStock stock = stockRepository.findById(dailyStockId).orElseThrow(() -> new BaseException(ErrorCode.DAILY_STOCK_001));
         accessScopeService.assertCanAccessBranch(stock.getBranch().getId());
         Page<BranchVariantStockLog> logs = logRepository.findByDailyStockId(dailyStockId, pageable);
-        return PageResponse.from(logs, logs.getContent().stream().map(this::toLogResponse).toList());
+        return PageResponse.from(logs, logs.getContent().stream().map(dailyStockMapper::toLogResponse).toList());
     }
 
     @Override
@@ -151,7 +161,7 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
         accessScopeService.assertCanAccessBranch(order.getBranch().getId());
         Page<BranchVariantStockLog> logs = logRepository.findByOrderId(orderId, pageable);
-        return PageResponse.from(logs, logs.getContent().stream().map(this::toLogResponse).toList());
+        return PageResponse.from(logs, logs.getContent().stream().map(dailyStockMapper::toLogResponse).toList());
     }
 
     @Override
@@ -276,48 +286,6 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
             return request.getReason();
         }
         return "Copy quota from " + request.getSourceDate();
-    }
-
-    private DailyStockResponse toResponse(BranchVariantDailyStock stock) {
-        ProductVariant variant = stock.getVariant();
-        Product product = variant.getProduct();
-        return DailyStockResponse.builder()
-                .id(stock.getId())
-                .branchId(stock.getBranch().getId())
-                .branchName(stock.getBranch().getName())
-                .productId(product == null ? null : product.getId())
-                .productName(product == null ? null : product.getName())
-                .variantId(variant.getId())
-                .variantName(variant.getVariantName())
-                .stockDate(stock.getStockDate())
-                .dailyQuantity(stock.getDailyQuantity())
-                .soldQuantity(stock.getSoldQuantity())
-                .reservedQuantity(stock.getReservedQuantity())
-                .availableQuantity(available(stock))
-                .stockStatus(available(stock) > 0 ? "AVAILABLE" : "OUT_OF_STOCK")
-                .status(stock.getStatus())
-                .createdAt(stock.getCreatedAt())
-                .updatedAt(stock.getUpdatedAt())
-                .build();
-    }
-
-    private DailyStockLogResponse toLogResponse(BranchVariantStockLog log) {
-        return DailyStockLogResponse.builder()
-                .id(log.getId())
-                .dailyStockId(log.getDailyStock().getId())
-                .orderId(log.getOrder() == null ? null : log.getOrder().getId())
-                .actionType(log.getActionType())
-                .quantity(log.getQuantity())
-                .beforeDailyQuantity(log.getBeforeDailyQuantity())
-                .afterDailyQuantity(log.getAfterDailyQuantity())
-                .beforeSoldQuantity(log.getBeforeSoldQuantity())
-                .afterSoldQuantity(log.getAfterSoldQuantity())
-                .beforeReservedQuantity(log.getBeforeReservedQuantity())
-                .afterReservedQuantity(log.getAfterReservedQuantity())
-                .reason(log.getReason())
-                .createdBy(log.getCreatedBy())
-                .createdAt(log.getCreatedAt())
-                .build();
     }
 
     private int available(BranchVariantDailyStock stock) {

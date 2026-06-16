@@ -165,6 +165,38 @@ public class VoucherServiceImpl implements VoucherService {
         return PageResponse.from(vouchers, content);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<VoucherResponse> getAvailableForCustomer(String branchId, Pageable pageable) {
+        String normalizedBranchId = normalizeOptional(branchId);
+        if (normalizedBranchId == null) {
+            throw new BaseException(ErrorCode.COM_004);
+        }
+        branchRepository.findById(normalizedBranchId).orElseThrow(branchNotFound());
+
+        Page<Voucher> vouchers = voucherRepository.search(
+                null,
+                EntityStatus.ACTIVE.getValue(),
+                null,
+                normalizedBranchId,
+                LocalDateTime.now(),
+                pageable
+        );
+
+        Map<String, List<String>> branchIdsByVoucherId = getBranchIdsByVoucherIds(
+                vouchers.getContent().stream().map(Voucher::getId).toList()
+        );
+
+        List<VoucherResponse> content = vouchers.getContent().stream()
+                .map(voucher -> voucherMapper.toResponse(
+                        voucher,
+                        branchIdsByVoucherId.getOrDefault(voucher.getId(), Collections.emptyList())
+                ))
+                .toList();
+
+        return PageResponse.from(vouchers, content);
+    }
+
     private Voucher getVoucherOrThrow(String id) {
         return voucherRepository.findById(id).orElseThrow(() -> new BaseException(ErrorCode.VOUCHER_001));
     }

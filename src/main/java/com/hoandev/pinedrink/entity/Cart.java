@@ -12,9 +12,6 @@ import java.util.List;
 @Table(name = "ca_cart")
 public class Cart extends BaseEntity {
 
-    @Column(name = "session_id")
-    private String sessionId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private CustomerProfile customer;

@@ -30,6 +30,7 @@ import com.hoandev.pinedrink.service.AccountService;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.PermissionCacheService;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
+import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,7 @@ import com.hoandev.pinedrink.utils.Constants;
         private final AccountManagementMapper accountManagementMapper;
         private final PermissionCacheService permissionCacheService;
         private final AccessScopeService accessScopeService;
+        private final CodeGenerator codeGenerator;
     
         @Override
         @Transactional(readOnly = true)
@@ -122,6 +124,7 @@ import com.hoandev.pinedrink.utils.Constants;
             account.setStatus(normalizeStatus(request.getStatus()));
             Account savedAccount = accountRepository.save(account);
             createAssignment(savedAccount, request.getRoleCode(), request.getScopeType(), request.getScopeBranchId(), request.getExpiresAt());
+            createProfileIfMissing(savedAccount, request.getRoleCode());
             permissionCacheService.invalidateUserCache(savedAccount.getId());
 
             log.info("Account created by admin: id={}, username={}", savedAccount.getId(), savedAccount.getUsername());
@@ -213,6 +216,7 @@ import com.hoandev.pinedrink.utils.Constants;
             validateRoleScopePolicy(request.getRoleCode(), request.getScopeType(), request.getBranchId());
             accessScopeService.assertCanManageTargetScope(request.getScopeType(), request.getBranchId());
             createAssignment(account, request.getRoleCode(), request.getScopeType(), request.getBranchId(), request.getExpiresAt());
+            createProfileIfMissing(account, request.getRoleCode());
             permissionCacheService.invalidateUserCache(account.getId());
             log.info("Role assigned by admin: accountId={}, roleCode={}", id, request.getRoleCode());
             return getAccountRoles(id);
@@ -477,6 +481,21 @@ import com.hoandev.pinedrink.utils.Constants;
                 profile.setEmail(account.getEmail());
                 customerProfileRepository.save(profile);
             });
+        }
+
+        private void createProfileIfMissing(Account account, String roleCode) {
+            if (customerProfileRepository.findByAccountId(account.getId()).isPresent()) {
+                return;
+            }
+            String prefix = Constants.ROLE_CUSTOMER.equals(roleCode.trim().toUpperCase(Locale.ROOT)) ? "KH" : "NV";
+            CustomerProfile profile = new CustomerProfile();
+            profile.setFullName(account.getFullName());
+            profile.setPhone(account.getPhone());
+            profile.setEmail(account.getEmail());
+            profile.setAccount(account);
+            profile.setCustomerCode(codeGenerator.generate(prefix));
+            profile.setStatus(Constants.STATUS_ACTIVE);
+            customerProfileRepository.save(profile);
         }
     
         private Account getAccountOrThrow(String id) {

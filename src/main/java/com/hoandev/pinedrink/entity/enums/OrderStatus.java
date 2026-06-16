@@ -5,8 +5,10 @@ public enum OrderStatus implements BaseEnum {
     CONFIRMED("CONFIRMED"),
     PREPARING("PREPARING"),
     READY("READY"),
+    DELIVERING("DELIVERING"),
     COMPLETED("COMPLETED"),
-    CANCELLED("CANCELLED");
+    CANCELLED("CANCELLED"),
+    REJECTED("REJECTED");
 
     private final String value;
 

@@ -76,7 +76,6 @@ public class ProductToppingController {
     }
 
     @GetMapping("/{productToppingId}")
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<ProductToppingResponse>> getById(
             @PathVariable String productId,
             @PathVariable String productToppingId) {
@@ -86,7 +85,6 @@ public class ProductToppingController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<List<ProductToppingResponse>>> getAll(@PathVariable String productId) {
         log.info("Getting product toppings: productId={}", productId);
         List<ProductToppingResponse> response = productToppingService.getAll(productId);
@@ -94,7 +92,6 @@ public class ProductToppingController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<List<ProductToppingResponse>>> getAllActive(@PathVariable String productId) {
         log.info("Getting active product toppings: productId={}", productId);
         List<ProductToppingResponse> response = productToppingService.getAllActive(productId);

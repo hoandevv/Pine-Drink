@@ -98,7 +98,6 @@ public class ToppingController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<ToppingResponse>> getById(@PathVariable String id) {
         log.info("Getting topping: id={}", id);
         ToppingResponse response = toppingService.getById(id);
@@ -106,7 +105,6 @@ public class ToppingController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ToppingResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting toppings");
@@ -115,7 +113,6 @@ public class ToppingController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('PERM_TOPPING_VIEW')")
     public ResponseEntity<BaseResponse<List<ToppingResponse>>> getAllActive() {
         log.info("Getting active toppings");
         List<ToppingResponse> response = toppingService.getAllActive();

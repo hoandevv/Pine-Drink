@@ -52,7 +52,6 @@ public class BranchAvailabilityController {
     }
 
     @GetMapping("/products/{id}")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchProductAvailabilityResponse>> getProductAvailability(@PathVariable String branchId, @PathVariable String id) {
         log.info("Getting branch product availability: branchId={}, id={}", branchId, id);
         BranchProductAvailabilityResponse response = branchAvailabilityService.getProductAvailability(branchId, id);
@@ -60,7 +59,6 @@ public class BranchAvailabilityController {
     }
 
     @GetMapping("/products")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<List<BranchProductAvailabilityResponse>>> getProductAvailabilities(@PathVariable String branchId) {
         log.info("Getting branch product availabilities: branchId={}", branchId);
         List<BranchProductAvailabilityResponse> response = branchAvailabilityService.getProductAvailabilities(branchId);
@@ -98,7 +96,6 @@ public class BranchAvailabilityController {
     }
 
     @GetMapping("/toppings/{id}")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchToppingAvailabilityResponse>> getToppingAvailability(@PathVariable String branchId, @PathVariable String id) {
         log.info("Getting branch topping availability: branchId={}, id={}", branchId, id);
         BranchToppingAvailabilityResponse response = branchAvailabilityService.getToppingAvailability(branchId, id);
@@ -106,7 +103,6 @@ public class BranchAvailabilityController {
     }
 
     @GetMapping("/toppings")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<List<BranchToppingAvailabilityResponse>>> getToppingAvailabilities(@PathVariable String branchId) {
         log.info("Getting branch topping availabilities: branchId={}", branchId);
         List<BranchToppingAvailabilityResponse> response = branchAvailabilityService.getToppingAvailabilities(branchId);

@@ -63,7 +63,6 @@ public class BranchController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchResponse>> getById(@PathVariable String id) {
         log.info("Getting branch: id={}", id);
         BranchResponse response = branchService.getById(id);
@@ -71,7 +70,6 @@ public class BranchController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting branches");

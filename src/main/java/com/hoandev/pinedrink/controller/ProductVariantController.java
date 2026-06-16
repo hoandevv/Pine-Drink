@@ -80,7 +80,6 @@ public class ProductVariantController {
     }
 
     @GetMapping("/{variantId}")
-    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<ProductVariantResponse>> getById(
             @PathVariable String productId,
             @PathVariable String variantId) {
@@ -90,7 +89,6 @@ public class ProductVariantController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ProductVariantResponse>>> getAll(
             @PathVariable String productId,
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -100,7 +98,6 @@ public class ProductVariantController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<List<ProductVariantResponse>>> getAllActive(@PathVariable String productId) {
         log.info("Getting active product variants: productId={}", productId);
         List<ProductVariantResponse> response = productVariantService.getAllActive(productId);

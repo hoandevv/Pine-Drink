@@ -41,7 +41,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = "rate_limit:" + clientIp;
 
         Supplier<BucketConfiguration> bucketConfig = () -> BucketConfiguration.builder()
-                .addLimit(limit -> limit.capacity(100).refillGreedy(20, Duration.ofMinutes(1)))
+                .addLimit(limit -> limit.capacity(200).refillGreedy(60, Duration.ofMinutes(1)))
                 .build();
 
         Bucket bucket = proxyManager.builder()

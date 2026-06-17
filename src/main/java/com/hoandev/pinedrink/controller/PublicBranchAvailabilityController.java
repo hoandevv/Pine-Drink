@@ -14,10 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/v1/branches/{branchId}/availability")
-@RequiredArgsConstructor
-@Slf4j
 /**
  * Controller công khai cung cấp các API kiểm tra tình trạng tồn kho (availability)
  * của một chi nhánh (branch). Các endpoint trả về tình trạng của sản phẩm và
@@ -25,11 +21,14 @@ import java.util.List;
  *
  * Base path: /api/v1/branches/{branchId}/availability
  */
+@RestController
+@RequestMapping("/api/v1/branches/{branchId}/availability")
+@RequiredArgsConstructor
+@Slf4j
 public class PublicBranchAvailabilityController {
 
     private final BranchAvailabilityService branchAvailabilityService;
 
-    @GetMapping("/products/{id}")
     /**
      * Lấy thông tin availability của 1 sản phẩm tại chi nhánh.
      *
@@ -37,6 +36,7 @@ public class PublicBranchAvailabilityController {
      * @param id       id của sản phẩm
      * @return ResponseEntity chứa BaseResponse với dữ liệu BranchProductAvailabilityResponse
      */
+    @GetMapping("/products/{id}")
     public ResponseEntity<BaseResponse<BranchProductAvailabilityResponse>> getProductAvailability(
             @PathVariable String branchId,
             @PathVariable String id) {
@@ -45,13 +45,13 @@ public class PublicBranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch product availability retrieved successfully"));
     }
 
-    @GetMapping("/products")
     /**
      * Lấy danh sách availability của tất cả sản phẩm tại chi nhánh.
      *
      * @param branchId id của chi nhánh
      * @return ResponseEntity chứa BaseResponse với danh sách BranchProductAvailabilityResponse
      */
+    @GetMapping("/products")
     public ResponseEntity<BaseResponse<List<BranchProductAvailabilityResponse>>> getProductAvailabilities(
             @PathVariable String branchId) {
         log.info("Getting public branch product availabilities: branchId={}", branchId);
@@ -59,7 +59,6 @@ public class PublicBranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch product availabilities retrieved successfully"));
     }
 
-    @GetMapping("/toppings/{id}")
     /**
      * Lấy thông tin availability của 1 topping tại chi nhánh.
      *
@@ -67,6 +66,7 @@ public class PublicBranchAvailabilityController {
      * @param id       id của topping
      * @return ResponseEntity chứa BaseResponse với dữ liệu BranchToppingAvailabilityResponse
      */
+    @GetMapping("/toppings/{id}")
     public ResponseEntity<BaseResponse<BranchToppingAvailabilityResponse>> getToppingAvailability(
             @PathVariable String branchId,
             @PathVariable String id) {
@@ -75,13 +75,13 @@ public class PublicBranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch topping availability retrieved successfully"));
     }
 
-    @GetMapping("/toppings")
     /**
      * Lấy danh sách availability của tất cả topping tại chi nhánh.
      *
      * @param branchId id của chi nhánh
      * @return ResponseEntity chứa BaseResponse với danh sách BranchToppingAvailabilityResponse
      */
+    @GetMapping("/toppings")
     public ResponseEntity<BaseResponse<List<BranchToppingAvailabilityResponse>>> getToppingAvailabilities(
             @PathVariable String branchId) {
         log.info("Getting public branch topping availabilities: branchId={}", branchId);

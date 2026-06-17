@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -114,12 +115,13 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info"
                         ).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/branches/*/hours", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/branches/*/hours/**", "GET")).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/products/**",
                                 "/api/v1/categories/**",
                                 "/api/v1/toppings/**",
                                 "/api/v1/branches/active",
-                                "/api/v1/branches/{branchId}/hours/**",
                                 "/api/v1/branches/{branchId}/daily-stocks",
                                 "/api/v1/branches/{branchId}/availability/products/**",
                                 "/api/v1/branches/{branchId}/availability/toppings/**"

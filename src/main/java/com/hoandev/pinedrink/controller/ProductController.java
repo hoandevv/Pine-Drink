@@ -97,7 +97,6 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<ProductResponse>> getById(@PathVariable String id) {
         log.info("Getting product: id={}", id);
         ProductResponse response = productService.getById(id);
@@ -105,7 +104,6 @@ public class ProductController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
             @RequestParam(required = false) String categoryId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

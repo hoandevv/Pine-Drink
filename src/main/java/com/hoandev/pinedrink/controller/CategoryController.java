@@ -100,7 +100,6 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_CATEGORY_VIEW')")
     public ResponseEntity<BaseResponse<CategoryResponse>> getById(@PathVariable String id) {
         log.info("Getting category: id={}", id);
         CategoryResponse response = categoryService.getById(id);
@@ -108,7 +107,6 @@ public class CategoryController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_CATEGORY_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<CategoryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("Getting categories");
@@ -117,7 +115,6 @@ public class CategoryController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('PERM_CATEGORY_VIEW')")
     public ResponseEntity<BaseResponse<List<CategoryResponse>>> getAllActive() {
         log.info("Getting active categories");
         List<CategoryResponse> response = categoryService.getAllActive();

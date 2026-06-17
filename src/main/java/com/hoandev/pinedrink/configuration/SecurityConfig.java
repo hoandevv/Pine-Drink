@@ -9,6 +9,7 @@ import com.hoandev.pinedrink.security.RateLimitFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,9 +30,9 @@ import java.util.List;
 /**
  * Spring Security configuration for the REST API.
  *
- * <p>The application uses stateless JWT authentication. Public auth endpoints
- * are explicitly allowed, while all other endpoints require a valid Bearer
- * access token.</p>
+ * <p>The application uses stateless JWT authentication. Read-only storefront
+ * endpoints are public, while customer and management endpoints require a valid
+ * Bearer access token.</p>
  */
 @Configuration
 @EnableMethodSecurity
@@ -101,8 +103,6 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/forgot-password/verify-otp",
-                                "/api/v1/branches/active",
-                                "/api/v1/branches/*/hours",
                                 "/api/v1/vouchers/customer/available",
                                 "/api/v1/files/private/**",
                                 "/swagger-ui/**",
@@ -114,6 +114,17 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/actuator/health",
                                 "/actuator/info"
+                        ).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/branches/*/hours", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/branches/*/hours/**", "GET")).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/products/**",
+                                "/api/v1/categories/**",
+                                "/api/v1/toppings/**",
+                                "/api/v1/branches/active",
+                                "/api/v1/branches/{branchId}/daily-stocks",
+                                "/api/v1/branches/{branchId}/availability/products/**",
+                                "/api/v1/branches/{branchId}/availability/toppings/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

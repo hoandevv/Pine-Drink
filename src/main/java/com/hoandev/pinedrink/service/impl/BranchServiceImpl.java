@@ -105,10 +105,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BranchResponse> getAllActive(Pageable pageable) {
-        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
-        Page<Branch> branches = scope.fullAccess()
-                ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
-                : findScopedActiveBranches(scope, pageable);
+        Page<Branch> branches = branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable);
         List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
         return PageResponse.from(branches, content);
     }

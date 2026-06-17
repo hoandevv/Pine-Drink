@@ -73,14 +73,12 @@ public class BranchHoursServiceImpl implements BranchHoursService {
     @Override
     @Transactional(readOnly = true)
     public BranchHoursResponse getById(String branchId, String id) {
-        accessScopeService.assertCanAccessBranch(branchId);
         return branchHoursMapper.toResponse(getBranchHoursOrThrow(branchId, id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BranchHoursResponse> getByBranch(String branchId) {
-        accessScopeService.assertCanAccessBranch(branchId);
         getBranchOrThrow(branchId);
         return branchHoursRepository.findByBranchId(branchId).stream()
                 .sorted(Comparator.comparingInt(BranchHours::getDayOfWeek))

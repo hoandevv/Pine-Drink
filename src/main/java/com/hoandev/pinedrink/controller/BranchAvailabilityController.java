@@ -14,13 +14,24 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST Controller cho quản lý tính sẵn có của sản phẩm và topping tại chi nhánh.
+ * Cung cấp các API để tạo, cập nhật, xóa và lấy thông tin sẵn có.
+ */
 @RestController
-@RequestMapping("/api/v1/branches/{branchId}/availability")
+@RequestMapping("/api/v1/admin/branches/{branchId}/availability")
 @RequiredArgsConstructor
 @Slf4j
 public class BranchAvailabilityController {
     private final BranchAvailabilityService branchAvailabilityService;
 
+    /**
+     * Tạo mới sẵn có sản phẩm cho chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param request thông tin sẵn có sản phẩm
+     * @return chi nhánh sản phẩm sẵn có vừa tạo
+     */
     @PostMapping("/products")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchProductAvailabilityResponse>> createProductAvailability(
@@ -32,6 +43,14 @@ public class BranchAvailabilityController {
                 .body(BaseResponse.success(response, "Branch product availability created successfully"));
     }
 
+    /**
+     * Cập nhật sẵn có sản phẩm của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có sản phẩm
+     * @param request thông tin cập nhật
+     * @return sẵn có sản phẩm đã cập nhật
+     */
     @PutMapping("/products/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchProductAvailabilityResponse>> updateProductAvailability(
@@ -43,6 +62,13 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch product availability updated successfully"));
     }
 
+    /**
+     * Xóa sẵn có sản phẩm của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có sản phẩm
+     * @return thông báo xóa thành công
+     */
     @DeleteMapping("/products/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<Void>> deleteProductAvailability(@PathVariable String branchId, @PathVariable String id) {
@@ -51,6 +77,13 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(null, "Branch product availability deleted successfully"));
     }
 
+    /**
+     * Lấy thông tin sẵn có sản phẩm theo ID.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có sản phẩm
+     * @return thông tin sẵn có sản phẩm
+     */
     @GetMapping("/products/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchProductAvailabilityResponse>> getProductAvailability(@PathVariable String branchId, @PathVariable String id) {
@@ -59,6 +92,12 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch product availability retrieved successfully"));
     }
 
+    /**
+     * Lấy danh sách tất cả sẵn có sản phẩm của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @return danh sách sẵn có sản phẩm
+     */
     @GetMapping("/products")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<List<BranchProductAvailabilityResponse>>> getProductAvailabilities(@PathVariable String branchId) {
@@ -67,6 +106,13 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch product availabilities retrieved successfully"));
     }
 
+    /**
+     * Tạo mới sẵn có topping cho chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param request thông tin sẵn có topping
+     * @return chi nhánh topping sẵn có vừa tạo
+     */
     @PostMapping("/toppings")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchToppingAvailabilityResponse>> createToppingAvailability(
@@ -78,6 +124,14 @@ public class BranchAvailabilityController {
                 .body(BaseResponse.success(response, "Branch topping availability created successfully"));
     }
 
+    /**
+     * Cập nhật sẵn có topping của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có topping
+     * @param request thông tin cập nhật
+     * @return sẵn có topping đã cập nhật
+     */
     @PutMapping("/toppings/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<BranchToppingAvailabilityResponse>> updateToppingAvailability(
@@ -89,6 +143,13 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch topping availability updated successfully"));
     }
 
+    /**
+     * Xóa sẵn có topping của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có topping
+     * @return thông báo xóa thành công
+     */
     @DeleteMapping("/toppings/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")
     public ResponseEntity<BaseResponse<Void>> deleteToppingAvailability(@PathVariable String branchId, @PathVariable String id) {
@@ -97,6 +158,13 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(null, "Branch topping availability deleted successfully"));
     }
 
+    /**
+     * Lấy thông tin sẵn có topping theo ID.
+     *
+     * @param branchId ID của chi nhánh
+     * @param id ID của sẵn có topping
+     * @return thông tin sẵn có topping
+     */
     @GetMapping("/toppings/{id}")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<BranchToppingAvailabilityResponse>> getToppingAvailability(@PathVariable String branchId, @PathVariable String id) {
@@ -105,6 +173,12 @@ public class BranchAvailabilityController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch topping availability retrieved successfully"));
     }
 
+    /**
+     * Lấy danh sách tất cả sẵn có topping của chi nhánh.
+     *
+     * @param branchId ID của chi nhánh
+     * @return danh sách sẵn có topping
+     */
     @GetMapping("/toppings")
     @PreAuthorize("hasAuthority('PERM_BRANCH_VIEW')")
     public ResponseEntity<BaseResponse<List<BranchToppingAvailabilityResponse>>> getToppingAvailabilities(@PathVariable String branchId) {
@@ -112,4 +186,5 @@ public class BranchAvailabilityController {
         List<BranchToppingAvailabilityResponse> response = branchAvailabilityService.getToppingAvailabilities(branchId);
         return ResponseEntity.ok(BaseResponse.success(response, "Branch topping availabilities retrieved successfully"));
     }
+
 }

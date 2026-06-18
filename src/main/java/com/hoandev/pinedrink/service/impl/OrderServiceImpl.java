@@ -1,0 +1,555 @@
+package com.hoandev.pinedrink.service.impl;
+
+import com.hoandev.pinedrink.configuration.OrderProperties;
+import com.hoandev.pinedrink.entity.*;
+import com.hoandev.pinedrink.entity.dto.request.Order.CancelOrderRequest;
+import com.hoandev.pinedrink.entity.dto.request.Order.CreateOrderRequest;
+import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
+import com.hoandev.pinedrink.entity.enums.DiscountType;
+import com.hoandev.pinedrink.entity.enums.OrderStatus;
+import com.hoandev.pinedrink.exception.BaseException;
+import com.hoandev.pinedrink.exception.ErrorCode;
+import com.hoandev.pinedrink.mapper.OrderMapper;
+import com.hoandev.pinedrink.repository.*;
+import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
+import com.hoandev.pinedrink.service.DeliveryFeeService;
+import com.hoandev.pinedrink.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class OrderServiceImpl implements OrderService {
+
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final OrderItemToppingRepository orderItemToppingRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final CartItemToppingRepository cartItemToppingRepository;
+    private final CustomerProfileRepository customerProfileRepository;
+    private final CustomerAddressRepository customerAddressRepository;
+    private final BranchRepository branchRepository;
+    private final OrderDeliveryRepository orderDeliveryRepository;
+    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
+    private final VoucherRepository voucherRepository;
+    private final VoucherUsageRepository voucherUsageRepository;
+    private final VoucherBranchRepository voucherBranchRepository;
+    private final BranchVariantDailyStockService dailyStockService;
+    private final DeliveryFeeService deliveryFeeService;
+    private final OrderMapper orderMapper;
+    private final OrderProperties orderProperties;
+
+    @Override
+    @Transactional
+    public OrderResponse createOrder(String customerId, CreateOrderRequest request) {
+        log.info("Creating order: customerId={}, branchId={}, orderType={}",
+                customerId, request.getBranchId(), request.getOrderType());
+
+        // Xác thực khách hàng
+        CustomerProfile customer = customerProfileRepository.findById(customerId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CUSTOMER_001));
+
+        // Xác thực chi nhánh
+        Branch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+
+        // Lấy giỏ hàng đang hoạt động với khóa pessimistic để tránh race condition
+        Cart cart = cartRepository.findByCustomerIdAndBranchIdAndStatusForUpdate(customerId, request.getBranchId(), "ACTIVE")
+                .orElseThrow(() -> new BaseException(ErrorCode.COM_005));
+
+        // Lấy các mục trong giỏ hàng
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
+        if (cartItems.isEmpty()) {
+            throw new BaseException(ErrorCode.COM_005);
+        }
+
+        // Tạo đơn hàng
+        Order order = new Order();
+        order.setOrderCode(generateOrderCode());
+        order.setBranch(branch);
+        order.setCustomer(customer);
+        order.setCustomerName(customer.getFullName());
+        order.setCustomerPhone(customer.getPhone());
+        order.setCustomerEmail(customer.getEmail());
+        order.setOrderType(request.getOrderType());
+        order.setPaymentMethod(request.getPaymentMethod());
+        order.setPaymentStatus("UNPAID");
+        order.setPickupTime(request.getPickupTime());
+        order.setNote(request.getNote());
+
+        // Tính tổng tiền hàng trước
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (CartItem cartItem : cartItems) {
+            subtotal = subtotal.add(cartItem.getTotalPrice());
+        }
+
+        // Khởi tạo phí giao hàng bằng 0 (cho PICKUP/DINE-IN)
+        order.setDeliveryFee(BigDecimal.ZERO);
+
+        // Xử lý địa chỉ giao hàng và phí cho đơn DELIVERY
+        if ("DELIVERY".equals(request.getOrderType())) {
+            CustomerAddress address = customerAddressRepository.findByCustomerIdAndIsDefaultTrue(customerId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.CUSTOMER_002));
+
+            order.setDeliveryAddress(formatAddress(address));
+            order.setDeliveryFee(deliveryFeeService.calculate(branch, address, subtotal));
+        }
+
+        order.setSubtotalAmount(subtotal);
+        BigDecimal discountAmount = calculateDiscount(request.getVoucherCode(), subtotal, branch.getId(), customerId);
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(subtotal.add(order.getDeliveryFee()).subtract(discountAmount));
+
+        // Lưu đơn hàng
+        order = orderRepository.save(order);
+        saveStatusHistory(order, null, OrderStatus.PENDING.getValue(), "Order created");
+        saveVoucherUsage(request.getVoucherCode(), order, customer, discountAmount);
+        saveDelivery(request, order);
+
+        // Tải tất cả topping của mục giỏ hàng trong một truy vấn (khắc phục N+1)
+        List<String> cartItemIds = cartItems.stream().map(CartItem::getId).collect(Collectors.toList());
+        List<CartItemTopping> allCartToppings = cartItemToppingRepository.findByCartItemIdIn(cartItemIds);
+
+        // Gom nhóm topping theo id mục giỏ hàng để tra cứu nhanh
+        var toppingsByCartItemId = allCartToppings.stream()
+                .collect(Collectors.groupingBy(t -> t.getCartItem().getId()));
+
+        // Tạo các mục đơn hàng từ mục giỏ hàng
+        List<OrderItem> orderItems = new ArrayList<>();
+        List<OrderItemTopping> orderItemToppings = new ArrayList<>();
+
+        for (CartItem cartItem : cartItems) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(cartItem.getProduct());
+            orderItem.setVariant(cartItem.getVariant());
+            orderItem.setProductCode(cartItem.getProduct().getCode());
+            orderItem.setProductName(cartItem.getProduct().getName());
+            orderItem.setVariantName(cartItem.getVariant() != null ? cartItem.getVariant().getVariantName() : null);
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setSugarLevel(cartItem.getSugarLevel());
+            orderItem.setIceLevel(cartItem.getIceLevel());
+            orderItem.setNote(cartItem.getNote());
+            orderItem.setUnitPrice(cartItem.getUnitPrice());
+            orderItem.setTotalPrice(cartItem.getTotalPrice());
+
+            orderItem = orderItemRepository.save(orderItem);
+            orderItems.add(orderItem);
+
+            // Tạo topping đơn hàng từ topping giỏ hàng đã tải trước
+            List<CartItemTopping> cartToppings = toppingsByCartItemId.getOrDefault(cartItem.getId(), new ArrayList<>());
+            for (CartItemTopping cartTopping : cartToppings) {
+                OrderItemTopping orderTopping = new OrderItemTopping();
+                orderTopping.setOrderItem(orderItem);
+                orderTopping.setTopping(cartTopping.getTopping());
+                orderTopping.setToppingCode(cartTopping.getTopping().getCode());
+                orderTopping.setToppingName(cartTopping.getTopping().getName());
+                orderTopping.setQuantity(cartTopping.getQuantity());
+                orderTopping.setUnitPrice(cartTopping.getUnitPrice());
+                orderTopping.setTotalPrice(cartTopping.getTotalPrice());
+                orderItemToppings.add(orderTopping);
+            }
+
+            // Đặt giữ tồn kho
+            if (cartItem.getVariant() != null) {
+                dailyStockService.reserve(
+                    branch.getId(),
+                    cartItem.getVariant().getId(),
+                    LocalDate.now(),
+                    cartItem.getQuantity(),
+                    order.getId()
+                );
+            }
+        }
+
+        // Lưu hàng loạt topping của mục đơn hàng
+        if (!orderItemToppings.isEmpty()) {
+            orderItemToppingRepository.saveAll(orderItemToppings);
+        }
+
+        cartItemToppingRepository.deleteAll(allCartToppings);
+        cartItemRepository.deleteAll(cartItems);
+        cart.setStatus("INACTIVE");
+        cartRepository.save(cart);
+
+        log.info("Order created successfully: orderId={}, orderCode={}", order.getId(), order.getOrderCode());
+
+        return toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(String orderId, String customerId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
+
+        // Kiểm tra quyền sở hữu nếu customerId được cung cấp (cho vai trò khách hàng)
+        if (customerId != null && order.getCustomer() != null) {
+            if (!order.getCustomer().getId().equals(customerId)) {
+                throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
+            }
+        }
+
+        return toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderByCode(String orderCode, String customerId) {
+        Order order = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
+
+        // Kiểm tra quyền sở hữu nếu customerId được cung cấp (cho vai trò khách hàng)
+        if (customerId != null && order.getCustomer() != null) {
+            if (!order.getCustomer().getId().equals(customerId)) {
+                throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
+            }
+        }
+
+        return toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getCustomerOrders(String customerId, Pageable pageable) {
+        Page<Order> ordersPage = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
+        List<OrderResponse> responses = toOrderResponseList(ordersPage.getContent());
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getBranchOrders(String branchId, String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status, pageable);
+        } else {
+            ordersPage = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId, pageable);
+        }
+
+        List<OrderResponse> responses = toOrderResponseList(ordersPage.getContent());
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateOrderStatus(String orderId, UpdateOrderStatusRequest request) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
+
+        String currentStatus = order.getStatus();
+        String newStatus = request.getStatus();
+
+        // Xác thực chuyển trạng thái
+        if (!isValidStatusTransition(currentStatus, newStatus)) {
+            throw new BaseException(ErrorCode.COM_004); // Invalid status transition
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Cập nhật timestamps theo trạng thái
+        switch (newStatus) {
+            case "CONFIRMED":
+                order.setConfirmedAt(now);
+                break;
+            case "PREPARING":
+                order.setPreparedAt(now);
+                break;
+            case "READY":
+                order.setReadyAt(now);
+                break;
+            case "DELIVERING":
+                order.setDeliveringAt(now);
+                break;
+            case "DELIVERED":
+                order.setDeliveredAt(now);
+                break;
+            case "COMPLETED":
+                order.setCompletedAt(now);
+                confirmSoldStock(order);
+                break;
+            case "REJECTED":
+                order.setRejectedAt(now);
+                order.setCancelReason(request.getReason());
+                releaseStock(order);
+                break;
+        }
+
+        order.setStatus(newStatus);
+        order = orderRepository.save(order);
+        saveStatusHistory(order, currentStatus, newStatus, request.getReason());
+
+        log.info("Order status updated: orderId={}, oldStatus={}, newStatus={}", orderId, currentStatus, newStatus);
+
+        return toOrderResponse(order);
+    }
+
+    private boolean isValidStatusTransition(String currentStatus, String newStatus) {
+        // Định nghĩa các chuyển trạng thái hợp lệ
+        switch (currentStatus) {
+            case "PENDING":
+                return newStatus.equals("CONFIRMED") || newStatus.equals("REJECTED");
+            case "CONFIRMED":
+                return newStatus.equals("PREPARING") || newStatus.equals("REJECTED");
+            case "PREPARING":
+                return newStatus.equals("READY") || newStatus.equals("REJECTED");
+            case "READY":
+                return newStatus.equals("DELIVERING") || newStatus.equals("COMPLETED") || newStatus.equals("REJECTED");
+            case "DELIVERING":
+                return newStatus.equals("DELIVERED") || newStatus.equals("REJECTED");
+            case "DELIVERED":
+                return newStatus.equals("COMPLETED");
+            case "COMPLETED":
+            case "CANCELLED":
+            case "REJECTED":
+                return false; // Trạng thái cuối cùng - không cho chuyển tiếp
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse cancelOrder(String orderId, String customerId, CancelOrderRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
+
+        // Xác minh quyền sở hữu
+        if (!order.getCustomer().getId().equals(customerId)) {
+            throw new BaseException(ErrorCode.AUTH_007);
+        }
+
+        String currentStatus = order.getStatus();
+        if (!orderProperties.getCancel().getAllowedStatuses().contains(currentStatus)) {
+            throw new BaseException(ErrorCode.COM_004);
+        }
+
+        Integer timeoutMinutes = orderProperties.getCancel().getTimeoutMinutes();
+        if (timeoutMinutes != null && timeoutMinutes > 0
+                && order.getCreatedAt().plusMinutes(timeoutMinutes).isBefore(LocalDateTime.now())) {
+            throw new BaseException(ErrorCode.COM_004);
+        }
+
+        order.setStatus("CANCELLED");
+        order.setCancelledAt(LocalDateTime.now());
+        order.setCancelReason(request.getReason());
+        order = orderRepository.save(order);
+        saveStatusHistory(order, currentStatus, "CANCELLED", request.getReason());
+
+        // Giải phóng tồn kho
+        releaseStock(order);
+
+        log.info("Order cancelled: orderId={}, reason={}", orderId, request.getReason());
+
+        return toOrderResponse(order);
+    }
+
+    private String generateOrderCode() {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String random = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        return "ORD-" + timestamp.substring(timestamp.length() - 8) + "-" + random;
+    }
+
+    private String formatAddress(CustomerAddress address) {
+        return String.format("%s, %s, %s, %s - %s (%s)",
+                address.getAddressLine(),
+                address.getWard(),
+                address.getDistrict(),
+                address.getCity(),
+                address.getReceiverName(),
+                address.getReceiverPhone());
+    }
+
+    private void releaseStock(Order order) {
+        List<OrderItem> items = orderItemRepository.findByOrderIdWithVariant(order.getId());
+        for (OrderItem item : items) {
+            if (item.getVariant() != null) {
+                dailyStockService.release(
+                    order.getBranch().getId(),
+                    item.getVariant().getId(),
+                    LocalDate.now(),
+                    item.getQuantity(),
+                    order.getId()
+                );
+            }
+        }
+    }
+
+    private void confirmSoldStock(Order order) {
+        List<OrderItem> items = orderItemRepository.findByOrderIdWithVariant(order.getId());
+        for (OrderItem item : items) {
+            if (item.getVariant() != null) {
+                dailyStockService.confirmSold(
+                    order.getBranch().getId(),
+                    item.getVariant().getId(),
+                    LocalDate.now(),
+                    item.getQuantity(),
+                    order.getId()
+                );
+            }
+        }
+    }
+
+    private void saveStatusHistory(Order order, String oldStatus, String newStatus, String reason) {
+        OrderStatusHistory history = new OrderStatusHistory();
+        history.setOrder(order);
+        history.setOldStatus(oldStatus);
+        history.setNewStatus(newStatus);
+        history.setReason(reason);
+        orderStatusHistoryRepository.save(history);
+    }
+
+    private BigDecimal calculateDiscount(String voucherCode, BigDecimal subtotal, String branchId, String customerId) {
+        if (voucherCode == null || voucherCode.isBlank()) {
+            return BigDecimal.ZERO;
+        }
+
+        Voucher voucher = voucherRepository.findByCodeForUpdate(voucherCode.trim().toUpperCase())
+                .orElseThrow(() -> new BaseException(ErrorCode.VOUCHER_001));
+        LocalDateTime now = LocalDateTime.now();
+        if (!"ACTIVE".equals(voucher.getStatus()) || voucher.getStartAt().isAfter(now) || voucher.getEndAt().isBefore(now)) {
+            throw new BaseException(ErrorCode.VOUCHER_006);
+        }
+        if (voucher.getMinOrderAmount() != null && subtotal.compareTo(voucher.getMinOrderAmount()) < 0) {
+            throw new BaseException(ErrorCode.VOUCHER_004);
+        }
+        if (voucher.getUsageLimit() != null && voucher.getUsedCount() >= voucher.getUsageLimit()) {
+            throw new BaseException(ErrorCode.VOUCHER_006);
+        }
+        if (voucher.getUsageLimitPerCustomer() != null
+                && voucherUsageRepository.countByVoucherIdAndCustomerId(voucher.getId(), customerId) >= voucher.getUsageLimitPerCustomer()) {
+            throw new BaseException(ErrorCode.VOUCHER_006);
+        }
+        if (voucherBranchRepository.existsByVoucherId(voucher.getId())
+                && !voucherBranchRepository.existsByVoucherIdAndBranchId(voucher.getId(), branchId)) {
+            throw new BaseException(ErrorCode.VOUCHER_007);
+        }
+
+        BigDecimal discount = DiscountType.PERCENTAGE.getValue().equals(voucher.getDiscountType())
+                ? subtotal.multiply(voucher.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                : voucher.getDiscountValue();
+        if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+            discount = voucher.getMaxDiscountAmount();
+        }
+        return discount.min(subtotal);
+    }
+
+    private void saveVoucherUsage(String voucherCode, Order order, CustomerProfile customer, BigDecimal discountAmount) {
+        if (voucherCode == null || voucherCode.isBlank()) {
+            return;
+        }
+
+        Voucher voucher = voucherRepository.findByCodeForUpdate(voucherCode.trim().toUpperCase())
+                .orElseThrow(() -> new BaseException(ErrorCode.VOUCHER_001));
+        voucher.setUsedCount(voucher.getUsedCount() + 1);
+        voucherRepository.save(voucher);
+
+        VoucherUsage usage = new VoucherUsage();
+        usage.setVoucher(voucher);
+        usage.setOrder(order);
+        usage.setCustomer(customer);
+        usage.setDiscountAmount(discountAmount);
+        voucherUsageRepository.save(usage);
+    }
+
+    private void saveDelivery(CreateOrderRequest request, Order order) {
+        if (!"DELIVERY".equals(order.getOrderType())) {
+            return;
+        }
+
+        OrderDelivery delivery = new OrderDelivery();
+        delivery.setOrder(order);
+        delivery.setReceiverName(order.getCustomerName());
+        delivery.setReceiverPhone(order.getCustomerPhone());
+        delivery.setDeliveryAddress(order.getDeliveryAddress());
+        delivery.setDeliveryNote(request.getNote());
+        delivery.setDeliveryFee(order.getDeliveryFee());
+        orderDeliveryRepository.save(delivery);
+    }
+
+    private OrderResponse toOrderResponse(Order order) {
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+
+        // Tải tất cả topping trong một truy vấn để tránh N+1
+        List<String> orderItemIds = orderItems.stream().map(OrderItem::getId).collect(Collectors.toList());
+        List<OrderItemTopping> allToppings = orderItemIds.isEmpty()
+            ? new ArrayList<>()
+            : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
+
+        // Gom nhóm topping theo id mục đơn hàng
+        var toppingsByItemId = allToppings.stream()
+                .collect(Collectors.groupingBy(t -> t.getOrderItem().getId()));
+
+        List<OrderItemResponse> itemResponses = orderItems.stream()
+                .map(item -> {
+                    List<OrderItemTopping> toppings = toppingsByItemId.getOrDefault(item.getId(), new ArrayList<>());
+                    List<OrderItemToppingResponse> toppingResponses = toppings.stream()
+                            .map(orderMapper::toToppingResponse)
+                            .collect(Collectors.toList());
+                    return orderMapper.toItemResponse(item, toppingResponses);
+                })
+                .collect(Collectors.toList());
+
+        return orderMapper.toResponse(order, itemResponses);
+    }
+
+    private List<OrderResponse> toOrderResponseList(List<Order> orders) {
+        if (orders.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Tải tất cả mục đơn hàng trong một truy vấn
+        List<String> orderIds = orders.stream().map(Order::getId).collect(Collectors.toList());
+        List<OrderItem> allItems = orderItemRepository.findByOrderIdIn(orderIds);
+
+        // Gom nhóm mục theo id đơn hàng
+        var itemsByOrderId = allItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        // Tải tất cả topping trong một truy vấn
+        List<String> orderItemIds = allItems.stream().map(OrderItem::getId).collect(Collectors.toList());
+        List<OrderItemTopping> allToppings = orderItemIds.isEmpty()
+            ? new ArrayList<>()
+            : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
+
+        // Gom nhóm topping theo id mục đơn hàng
+        var toppingsByItemId = allToppings.stream()
+                .collect(Collectors.groupingBy(t -> t.getOrderItem().getId()));
+
+        // Xây dựng danh sách phản hồi
+        return orders.stream().map(order -> {
+            List<OrderItem> orderItems = itemsByOrderId.getOrDefault(order.getId(), new ArrayList<>());
+
+            List<OrderItemResponse> itemResponses = orderItems.stream()
+                    .map(item -> {
+                        List<OrderItemTopping> toppings = toppingsByItemId.getOrDefault(item.getId(), new ArrayList<>());
+                        List<OrderItemToppingResponse> toppingResponses = toppings.stream()
+                                .map(orderMapper::toToppingResponse)
+                                .collect(Collectors.toList());
+                        return orderMapper.toItemResponse(item, toppingResponses);
+                    })
+                    .collect(Collectors.toList());
+
+            return orderMapper.toResponse(order, itemResponses);
+        }).collect(Collectors.toList());
+    }
+}

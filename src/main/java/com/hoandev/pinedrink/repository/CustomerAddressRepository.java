@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, String> {
@@ -18,4 +19,5 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
      */
     List<CustomerAddress> findByCustomerId(String customerId);
     Page<CustomerAddress> findByCustomerId(String customerId, Pageable pageable);
+    Optional<CustomerAddress> findByCustomerIdAndIsDefaultTrue(String customerId);
 }

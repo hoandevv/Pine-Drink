@@ -35,7 +35,7 @@ public class OrderController {
      * Create a new order from cart
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('ORDER_CREATE')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_CREATE')")
     public ResponseEntity<BaseResponse<OrderResponse>> createOrder(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateOrderRequest request) {
@@ -51,7 +51,7 @@ public class OrderController {
      * Get order by ID
      */
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasAuthority('ORDER_VIEW')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
     public ResponseEntity<BaseResponse<OrderResponse>> getOrderById(@PathVariable String orderId) {
         log.info("Getting order by ID: orderId={}", orderId);
 
@@ -63,7 +63,7 @@ public class OrderController {
      * Get order by code
      */
     @GetMapping("/code/{orderCode}")
-    @PreAuthorize("hasAuthority('ORDER_VIEW')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
     public ResponseEntity<BaseResponse<OrderResponse>> getOrderByCode(@PathVariable String orderCode) {
         log.info("Getting order by code: orderCode={}", orderCode);
 
@@ -75,7 +75,7 @@ public class OrderController {
      * Get customer's orders
      */
     @GetMapping("/my-orders")
-    @PreAuthorize("hasAuthority('ORDER_VIEW_OWN')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW_OWN')")
     public ResponseEntity<BaseResponse<Page<OrderResponse>>> getMyOrders(
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable) {
@@ -90,7 +90,7 @@ public class OrderController {
      * Get branch orders (for staff/manager)
      */
     @GetMapping("/branch/{branchId}")
-    @PreAuthorize("hasAuthority('ORDER_VIEW_BRANCH')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW_BRANCH')")
     public ResponseEntity<BaseResponse<Page<OrderResponse>>> getBranchOrders(
             @PathVariable String branchId,
             @RequestParam(required = false) String status,
@@ -105,7 +105,7 @@ public class OrderController {
      * Update order status (for staff/manager)
      */
     @PatchMapping("/{orderId}/status")
-    @PreAuthorize("hasAuthority('ORDER_UPDATE_STATUS')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_UPDATE_STATUS')")
     public ResponseEntity<BaseResponse<OrderResponse>> updateOrderStatus(
             @PathVariable String orderId,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
@@ -119,7 +119,7 @@ public class OrderController {
      * Cancel order (for customer)
      */
     @PostMapping("/{orderId}/cancel")
-    @PreAuthorize("hasAuthority('ORDER_CANCEL')")
+    @PreAuthorize("hasAuthority('PERM_ORDER_CANCEL')")
     public ResponseEntity<BaseResponse<OrderResponse>> cancelOrder(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String orderId,

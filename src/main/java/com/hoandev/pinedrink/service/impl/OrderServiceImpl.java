@@ -110,8 +110,18 @@ public class OrderServiceImpl implements OrderService {
             CustomerAddress address = customerAddressRepository.findByCustomerIdAndIsDefaultTrue(customerId)
                     .orElseThrow(() -> new BaseException(ErrorCode.CUSTOMER_002));
 
+            if (hasText(address.getReceiverName())) {
+                order.setCustomerName(address.getReceiverName());
+            }
+            if (hasText(address.getReceiverPhone())) {
+                order.setCustomerPhone(address.getReceiverPhone());
+            }
             order.setDeliveryAddress(formatAddress(address));
             order.setDeliveryFee(deliveryFeeService.calculate(branch, address, subtotal));
+        }
+
+        if (!hasText(order.getCustomerPhone())) {
+            throw new BaseException(ErrorCode.CUSTOMER_002);
         }
 
         order.setSubtotalAmount(subtotal);
@@ -377,6 +387,10 @@ public class OrderServiceImpl implements OrderService {
                 address.getCity(),
                 address.getReceiverName(),
                 address.getReceiverPhone());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private void releaseStock(Order order) {

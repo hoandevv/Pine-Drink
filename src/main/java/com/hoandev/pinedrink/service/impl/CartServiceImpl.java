@@ -147,6 +147,24 @@ public class CartServiceImpl implements CartService {
         return toCartResponse(cart);
     }
 
+    @Override
+    @Transactional
+    public CartResponse removeCartItem(String customerId, String itemId) {
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new BaseException(ErrorCode.COM_005));
+
+        Cart cart = item.getCart();
+        if (!cart.getCustomer().getId().equals(customerId)) {
+            throw new BaseException(ErrorCode.AUTH_007);
+        }
+
+        cartItemToppingRepository.deleteByCartItemId(itemId);
+        cartItemRepository.delete(item);
+
+        log.info("Cart item removed: cartId={}, itemId={}, customerId={}", cart.getId(), itemId, customerId);
+        return toCartResponse(cart);
+    }
+
     private Cart createCart(CustomerProfile customer, Branch branch) {
         Cart cart = new Cart();
         cart.setCustomer(customer);

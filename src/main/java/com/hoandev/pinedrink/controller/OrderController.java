@@ -51,11 +51,14 @@ public class OrderController {
      * Get order by ID
      */
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
-    public ResponseEntity<BaseResponse<OrderResponse>> getOrderById(@PathVariable String orderId) {
+    @PreAuthorize("hasAnyAuthority('PERM_ORDER_VIEW', 'PERM_ORDER_VIEW_OWN')")
+    public ResponseEntity<BaseResponse<OrderResponse>> getOrderById(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String orderId) {
         log.info("Getting order by ID: orderId={}", orderId);
 
-        OrderResponse response = orderService.getOrderById(orderId);
+        String customerId = shouldRestrictToOwnOrders(principal) ? getCurrentCustomer(principal).getId() : null;
+        OrderResponse response = orderService.getOrderById(orderId, customerId);
         return ResponseEntity.ok(BaseResponse.success(response, "Order retrieved successfully"));
     }
 
@@ -63,11 +66,14 @@ public class OrderController {
      * Get order by code
      */
     @GetMapping("/code/{orderCode}")
-    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
-    public ResponseEntity<BaseResponse<OrderResponse>> getOrderByCode(@PathVariable String orderCode) {
+    @PreAuthorize("hasAnyAuthority('PERM_ORDER_VIEW', 'PERM_ORDER_VIEW_OWN')")
+    public ResponseEntity<BaseResponse<OrderResponse>> getOrderByCode(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String orderCode) {
         log.info("Getting order by code: orderCode={}", orderCode);
 
-        OrderResponse response = orderService.getOrderByCode(orderCode);
+        String customerId = shouldRestrictToOwnOrders(principal) ? getCurrentCustomer(principal).getId() : null;
+        OrderResponse response = orderService.getOrderByCode(orderCode, customerId);
         return ResponseEntity.ok(BaseResponse.success(response, "Order retrieved successfully"));
     }
 
@@ -129,6 +135,14 @@ public class OrderController {
 
         OrderResponse response = orderService.cancelOrder(orderId, customer.getId(), request);
         return ResponseEntity.ok(BaseResponse.success(response, "Order cancelled successfully"));
+    }
+
+    private boolean shouldRestrictToOwnOrders(UserPrincipal principal) {
+        if (principal == null) {
+            return true;
+        }
+        boolean canViewAllOrders = principal.getPermissionAuthorities().contains("PERM_ORDER_VIEW");
+        return !canViewAllOrders;
     }
 
     private CustomerProfile getCurrentCustomer(UserPrincipal principal) {

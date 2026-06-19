@@ -261,6 +261,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getAllOrders(String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+        } else {
+            ordersPage = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+
+        List<OrderResponse> responses = toOrderResponseList(ordersPage.getContent());
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
     @Transactional
     public OrderResponse updateOrderStatus(String orderId, UpdateOrderStatusRequest request) {
         Order order = orderRepository.findByIdForUpdate(orderId)

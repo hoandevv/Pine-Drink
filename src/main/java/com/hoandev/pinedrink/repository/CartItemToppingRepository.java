@@ -14,4 +14,6 @@ public interface CartItemToppingRepository extends JpaRepository<CartItemTopping
     
     @Query("SELECT t FROM CartItemTopping t WHERE t.cartItem.id IN :cartItemIds")
     List<CartItemTopping> findByCartItemIdIn(@Param("cartItemIds") List<String> cartItemIds);
+
+    void deleteByCartItemId(String cartItemId);
 }

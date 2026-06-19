@@ -22,5 +22,6 @@ public interface CartService {
      */
     CartResponse addItemToCart(String customerId, AddCartItemRequest request);
 
+    CartResponse removeCartItem(String customerId, String itemId);
 
 }

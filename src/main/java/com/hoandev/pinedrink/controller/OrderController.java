@@ -48,6 +48,20 @@ public class OrderController {
     }
 
     /**
+     * Get all orders (for admin dashboards)
+     */
+    @GetMapping
+    @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
+    public ResponseEntity<BaseResponse<Page<OrderResponse>>> getAllOrders(
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        log.info("Getting all orders: status={}", status);
+
+        Page<OrderResponse> response = orderService.getAllOrders(status, pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Orders retrieved successfully"));
+    }
+
+    /**
      * Get order by ID
      */
     @GetMapping("/{orderId}")

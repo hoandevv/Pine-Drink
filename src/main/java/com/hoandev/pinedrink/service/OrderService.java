@@ -62,6 +62,15 @@ public interface OrderService {
      * @return page of orders
      */
     Page<OrderResponse> getBranchOrders(String branchId, String status, Pageable pageable);
+
+    /**
+     * Get all orders for admin dashboards.
+     *
+     * @param status filter by status (optional)
+     * @param pageable pagination information
+     * @return page of orders
+     */
+    Page<OrderResponse> getAllOrders(String status, Pageable pageable);
     
     /**
      * Update order status

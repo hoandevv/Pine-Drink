@@ -35,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,14 +93,36 @@ public class CartServiceImpl implements CartService {
                 .findByCustomerIdAndBranchIdAndStatus(customerId, request.getBranchId(), ACTIVE)
                 .orElseGet(() -> createCart(customer, branch));
 
+        String sugarLevel = defaultValue(request.getSugarLevel(), NORMAL);
+        String iceLevel = defaultValue(request.getIceLevel(), NORMAL);
+        String note = normalizeNote(request.getNote());
+
+        CartItem matchingItem = findMatchingItem(cart, product, variant, sugarLevel, iceLevel, note, request.getToppings());
+        if (matchingItem != null) {
+            int newQuantity = matchingItem.getQuantity() + request.getQuantity();
+            if (availableQuantity < newQuantity) {
+                throw new BaseException(ErrorCode.DAILY_STOCK_003);
+            }
+
+            matchingItem.setQuantity(newQuantity);
+            matchingItem.setTotalPrice(matchingItem.getUnitPrice()
+                    .add(getToppingAmountPerItem(matchingItem))
+                    .multiply(BigDecimal.valueOf(newQuantity)));
+            cartItemRepository.save(matchingItem);
+
+            log.info("Cart item merged: cartId={}, itemId={}, customerId={}, quantity={}",
+                    cart.getId(), matchingItem.getId(), customerId, newQuantity);
+            return toCartResponse(cart);
+        }
+
         CartItem item = new CartItem();
         item.setCart(cart);
         item.setProduct(product);
         item.setVariant(variant);
         item.setQuantity(request.getQuantity());
-        item.setSugarLevel(defaultValue(request.getSugarLevel(), NORMAL));
-        item.setIceLevel(defaultValue(request.getIceLevel(), NORMAL));
-        item.setNote(request.getNote());
+        item.setSugarLevel(sugarLevel);
+        item.setIceLevel(iceLevel);
+        item.setNote(note);
 
         BigDecimal unitPrice = product.getBasePrice()
                 .add(variant != null ? variant.getPriceDelta() : BigDecimal.ZERO);
@@ -144,6 +168,49 @@ public class CartServiceImpl implements CartService {
         return variant;
     }
 
+    private CartItem findMatchingItem(
+            Cart cart,
+            Product product,
+            ProductVariant variant,
+            String sugarLevel,
+            String iceLevel,
+            String note,
+            List<CartItemToppingRequest> toppings) {
+        return cartItemRepository.findMatchingItems(
+                        cart.getId(),
+                        product.getId(),
+                        variant != null ? variant.getId() : null,
+                        sugarLevel,
+                        iceLevel,
+                        note)
+                .stream()
+                .filter(item -> hasSameToppings(item, toppings))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasSameToppings(CartItem item, List<CartItemToppingRequest> requests) {
+        List<CartItemTopping> existingToppings = cartItemToppingRepository.findByCartItemId(item.getId());
+        List<CartItemToppingRequest> requestedToppings = requests == null ? List.of() : requests;
+        if (existingToppings.size() != requestedToppings.size()) {
+            return false;
+        }
+
+        return requestedToppings.stream().allMatch(request -> existingToppings.stream().anyMatch(existing ->
+                existing.getTopping().getId().equals(request.getToppingId())
+                        && existing.getQuantity() == request.getQuantity()));
+    }
+
+    private BigDecimal getToppingAmountPerItem(CartItem item) {
+        return cartItemToppingRepository.findByCartItemId(item.getId()).stream()
+                .map(CartItemTopping::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String normalizeNote(String note) {
+        return note == null || note.isBlank() ? null : note.trim();
+    }
+
     private BigDecimal saveToppings(CartItem item, List<CartItemToppingRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             return BigDecimal.ZERO;
@@ -168,17 +235,29 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse toCartResponse(Cart cart) {
-        List<CartItemResponse> items = cartItemRepository.findByCartId(cart.getId()).stream()
-                .map(this::toItemResponse)
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
+        if (cartItems.isEmpty()) {
+            return cartMapper.toResponse(cart, List.of());
+        }
+
+        List<String> cartItemIds = cartItems.stream()
+                .map(CartItem::getId)
+                .toList();
+        Map<String, List<CartItemTopping>> toppingsByItemId = cartItemToppingRepository.findByCartItemIdIn(cartItemIds)
+                .stream()
+                .collect(Collectors.groupingBy(topping -> topping.getCartItem().getId()));
+
+        List<CartItemResponse> items = cartItems.stream()
+                .map(item -> toItemResponse(item, toppingsByItemId.getOrDefault(item.getId(), List.of())))
                 .toList();
         return cartMapper.toResponse(cart, items);
     }
 
-    private CartItemResponse toItemResponse(CartItem item) {
-        List<CartItemToppingResponse> toppings = cartItemToppingRepository.findByCartItemId(item.getId()).stream()
+    private CartItemResponse toItemResponse(CartItem item, List<CartItemTopping> toppings) {
+        List<CartItemToppingResponse> toppingResponses = toppings.stream()
                 .map(cartMapper::toToppingResponse)
                 .toList();
-        return cartMapper.toItemResponse(item, toppings);
+        return cartMapper.toItemResponse(item, toppingResponses);
     }
 
     private String defaultValue(String value, String defaultValue) {

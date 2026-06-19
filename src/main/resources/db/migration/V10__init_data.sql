@@ -36,3 +36,10 @@ ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), updated_at = NOW();
 INSERT INTO ia_account_role_assignment (id, account_id, role_id, scope_id, status, assigned_at, assigned_by, expires_at)
 VALUES ('00000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000010', 'ACTIVE', NOW(), NULL, NULL)
 ON DUPLICATE KEY UPDATE status = VALUES(status), assigned_at = VALUES(assigned_at);
+
+-- ============================================================
+-- 5. Admin customer profile (required by cart/order/address modules)
+-- ============================================================
+INSERT INTO cu_customer_profile (id, account_id, customer_code, full_name, phone, email, date_of_birth, gender, status, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000050', '00000000-0000-0000-0000-000000000030', 'KH-ADMIN-000001', 'Administrator', NULL, 'admin@pine-drink.com', NULL, NULL, 'ACTIVE', NOW(), NOW())
+ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), updated_at = NOW();

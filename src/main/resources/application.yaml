@@ -231,6 +231,11 @@ app:
     queue:
       geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}
 
+    order-expiry:
+      exchange: ${APP_RABBITMQ_ORDER_EXPIRY_EXCHANGE:pine-drink.order-expire.exchange}
+      queue: ${APP_RABBITMQ_ORDER_EXPIRY_QUEUE:pine-drink.order-expire.queue}
+      routing-key: ${APP_RABBITMQ_ORDER_EXPIRY_ROUTING_KEY:order.expire}
+
 geocoding:
   nominatim:
     base-url: ${GEOCODING_NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
@@ -250,3 +255,5 @@ order:
   cancel:
     allowed-statuses: ${ORDER_CANCEL_ALLOWED_STATUSES:PENDING,CONFIRMED}
     timeout-minutes: ${ORDER_CANCEL_TIMEOUT_MINUTES:30}
+  expire:
+    timeout-minutes: ${ORDER_EXPIRE_TIMEOUT_MINUTES:15}

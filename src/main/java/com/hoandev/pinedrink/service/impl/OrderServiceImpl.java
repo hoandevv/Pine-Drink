@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.configuration.OrderProperties;
+import com.hoandev.pinedrink.configuration.RabbitMqProperties;
 import com.hoandev.pinedrink.entity.*;
 import com.hoandev.pinedrink.entity.dto.request.Order.CancelOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.CreateOrderRequest;
@@ -19,11 +20,14 @@ import com.hoandev.pinedrink.service.DeliveryFeeService;
 import com.hoandev.pinedrink.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -57,6 +61,8 @@ public class OrderServiceImpl implements OrderService {
     private final DeliveryFeeService deliveryFeeService;
     private final OrderMapper orderMapper;
     private final OrderProperties orderProperties;
+    private final RabbitTemplate rabbitTemplate;
+    private final RabbitMqProperties rabbitMqProperties;
 
     @Override
     @Transactional
@@ -203,13 +209,24 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("Order created successfully: orderId={}, orderCode={}", order.getId(), order.getOrderCode());
 
+        // Register callback to send delayed message AFTER transaction commit
+        String orderId = order.getId();
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        sendOrderExpiryMessage(orderId);
+                    }
+                }
+        );
+
         return toOrderResponse(order);
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(String orderId, String customerId) {
-        Order order = orderRepository.findByIdForUpdate(orderId)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
 
         // Kiểm tra quyền sở hữu nếu customerId được cung cấp (cho vai trò khách hàng)
@@ -391,6 +408,26 @@ public class OrderServiceImpl implements OrderService {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String random = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         return "ORD-" + timestamp.substring(timestamp.length() - 8) + "-" + random;
+    }
+
+    private void sendOrderExpiryMessage(String orderId) {
+        try {
+            int delayMs = orderProperties.getExpire().getTimeoutMinutes() * 60 * 1000;
+
+            rabbitTemplate.convertAndSend(
+                    rabbitMqProperties.orderExpiry().exchange(),
+                    rabbitMqProperties.orderExpiry().routingKey(),
+                    orderId,
+                    message -> {
+                        message.getMessageProperties().setHeader("x-delay", delayMs);
+                        return message;
+                    }
+            );
+
+            log.info("Order expiry message sent: orderId={}, delay={}ms", orderId, delayMs);
+        } catch (Exception e) {
+            log.error("Failed to send order expiry message: orderId={}", orderId, e);
+        }
     }
 
     private String formatAddress(CustomerAddress address) {

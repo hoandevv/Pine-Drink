@@ -34,11 +34,11 @@ services:
 
   # RabbitMQ Message Queue
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    build:
+      context: ./docker/rabbitmq
+      dockerfile: Dockerfile
     container_name: pine-drink-rabbitmq
     restart: unless-stopped
-    command: >
-      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_web_stomp && rabbitmq-server"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}

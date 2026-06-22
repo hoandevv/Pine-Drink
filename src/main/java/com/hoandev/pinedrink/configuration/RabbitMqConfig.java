@@ -2,6 +2,8 @@ package com.hoandev.pinedrink.configuration;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
@@ -267,7 +269,35 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 5. Message Converter & RabbitTemplate
+    // 5. Order Expiry — Delayed Message Exchange
+    // ──────────────────────────────────────────────
+
+    @Bean
+    public DirectExchange orderExpireExchange() {
+        return ExchangeBuilder
+                .directExchange(properties.orderExpiry().exchange())
+                .delayed()
+                .durable(true)
+                .build();
+    }
+
+    @Bean
+    public Queue orderExpireQueue() {
+        return QueueBuilder.durable(properties.orderExpiry().queue())
+                .withArgument("x-dead-letter-exchange", properties.orderExpiry().exchange())
+                .withArgument("x-dead-letter-routing-key", "order.expire.dlq")
+                .build();
+    }
+
+    @Bean
+    public Binding orderExpireBinding() {
+        return BindingBuilder.bind(orderExpireQueue())
+                .to(orderExpireExchange())
+                .with(properties.orderExpiry().routingKey());
+    }
+
+    // ──────────────────────────────────────────────
+    // 6. Message Converter & RabbitTemplate
     // ──────────────────────────────────────────────
 
     @Bean

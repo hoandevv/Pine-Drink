@@ -8,96 +8,81 @@ import org.springframework.context.annotation.Configuration;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Cấu hình liên quan đến đơn hàng (order).
+ * <p>
+ * Các giá trị này được bind từ cấu hình (prefix = "order") và dùng để
+ * tính phí giao hàng, timeout huỷ đơn, và timeout tự huỷ.
+ */
 @Configuration
 @ConfigurationProperties(prefix = "order")
 @Getter
 @Setter
 public class OrderProperties {
     
+    /** Cấu hình phí giao hàng */
     private Delivery delivery = new Delivery();
+
+    /** Cấu hình huỷ đơn */
     private Cancel cancel = new Cancel();
+
+    /** Cấu hình timeout tự huỷ/expire */
+    private Expire expire = new Expire();
     
     @Getter
     @Setter
     public static class Delivery {
         /**
-         * Default delivery fee in VND
+         * Phí giao hàng mặc định (VND) nếu không tính theo khoảng cách.
          */
         private BigDecimal defaultFee = BigDecimal.valueOf(15000);
 
+        /**
+         * Phí cơ bản (VND) khi bắt đầu tính phí theo khoảng cách.
+         */
         private BigDecimal baseFee = BigDecimal.valueOf(10000);
 
+        /**
+         * Phí mỗi km (VND).
+         */
         private BigDecimal feePerKm = BigDecimal.valueOf(5000);
 
+        /**
+         * Khoảng cách tối đa (km) để áp dụng tính phí.
+         */
         private BigDecimal maxDistanceKm = BigDecimal.valueOf(15);
 
+        /**
+         * Hệ số đường (để nhân với khoảng cách thực tế nếu cần).
+         */
         private BigDecimal roadFactor = BigDecimal.valueOf(1.25);
         
         /**
-         * Free delivery threshold in VND
+         * Ngưỡng miễn phí giao hàng (VND) nếu tổng đơn >= giá trị này.
          */
         private BigDecimal freeThreshold = BigDecimal.valueOf(200000);
-
-        public BigDecimal getDefaultFee() {
-            return defaultFee;
-        }
-
-        public void setDefaultFee(BigDecimal defaultFee) {
-            this.defaultFee = defaultFee;
-        }
-
-        public BigDecimal getBaseFee() {
-            return baseFee;
-        }
-
-        public void setBaseFee(BigDecimal baseFee) {
-            this.baseFee = baseFee;
-        }
-
-        public BigDecimal getFeePerKm() {
-            return feePerKm;
-        }
-
-        public void setFeePerKm(BigDecimal feePerKm) {
-            this.feePerKm = feePerKm;
-        }
-
-        public BigDecimal getMaxDistanceKm() {
-            return maxDistanceKm;
-        }
-
-        public void setMaxDistanceKm(BigDecimal maxDistanceKm) {
-            this.maxDistanceKm = maxDistanceKm;
-        }
-
-        public BigDecimal getRoadFactor() {
-            return roadFactor;
-        }
-
-        public void setRoadFactor(BigDecimal roadFactor) {
-            this.roadFactor = roadFactor;
-        }
-
-        public BigDecimal getFreeThreshold() {
-            return freeThreshold;
-        }
-
-        public void setFreeThreshold(BigDecimal freeThreshold) {
-            this.freeThreshold = freeThreshold;
-        }
     }
     
     @Getter
     @Setter
     public static class Cancel {
         /**
-         * Allowed statuses for order cancellation
+         * Các trạng thái được phép huỷ đơn (ví dụ: PENDING, CONFIRMED).
          */
         private List<String> allowedStatuses = List.of("PENDING", "CONFIRMED");
         
         /**
-         * Timeout in minutes for order cancellation
+         * Thời hạn (phút) cho phép huỷ đơn trước khi không còn được huỷ.
          */
         private Integer timeoutMinutes = 30;
+    }
+
+    @Getter
+    @Setter
+    public static class Expire {
+        /**
+         * Thời hạn (phút) để tự động từ chối các đơn ở trạng thái PENDING.
+         */
+        private Integer timeoutMinutes = 15;
     }
 }

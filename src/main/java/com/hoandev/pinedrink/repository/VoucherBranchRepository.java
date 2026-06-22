@@ -17,6 +17,10 @@ public interface VoucherBranchRepository extends JpaRepository<VoucherBranch, St
      */
     List<VoucherBranch> findByVoucherIdIn(Collection<String> voucherIds);
 
+    boolean existsByVoucherId(String voucherId);
+
+    boolean existsByVoucherIdAndBranchId(String voucherId, String branchId);
+
     /**
      * Deletes voucher branches by voucher ID.
      *

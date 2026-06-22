@@ -15,4 +15,12 @@ public interface VoucherUsageRepository extends JpaRepository<VoucherUsage, Stri
      * @return true if a usage record exists, false otherwise
      */
     boolean existsByVoucherId(String voucherId);
+    /**
+     * Counts the number of usage records for a given voucher and customer.
+     *
+     * @param voucherId the ID of the voucher
+     * @param customerId the ID of the customer
+     * @return the number of usage records
+     */
+    long countByVoucherIdAndCustomerId(String voucherId, String customerId);
 }

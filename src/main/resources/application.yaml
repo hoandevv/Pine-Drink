@@ -231,6 +231,11 @@ app:
     queue:
       geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}
 
+    order-expiry:
+      exchange: ${APP_RABBITMQ_ORDER_EXPIRY_EXCHANGE:pine-drink.order-expire.exchange}
+      queue: ${APP_RABBITMQ_ORDER_EXPIRY_QUEUE:pine-drink.order-expire.queue}
+      routing-key: ${APP_RABBITMQ_ORDER_EXPIRY_ROUTING_KEY:order.expire}
+
 geocoding:
   nominatim:
     base-url: ${GEOCODING_NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
@@ -238,3 +243,17 @@ geocoding:
   cache:
     enabled: ${GEOCODING_CACHE_ENABLED:true}
     ttl-days: ${GEOCODING_CACHE_TTL_DAYS:30}
+
+order:
+  delivery:
+    default-fee: ${ORDER_DELIVERY_DEFAULT_FEE:15000}
+    base-fee: ${ORDER_DELIVERY_BASE_FEE:10000}
+    fee-per-km: ${ORDER_DELIVERY_FEE_PER_KM:5000}
+    max-distance-km: ${ORDER_DELIVERY_MAX_DISTANCE_KM:15}
+    road-factor: ${ORDER_DELIVERY_ROAD_FACTOR:1.25}
+    free-threshold: ${ORDER_DELIVERY_FREE_THRESHOLD:200000}
+  cancel:
+    allowed-statuses: ${ORDER_CANCEL_ALLOWED_STATUSES:PENDING,CONFIRMED}
+    timeout-minutes: ${ORDER_CANCEL_TIMEOUT_MINUTES:30}
+  expire:
+    timeout-minutes: ${ORDER_EXPIRE_TIMEOUT_MINUTES:15}

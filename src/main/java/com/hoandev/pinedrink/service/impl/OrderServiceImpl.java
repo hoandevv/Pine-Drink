@@ -14,6 +14,11 @@ import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.OrderMapper;
+import com.hoandev.pinedrink.realtime.RealtimeEventFactory;
+import com.hoandev.pinedrink.realtime.RealtimeEventType;
+import com.hoandev.pinedrink.realtime.RealtimePublishService;
+import com.hoandev.pinedrink.realtime.payload.OrderCreatedPayload;
+import com.hoandev.pinedrink.realtime.payload.OrderStatusChangedPayload;
 import com.hoandev.pinedrink.repository.*;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.DeliveryFeeService;
@@ -63,6 +68,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderProperties orderProperties;
     private final RabbitTemplate rabbitTemplate;
     private final RabbitMqProperties rabbitMqProperties;
+    private final RealtimePublishService realtimePublishService;
+    private final RealtimeEventFactory realtimeEventFactory;
 
     @Override
     @Transactional
@@ -211,11 +218,16 @@ public class OrderServiceImpl implements OrderService {
 
         // Register callback to send delayed message AFTER transaction commit
         String orderId = order.getId();
+        String branchId = branch.getId();
+        String orderCode = order.getOrderCode();
+        BigDecimal totalAmount = order.getTotalAmount();
+        String customerAccountId = customerId;
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         sendOrderExpiryMessage(orderId);
+                        publishOrderCreatedEvent(orderId, orderCode, branchId, customerAccountId, totalAmount);
                     }
                 }
         );
@@ -341,6 +353,20 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("Order status updated: orderId={}, oldStatus={}, newStatus={}", orderId, currentStatus, newStatus);
 
+        // Publish realtime event after transaction commit
+        String orderCode = order.getOrderCode();
+        String branchId = order.getBranch().getId();
+        String customerAccountId = order.getCustomer() != null ? order.getCustomer().getId() : null;
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        publishOrderStatusChangedEvent(orderId, orderCode, currentStatus, newStatus,
+                                request.getReason(), branchId, customerAccountId);
+                    }
+                }
+        );
+
         return toOrderResponse(order);
     }
 
@@ -400,6 +426,20 @@ public class OrderServiceImpl implements OrderService {
         releaseStock(order);
 
         log.info("Order cancelled: orderId={}, reason={}", orderId, request.getReason());
+
+        // Publish realtime event after transaction commit
+        String orderCode = order.getOrderCode();
+        String branchId = order.getBranch().getId();
+        String customerAccountId = order.getCustomer() != null ? order.getCustomer().getId() : null;
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        publishOrderStatusChangedEvent(orderId, orderCode, currentStatus, "CANCELLED",
+                                request.getReason(), branchId, customerAccountId);
+                    }
+                }
+        );
 
         return toOrderResponse(order);
     }
@@ -549,6 +589,48 @@ public class OrderServiceImpl implements OrderService {
         delivery.setDeliveryNote(request.getNote());
         delivery.setDeliveryFee(order.getDeliveryFee());
         orderDeliveryRepository.save(delivery);
+    }
+
+    private void publishOrderCreatedEvent(String orderId, String orderCode, String branchId,
+                                           String customerAccountId, BigDecimal totalAmount) {
+        try {
+            OrderCreatedPayload payload = new OrderCreatedPayload(
+                    orderId, orderCode, branchId, customerAccountId, totalAmount);
+
+            var event = realtimeEventFactory.create(
+                    RealtimeEventType.ORDER_CREATED,
+                    customerAccountId,
+                    "ORDER",
+                    orderId,
+                    payload);
+
+            realtimePublishService.publishBranchOrderEvent(branchId, event);
+            log.debug("Published ORDER_CREATED event: orderId={}", orderId);
+        } catch (Exception e) {
+            log.error("Failed to publish ORDER_CREATED event: orderId={}", orderId, e);
+        }
+    }
+
+    private void publishOrderStatusChangedEvent(String orderId, String orderCode, String oldStatus,
+                                                 String newStatus, String reason, String branchId,
+                                                 String customerAccountId) {
+        try {
+            OrderStatusChangedPayload payload = new OrderStatusChangedPayload(
+                    orderId, orderCode, oldStatus, newStatus, reason, branchId, customerAccountId);
+
+            var event = realtimeEventFactory.create(
+                    RealtimeEventType.ORDER_STATUS_CHANGED,
+                    customerAccountId,
+                    "ORDER",
+                    orderId,
+                    payload);
+
+            realtimePublishService.publishOrderEvent(orderId, event);
+            realtimePublishService.publishBranchOrderEvent(branchId, event);
+            log.debug("Published ORDER_STATUS_CHANGED event: orderId={}, {} -> {}", orderId, oldStatus, newStatus);
+        } catch (Exception e) {
+            log.error("Failed to publish ORDER_STATUS_CHANGED event: orderId={}", orderId, e);
+        }
     }
 
     private OrderResponse toOrderResponse(Order order) {

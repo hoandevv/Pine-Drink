@@ -4,6 +4,10 @@ import com.hoandev.pinedrink.configuration.OrderProperties;
 import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.OrderStatusHistory;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
+import com.hoandev.pinedrink.realtime.RealtimeEventFactory;
+import com.hoandev.pinedrink.realtime.RealtimeEventType;
+import com.hoandev.pinedrink.realtime.RealtimePublishService;
+import com.hoandev.pinedrink.realtime.payload.OrderStatusChangedPayload;
 import com.hoandev.pinedrink.repository.OrderItemRepository;
 import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.repository.OrderStatusHistoryRepository;
@@ -29,6 +33,8 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final BranchVariantDailyStockService dailyStockService;
     private final OrderProperties orderProperties;
+    private final RealtimePublishService realtimePublishService;
+    private final RealtimeEventFactory realtimeEventFactory;
 
     @Override
     @Transactional
@@ -60,6 +66,36 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
 
         log.info("Order auto-rejected: orderId={}, orderCode={}, createdAt={}",
                 order.getId(), order.getOrderCode(), order.getCreatedAt());
+
+        publishOrderExpiredEvent(order);
+    }
+
+    private void publishOrderExpiredEvent(Order order) {
+        try {
+            String customerAccountId = order.getCustomer() != null ? order.getCustomer().getId() : null;
+
+            OrderStatusChangedPayload payload = new OrderStatusChangedPayload(
+                    order.getId(),
+                    order.getOrderCode(),
+                    OrderStatus.PENDING.getValue(),
+                    OrderStatus.REJECTED.getValue(),
+                    order.getCancelReason(),
+                    order.getBranch().getId(),
+                    customerAccountId);
+
+            var event = realtimeEventFactory.create(
+                    RealtimeEventType.ORDER_STATUS_CHANGED,
+                    customerAccountId,
+                    "ORDER",
+                    order.getId(),
+                    payload);
+
+            realtimePublishService.publishOrderEvent(order.getId(), event);
+            realtimePublishService.publishBranchOrderEvent(order.getBranch().getId(), event);
+            log.debug("Published ORDER_STATUS_CHANGED event for expired order: orderId={}", order.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish ORDER_STATUS_CHANGED event for expired order: orderId={}", order.getId(), e);
+        }
     }
 
     private void releaseStock(Order order) {

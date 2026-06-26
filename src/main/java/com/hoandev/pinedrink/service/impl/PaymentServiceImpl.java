@@ -205,20 +205,24 @@ public class PaymentServiceImpl implements PaymentService {
      */
     public MomoIpnResponse handleMomoIpn(MomoIpnRequest request) {
         if (!verifyMomoIpnSignature(request)) {
+            log.warn("MoMo IPN rejected: invalid signature, orderId={}, requestId={}", request.getOrderId(), request.getRequestId());
             return momoIpnResponse(request, 1, "Invalid signature");
         }
 
         Optional<PaymentTransaction> latest = paymentTransactionRepository
                 .findByTransactionCodeAndPaymentMethod(request.getOrderId(), METHOD_MOMO);
         if (latest.isEmpty()) {
+            log.warn("MoMo IPN ignored: transaction not found, momoOrderId={}, requestId={}", request.getOrderId(), request.getRequestId());
             return momoIpnResponse(request, 0, "Transaction already processed or not found");
         }
         if (!Objects.equals(request.getOrderId(), request.getRequestId())) {
+            log.warn("MoMo IPN rejected: requestId mismatch, orderId={}, requestId={}", request.getOrderId(), request.getRequestId());
             return momoIpnResponse(request, 1, "Invalid request id");
         }
 
         PaymentTransaction transaction = latest.get();
         if (!STATUS_PENDING.equals(transaction.getStatus())) {
+            log.info("MoMo IPN ignored: transaction already processed, transactionId={}, status={}", transaction.getId(), transaction.getStatus());
             return momoIpnResponse(request, 0, "Transaction already processed");
         }
 
@@ -230,6 +234,8 @@ public class PaymentServiceImpl implements PaymentService {
             transaction.setStatus(STATUS_FAILED);
             transaction.setFailedReason("Amount mismatch");
             paymentTransactionRepository.save(transaction);
+            log.warn("MoMo IPN rejected: amount mismatch, transactionId={}, expected={}, actual={}",
+                    transaction.getId(), transaction.getAmount(), request.getAmount());
             return momoIpnResponse(request, 1, "Amount mismatch");
         }
 
@@ -250,6 +256,8 @@ public class PaymentServiceImpl implements PaymentService {
         paymentTransactionRepository.save(transaction);
         paymentIntentRepository.save(intent);
         orderRepository.save(order);
+        log.info("MoMo IPN processed: orderId={}, transactionId={}, resultCode={}, paymentStatus={}",
+                order.getId(), transaction.getId(), request.getResultCode(), order.getPaymentStatus());
         return momoIpnResponse(request, 0, "Success");
     }
 

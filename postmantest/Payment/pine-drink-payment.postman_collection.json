@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "Pine Drink - Payment",
+    "description": "Payment/offline COD-CASH smoke tests. Set baseUrl, accessToken, orderId before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('login ok', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "const token = body?.data?.accessToken || body?.data?.token;",
+              "if (token) pm.collectionVariables.set('accessToken', token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment - Record Offline CASH",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"paymentMethod\": \"CASH\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/payments/offline/record",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            "offline",
+            "record"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('record payment ok', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.test('payment status paid', function () { pm.expect(body.data.status).to.eql('PAID'); });",
+              "pm.test('order payment status paid', function () { pm.expect(body.data.orderPaymentStatus).to.eql('PAID'); });",
+              "if (body?.data?.transactionCode) pm.collectionVariables.set('transactionCode', body.data.transactionCode);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment - Get Order Payment Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/payments/orders/{{orderId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            "orders",
+            "{{orderId}}",
+            "status"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('get payment status ok', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.test('same order id', function () { pm.expect(body.data.orderId).to.eql(pm.collectionVariables.get('orderId')); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment - Record Offline COD",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"paymentMethod\": \"COD\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/payments/offline/record",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            "offline",
+            "record"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payment - Invalid Method",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"paymentMethod\": \"VNPAY\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/payments/offline/record",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            "offline",
+            "record"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('invalid method rejected', function () { pm.expect(pm.response.code).to.be.oneOf([400, 422]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order - Get By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "orders",
+            "{{orderId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('get order ok', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.test('order payment status paid after record', function () { pm.expect(body.data.paymentStatus).to.eql('PAID'); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": "password123"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "transactionCode",
+      "value": ""
+    }
+  ]
+}

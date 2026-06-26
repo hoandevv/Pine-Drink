@@ -103,6 +103,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/forgot-password/verify-otp",
+                                "/api/v1/payments/momo/ipn",
+                                "/api/v1/payments/momo/return",
                                 "/api/v1/vouchers/customer/available",
                                 "/api/v1/files/private/**",
                                 "/swagger-ui/**",

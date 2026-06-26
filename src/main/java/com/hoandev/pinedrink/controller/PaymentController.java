@@ -1,7 +1,11 @@
 package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
+import com.hoandev.pinedrink.entity.dto.request.Payment.MomoCreatePaymentRequest;
+import com.hoandev.pinedrink.entity.dto.request.Payment.MomoIpnRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentResponse;
+import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
 import com.hoandev.pinedrink.service.PaymentService;
 import jakarta.validation.Valid;
@@ -14,7 +18,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -40,5 +47,24 @@ public class PaymentController {
         log.info("Getting payment status: orderId={}", orderId);
         PaymentTransactionResponse response = paymentService.getLatestOrderPaymentStatus(orderId);
         return ResponseEntity.ok(BaseResponse.success(response, "Payment status retrieved successfully"));
+    }
+
+    @PostMapping("/momo/create")
+    @PreAuthorize("hasAnyAuthority('PERM_ORDER_VIEW', 'PERM_ORDER_VIEW_BRANCH', 'PERM_ORDER_VIEW_OWN')")
+    public ResponseEntity<BaseResponse<MomoCreatePaymentResponse>> createMomoPayment(
+            @Valid @RequestBody MomoCreatePaymentRequest request) {
+        MomoCreatePaymentResponse response = paymentService.createMomoPayment(request);
+        return ResponseEntity.ok(BaseResponse.success(response, "MoMo payment created successfully"));
+    }
+
+    @PostMapping("/momo/ipn")
+    public ResponseEntity<MomoIpnResponse> handleMomoIpn(@RequestBody MomoIpnRequest request) {
+        return ResponseEntity.ok(paymentService.handleMomoIpn(request));
+    }
+
+    @GetMapping("/momo/return")
+    public ResponseEntity<BaseResponse<MomoIpnResponse>> handleMomoReturn(@RequestParam Map<String, String> params) {
+        MomoIpnResponse response = paymentService.handleMomoReturn(params);
+        return ResponseEntity.ok(BaseResponse.success(response, "MoMo return verified"));
     }
 }

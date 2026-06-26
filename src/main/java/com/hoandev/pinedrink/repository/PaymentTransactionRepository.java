@@ -26,6 +26,11 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             @Param("status") String status
     );
 
+    Optional<PaymentTransaction> findByTransactionCodeAndPaymentMethod(
+            String transactionCode,
+            String paymentMethod
+    );
+
     @Query("""
             select transaction
             from PaymentTransaction transaction

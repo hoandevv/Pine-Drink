@@ -137,6 +137,20 @@ app:
     private-bucket-name: ${MINIO_PRIVATE_BUCKET_NAME:pine-drink-private}
     presigned-url-expiry: ${MINIO_PRESIGNED_URL_EXPIRY:3600}
 
+  momo:
+    partner-code: ${MOMO_PARTNER_CODE:}
+    access-key: ${MOMO_ACCESS_KEY:}
+    secret-key: ${MOMO_SECRET_KEY:}
+    endpoint: ${MOMO_ENDPOINT:https://test-payment.momo.vn/v2/gateway/api/create}
+    redirect-url: ${MOMO_REDIRECT_URL:}
+    ipn-url: ${MOMO_IPN_URL:}
+    request-type: ${MOMO_REQUEST_TYPE:payWithMethod}
+    lang: ${MOMO_LANG:vi}
+    auto-capture: ${MOMO_AUTO_CAPTURE:true}
+    partner-name: ${MOMO_PARTNER_NAME:Pine Drink}
+    store-id: ${MOMO_STORE_ID:PineDrinkStore}
+    order-group-id: ${MOMO_ORDER_GROUP_ID:}
+
   email:
     enabled: ${EMAIL_ENABLED:true}
     from: ${EMAIL_FROM:noreply@pine-drink.com}

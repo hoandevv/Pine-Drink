@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.service;
 
+import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 
@@ -29,6 +30,10 @@ public interface AccessScopeService {
      *
      */
     void assertCanAccessBranch(String branchId);
+    /**
+     * Ensures that the current account can view the given order.
+     */
+    void assertCanViewOrder(Order order);
     /**
      * Ensures that the current account can manage (create/update/delete) data in the given branch.
      * */

@@ -99,6 +99,8 @@ public enum ErrorCode {
     ORDER_002("ORDER_002", "Order has expired and was auto-rejected"),
     ORDER_003("ORDER_003", "Order is no longer in PENDING status"),
 
+    PAYMENT_001("PAYMENT_001", "Payment provider is unavailable"),
+
     VOUCHER_001("VOUCHER_001", "Voucher not found"),
     VOUCHER_002("VOUCHER_002", "Voucher code already exists"),
     VOUCHER_003("VOUCHER_003", "Voucher date range is invalid"),

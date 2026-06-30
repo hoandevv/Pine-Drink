@@ -1,10 +1,13 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.AccountRoleAssignment;
+import com.hoandev.pinedrink.entity.CustomerProfile;
+import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
+import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
@@ -25,6 +28,7 @@ import java.util.Set;
 public class AccessScopeServiceImpl implements AccessScopeService {
 
     private final AccountRoleAssignmentRepository assignmentRepository;
+    private final CustomerProfileRepository customerProfileRepository;
 
     /**
      * {@inheritDoc}
@@ -60,6 +64,28 @@ public class AccessScopeServiceImpl implements AccessScopeService {
         throw new BaseException(ErrorCode.AUTH_007);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCanViewOrder(Order order) {
+        UserPrincipal principal = getCurrentPrincipal();
+        AccessScopeContext scope = resolveScopeByAccountId(principal.getId());
+
+        if (scope.fullAccess()) {
+            return;
+        }
+
+        if (order.getBranch() != null
+                && order.getBranch().getId() != null
+                && scope.branchIds().contains(order.getBranch().getId())) {
+            return;
+        }
+
+        if (isOwnOrder(order, principal)) {
+            return;
+        }
+
+        throw new BaseException(ErrorCode.AUTH_007);
+    }
     @Override
     @Transactional(readOnly = true)
     public void assertCanManageBranch(String branchId) {
@@ -130,6 +156,13 @@ public class AccessScopeServiceImpl implements AccessScopeService {
                 .filter(scope -> scope.getBranch() != null)
                 .map(scope -> scope.getBranch().getId())
                 .anyMatch(allowedBranchIds::contains);
+    }
+
+    private boolean isOwnOrder(Order order, UserPrincipal principal) {
+        return customerProfileRepository.findByAccountId(principal.getId())
+                .map(CustomerProfile::getId)
+                .filter(customerId -> order.getCustomer() != null && customerId.equals(order.getCustomer().getId()))
+                .isPresent();
     }
 
     private AccessScopeContext resolveAccessScope(String accountId) {

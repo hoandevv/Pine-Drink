@@ -59,6 +59,8 @@ public class PaymentController {
 
     @PostMapping("/momo/ipn")
     public ResponseEntity<MomoIpnResponse> handleMomoIpn(@RequestBody MomoIpnRequest request) {
+        log.info("Received MoMo IPN: orderId={}, requestId={}, resultCode={}, amount={}",
+                request.getOrderId(), request.getRequestId(), request.getResultCode(), request.getAmount());
         return ResponseEntity.ok(paymentService.handleMomoIpn(request));
     }
 

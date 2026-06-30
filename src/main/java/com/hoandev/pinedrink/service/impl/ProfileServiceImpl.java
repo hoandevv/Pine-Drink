@@ -216,21 +216,7 @@ public class ProfileServiceImpl implements ProfileService {
         CustomerProfile customerProfile = customerProfileRepository.findByAccountId(account.getId())
                 .orElse(null);
 
-        return AccountResponse.builder()
-                .id(account.getId())
-                .username(account.getUsername())
-                .fullName(account.getFullName())
-                .email(account.getEmail())
-                .phone(account.getPhone())
-                .avatarUrl(account.getAvatarUrl())
-                .status(account.getStatus())
-                .authProvider(account.getAuthProvider())
-                .hasLocalPassword(Boolean.TRUE.equals(account.getHasLocalPassword()))
-                .lastLoginAt(account.getLastLoginAt())
-                .dateOfBirth(customerProfile != null ? customerProfile.getDateOfBirth() : null)
-                .gender(customerProfile != null ? customerProfile.getGender() : null)
-                .scope(authMapper.buildScopeAccess(account.getId()))
-                .build();
+        return authMapper.toAccountResponse(account, customerProfile);
     }
 
 }

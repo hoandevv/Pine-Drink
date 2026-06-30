@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.AccountRoleAssignment;
+import com.hoandev.pinedrink.entity.CustomerProfile;
 import com.hoandev.pinedrink.entity.dto.response.Auth.AccountResponse;
 import com.hoandev.pinedrink.entity.dto.response.Auth.LoginResponse;
 import com.hoandev.pinedrink.entity.dto.response.Auth.RegisterResponse;
@@ -32,23 +33,30 @@ public class AuthMapper {
      * @return the account response DTO
      */
     public AccountResponse toAccountResponse(Account account) {
+        return toAccountResponse(account, null);
+    }
+
+    public AccountResponse toAccountResponse(Account account, CustomerProfile customerProfile) {
         if (account == null) {
             return null;
         }
 
-        AccountResponse response = new AccountResponse();
-        response.setId(account.getId());
-        response.setUsername(account.getUsername());
-        response.setFullName(account.getFullName());
-        response.setEmail(account.getEmail());
-        response.setPhone(account.getPhone());
-        response.setAvatarUrl(account.getAvatarUrl());
-        response.setStatus(account.getStatus());
-        response.setAuthProvider(account.getAuthProvider());
-        response.setHasLocalPassword(Boolean.TRUE.equals(account.getHasLocalPassword()));
-        response.setLastLoginAt(account.getLastLoginAt());
-        response.setScope(buildScopeAccess(account.getId()));
-        return response;
+        return AccountResponse.builder()
+                .id(account.getId())
+                .username(account.getUsername())
+                .fullName(account.getFullName())
+                .email(account.getEmail())
+                .phone(account.getPhone())
+                .avatarUrl(account.getAvatarUrl())
+                .status(account.getStatus())
+                .authProvider(account.getAuthProvider())
+                .hasLocalPassword(Boolean.TRUE.equals(account.getHasLocalPassword()))
+                .lastLoginAt(account.getLastLoginAt())
+                .createdAt(account.getCreatedAt())
+                .dateOfBirth(customerProfile != null ? customerProfile.getDateOfBirth() : null)
+                .gender(customerProfile != null ? customerProfile.getGender() : null)
+                .scope(buildScopeAccess(account.getId()))
+                .build();
     }
 
     /**

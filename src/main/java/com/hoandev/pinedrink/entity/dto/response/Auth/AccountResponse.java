@@ -24,6 +24,7 @@ public class AccountResponse {
     private String authProvider;
     private Boolean hasLocalPassword;
     private LocalDateTime lastLoginAt;
+    private LocalDateTime createdAt;
     private LocalDate dateOfBirth;
     private String gender;
     private ScopeAccessResponse scope;

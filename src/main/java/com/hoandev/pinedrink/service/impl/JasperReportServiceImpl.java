@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.JasperReportService;
@@ -62,6 +63,17 @@ public class JasperReportServiceImpl implements JasperReportService {
         return generatePdf("reports/daily-revenue.jrxml", params, data.getItems(), "Failed to generate daily revenue PDF");
     }
 
+    @Override
+    public byte[] generateProductCatalogPdf(ProductCatalogReportDto data) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("title", data.getTitle());
+        params.put("generatedAt", data.getGeneratedAt());
+        params.put("statusFilter", data.getStatusFilter());
+        params.put("categoryFilter", data.getCategoryFilter());
+        params.put("totalProducts", data.getTotalProducts());
+        return generatePdf("reports/product-catalog.jrxml", params, data.getItems(), "Failed to generate product catalog PDF");
+    }
+
     private byte[] generatePdf(String templatePath, Map<String, Object> params, Object rows, String errorMessage) {
         try (InputStream template = new ClassPathResource(templatePath).getInputStream()) {
             JasperReport report = JasperCompileManager.compileReport(template);
@@ -70,7 +82,7 @@ public class JasperReportServiceImpl implements JasperReportService {
             return JasperExportManager.exportReportToPdf(print);
         } catch (Exception e) {
             log.error(errorMessage, e);
-            throw new BaseException(ErrorCode.COM_002, errorMessage);
+            throw new BaseException(ErrorCode.COM_002, errorMessage + ": " + e.getMessage());
         }
     }
 }

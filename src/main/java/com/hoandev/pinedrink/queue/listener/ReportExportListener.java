@@ -31,8 +31,8 @@ public class ReportExportListener {
      * @param event thông điệp mô tả job báo cáo cần được xuất
      */
     @RabbitListener(
-            queues = "${app.rabbitmq.background-job.queue}",
-            containerFactory = "backgroundJobListenerContainerFactory"
+            queues = "${app.rabbitmq.report.queue}",
+            containerFactory = "reportListenerContainerFactory"
     )
     public void handleReportExportRequested(ReportExportRequestedEvent event) {
         log.info("Received report export event: eventId={}, jobId={}", event.eventId(), event.jobId());

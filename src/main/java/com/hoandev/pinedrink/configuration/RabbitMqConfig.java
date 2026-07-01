@@ -60,6 +60,11 @@ public class RabbitMqConfig {
         return new TopicExchange(properties.backgroundJob().exchange());
     }
 
+    @Bean
+    public TopicExchange reportExchange() {
+        return new TopicExchange(properties.report().exchange());
+    }
+
     // ──────────────────────────────────────────────
     // 2. Domain Events — Queues & Bindings
     // ──────────────────────────────────────────────
@@ -271,7 +276,51 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 5. Order Expiry — Delayed Message Exchange
+    // 5. Report — Queues & Bindings
+    // ──────────────────────────────────────────────
+
+    @Bean
+    public Queue reportQueue() {
+        return QueueBuilder.durable(properties.report().queue()).build();
+    }
+
+    @Bean
+    public Queue reportRetryQueue() {
+        return QueueBuilder.durable(properties.report().retryQueue())
+                .withArgument("x-message-ttl", properties.report().retryTtlMs())
+                .withArgument("x-dead-letter-exchange", properties.report().exchange())
+                .withArgument("x-dead-letter-routing-key", properties.report().routingKey())
+                .build();
+    }
+
+    @Bean
+    public Queue reportDlq() {
+        return QueueBuilder.durable(properties.report().dlq()).build();
+    }
+
+    @Bean
+    public Binding reportBinding() {
+        return BindingBuilder.bind(reportQueue())
+                .to(reportExchange())
+                .with(properties.report().routingKey());
+    }
+
+    @Bean
+    public Binding reportRetryBinding() {
+        return BindingBuilder.bind(reportRetryQueue())
+                .to(reportExchange())
+                .with(properties.report().retryRoutingKey());
+    }
+
+    @Bean
+    public Binding reportDlqBinding() {
+        return BindingBuilder.bind(reportDlq())
+                .to(reportExchange())
+                .with(properties.report().dlqRoutingKey());
+    }
+
+    // ──────────────────────────────────────────────
+    // 6. Order Expiry — Delayed Message Exchange
     // ──────────────────────────────────────────────
 
     @Bean
@@ -299,7 +348,7 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 6. Message Converter & RabbitTemplate
+    // 7. Message Converter & RabbitTemplate
     // ──────────────────────────────────────────────
 
     @Bean
@@ -338,6 +387,23 @@ public class RabbitMqConfig {
         factory.setConcurrentConsumers(backgroundJob.concurrentConsumers());
         factory.setMaxConcurrentConsumers(backgroundJob.maxConsumers());
         factory.setPrefetchCount(backgroundJob.prefetch());
+        return factory;
+    }
+
+    /**
+     * Factory riêng cho report export để job sinh file nặng không chiếm consumer background-job.
+     */
+    @Bean
+    public SimpleRabbitListenerContainerFactory reportListenerContainerFactory(
+            SimpleRabbitListenerContainerFactoryConfigurer configurer,
+            ConnectionFactory connectionFactory
+    ) {
+        var report = properties.report();
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setConcurrentConsumers(report.concurrentConsumers());
+        factory.setMaxConcurrentConsumers(report.maxConsumers());
+        factory.setPrefetchCount(report.prefetch());
         return factory;
     }
 

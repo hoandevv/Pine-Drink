@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.service;
 
 import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 
 /**
  * Service dùng để render các template JasperReports.
@@ -26,4 +27,12 @@ public interface JasperReportService {
      * @return nội dung PDF dạng byte
      */
     byte[] generateDailyRevenuePdf(DailyRevenueReportDto data);
+
+    /**
+     * Sinh file PDF danh mục sản phẩm.
+     *
+     * @param data danh sách sản phẩm đã map cho Jasper template
+     * @return nội dung PDF dạng byte
+     */
+    byte[] generateProductCatalogPdf(ProductCatalogReportDto data);
 }

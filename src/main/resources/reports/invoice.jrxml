@@ -11,6 +11,18 @@
               topMargin="20"
               bottomMargin="20">
 
+    <!-- ===================== STYLES ===================== -->
+
+    <style name="Base" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="Title" fontName="DejaVu Sans" fontSize="20" isBold="true"/>
+    <style name="SubTitle" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="Label" fontName="DejaVu Sans" fontSize="10" isBold="true"/>
+    <style name="TableHeader" fontName="DejaVu Sans" fontSize="10" isBold="true" mode="Opaque" backcolor="#EAF2FF"/>
+    <style name="TableCell" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="TotalText" fontName="DejaVu Sans" fontSize="12" isBold="true"/>
+
+    <!-- ===================== PARAMETERS ===================== -->
+
     <parameter name="branchName" class="java.lang.String"/>
     <parameter name="branchAddress" class="java.lang.String"/>
     <parameter name="orderCode" class="java.lang.String"/>
@@ -21,70 +33,268 @@
     <parameter name="discount" class="java.lang.String"/>
     <parameter name="total" class="java.lang.String"/>
 
+    <!-- ===================== FIELDS ===================== -->
+
     <field name="productName" class="java.lang.String"/>
     <field name="quantity" class="java.lang.Integer"/>
     <field name="unitPrice" class="java.lang.String"/>
     <field name="lineTotal" class="java.lang.String"/>
 
+    <!-- ===================== TITLE ===================== -->
+
     <title>
-        <band height="120">
+        <band height="175">
+
             <staticText>
-                <reportElement x="0" y="0" width="555" height="30"/>
-                <textElement textAlignment="Center"><font size="18" isBold="true"/></textElement>
-                <text><![CDATA[HOA DON BAN HANG]]></text>
+                <reportElement style="Title" x="0" y="0" width="555" height="30"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[PINE DRINK]]></text>
             </staticText>
+
+            <staticText>
+                <reportElement style="SubTitle" x="0" y="32" width="555" height="18"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[HÓA ĐƠN BÁN HÀNG]]></text>
+            </staticText>
+
             <textField>
-                <reportElement x="0" y="35" width="555" height="20"/>
+                <reportElement style="SubTitle" x="0" y="55" width="555" height="18"/>
                 <textElement textAlignment="Center"/>
                 <textFieldExpression><![CDATA[$P{branchName}]]></textFieldExpression>
             </textField>
+
             <textField>
-                <reportElement x="0" y="58" width="555" height="20"/>
+                <reportElement style="SubTitle" x="0" y="75" width="555" height="18"/>
                 <textElement textAlignment="Center"/>
                 <textFieldExpression><![CDATA[$P{branchAddress}]]></textFieldExpression>
             </textField>
+
+            <line>
+                <reportElement x="0" y="105" width="555" height="1" forecolor="#D0D0D0"/>
+            </line>
+
+            <rectangle>
+                <reportElement x="0" y="118" width="555" height="45" forecolor="#DADADA" backcolor="#FAFAFA" mode="Opaque"/>
+            </rectangle>
+
+            <staticText>
+                <reportElement style="Label" x="15" y="128" width="80" height="18"/>
+                <text><![CDATA[Mã đơn:]]></text>
+            </staticText>
+
             <textField>
-                <reportElement x="0" y="90" width="260" height="20"/>
-                <textFieldExpression><![CDATA["Ma don: " + $P{orderCode}]]></textFieldExpression>
+                <reportElement style="Base" x="95" y="128" width="180" height="18"/>
+                <textFieldExpression><![CDATA[$P{orderCode}]]></textFieldExpression>
             </textField>
+
+            <staticText>
+                <reportElement style="Label" x="300" y="128" width="80" height="18"/>
+                <text><![CDATA[Thời gian:]]></text>
+            </staticText>
+
             <textField>
-                <reportElement x="300" y="90" width="255" height="20"/>
-                <textFieldExpression><![CDATA["Thoi gian: " + $P{orderTime}]]></textFieldExpression>
+                <reportElement style="Base" x="380" y="128" width="160" height="18"/>
+                <textFieldExpression><![CDATA[$P{orderTime}]]></textFieldExpression>
             </textField>
+
         </band>
     </title>
 
+    <!-- ===================== PAGE HEADER ===================== -->
+
     <pageHeader>
-        <band height="45">
+        <band height="60">
+
+            <staticText>
+                <reportElement style="Label" x="0" y="0" width="90" height="18"/>
+                <text><![CDATA[Khách hàng:]]></text>
+            </staticText>
+
             <textField>
-                <reportElement x="0" y="0" width="260" height="20"/>
-                <textFieldExpression><![CDATA["Khach hang: " + $P{customerName}]]></textFieldExpression>
+                <reportElement style="Base" x="90" y="0" width="200" height="18"/>
+                <textFieldExpression><![CDATA[$P{customerName}]]></textFieldExpression>
             </textField>
+
+            <staticText>
+                <reportElement style="Label" x="320" y="0" width="80" height="18"/>
+                <text><![CDATA[Thu ngân:]]></text>
+            </staticText>
+
             <textField>
-                <reportElement x="300" y="0" width="255" height="20"/>
-                <textFieldExpression><![CDATA["Thu ngan: " + $P{cashierName}]]></textFieldExpression>
+                <reportElement style="Base" x="400" y="0" width="155" height="18"/>
+                <textFieldExpression><![CDATA[$P{cashierName}]]></textFieldExpression>
             </textField>
-            <staticText><reportElement x="0" y="25" width="235" height="20"/><text><![CDATA[San pham]]></text></staticText>
-            <staticText><reportElement x="235" y="25" width="70" height="20"/><textElement textAlignment="Right"/><text><![CDATA[SL]]></text></staticText>
-            <staticText><reportElement x="305" y="25" width="120" height="20"/><textElement textAlignment="Right"/><text><![CDATA[Don gia]]></text></staticText>
-            <staticText><reportElement x="425" y="25" width="130" height="20"/><textElement textAlignment="Right"/><text><![CDATA[Thanh tien]]></text></staticText>
+
+            <line>
+                <reportElement x="0" y="35" width="555" height="1" forecolor="#D0D0D0"/>
+            </line>
+
         </band>
     </pageHeader>
 
+    <!-- ===================== COLUMN HEADER ===================== -->
+
+    <columnHeader>
+        <band height="30">
+
+            <staticText>
+                <reportElement style="TableHeader" x="0" y="0" width="245" height="28"/>
+                <box topPadding="6" leftPadding="8" rightPadding="5">
+                    <pen lineWidth="0.5" lineColor="#D0D0D0"/>
+                </box>
+                <textElement verticalAlignment="Middle"/>
+                <text><![CDATA[Sản phẩm]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement style="TableHeader" x="245" y="0" width="60" height="28"/>
+                <box topPadding="6" rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#D0D0D0"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <text><![CDATA[SL]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement style="TableHeader" x="305" y="0" width="120" height="28"/>
+                <box topPadding="6" rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#D0D0D0"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <text><![CDATA[Đơn giá]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement style="TableHeader" x="425" y="0" width="130" height="28"/>
+                <box topPadding="6" rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#D0D0D0"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <text><![CDATA[Thành tiền]]></text>
+            </staticText>
+
+        </band>
+    </columnHeader>
+
+    <!-- ===================== DETAIL ===================== -->
+
     <detail>
-        <band height="22">
-            <textField><reportElement x="0" y="0" width="235" height="20"/><textFieldExpression><![CDATA[$F{productName}]]></textFieldExpression></textField>
-            <textField><reportElement x="235" y="0" width="70" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$F{quantity}]]></textFieldExpression></textField>
-            <textField><reportElement x="305" y="0" width="120" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$F{unitPrice}]]></textFieldExpression></textField>
-            <textField><reportElement x="425" y="0" width="130" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$F{lineTotal}]]></textFieldExpression></textField>
+        <band height="28">
+
+            <textField isStretchWithOverflow="true">
+                <reportElement style="TableCell" x="0" y="0" width="245" height="28"/>
+                <box leftPadding="8" rightPadding="5">
+                    <pen lineWidth="0.5" lineColor="#EEEEEE"/>
+                </box>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{productName}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement style="TableCell" x="245" y="0" width="60" height="28"/>
+                <box rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#EEEEEE"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{quantity}.toString()]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement style="TableCell" x="305" y="0" width="120" height="28"/>
+                <box rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#EEEEEE"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{unitPrice}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement style="TableCell" x="425" y="0" width="130" height="28"/>
+                <box rightPadding="8">
+                    <pen lineWidth="0.5" lineColor="#EEEEEE"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{lineTotal}]]></textFieldExpression>
+            </textField>
+
         </band>
     </detail>
 
+    <!-- ===================== PAGE FOOTER ===================== -->
+
+    <pageFooter>
+        <band height="25">
+
+            <staticText>
+                <reportElement style="SubTitle" x="0" y="5" width="150" height="15"/>
+                <text><![CDATA[Pine Drink Invoice]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement style="SubTitle" x="455" y="5" width="100" height="15"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Trang " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+
+        </band>
+    </pageFooter>
+
+    <!-- ===================== SUMMARY ===================== -->
+
     <summary>
-        <band height="90">
-            <textField><reportElement x="355" y="10" width="200" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA["Tam tinh: " + $P{subtotal}]]></textFieldExpression></textField>
-            <textField><reportElement x="355" y="35" width="200" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA["Giam gia: " + $P{discount}]]></textFieldExpression></textField>
-            <textField><reportElement x="355" y="60" width="200" height="25"/><textElement textAlignment="Right"><font size="14" isBold="true"/></textElement><textFieldExpression><![CDATA["Tong cong: " + $P{total}]]></textFieldExpression></textField>
+        <band height="145">
+
+            <line>
+                <reportElement x="0" y="10" width="555" height="1" forecolor="#D0D0D0"/>
+            </line>
+
+            <staticText>
+                <reportElement style="Label" x="330" y="25" width="90" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Tạm tính:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement style="Base" x="425" y="25" width="130" height="20"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[$P{subtotal}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement style="Label" x="330" y="50" width="90" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Giảm giá:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement style="Base" x="425" y="50" width="130" height="20"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[$P{discount}]]></textFieldExpression>
+            </textField>
+
+            <rectangle>
+                <reportElement x="320" y="78" width="235" height="35" forecolor="#DADADA" backcolor="#F5F8FF" mode="Opaque"/>
+            </rectangle>
+
+            <staticText>
+                <reportElement style="TotalText" x="330" y="86" width="90" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <text><![CDATA[Tổng cộng:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement style="TotalText" x="425" y="86" width="120" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$P{total}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement style="SubTitle" x="0" y="122" width="555" height="18"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Cảm ơn quý khách đã mua hàng tại Pine Drink!]]></text>
+            </staticText>
+
         </band>
     </summary>
+
 </jasperReport>

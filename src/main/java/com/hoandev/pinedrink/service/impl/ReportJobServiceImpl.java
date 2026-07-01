@@ -130,10 +130,10 @@ public class ReportJobServiceImpl implements ReportJobService {
      */
     private void publishReportExportRequestedAfterCommit(String jobId) {
         Runnable publish = () -> {
-            var backgroundJob = rabbitMqProperties.backgroundJob();
+            var report = rabbitMqProperties.report();
             eventPublisher.publish(
-                    backgroundJob.exchange(),
-                    backgroundJob.routingKey(),
+                    report.exchange(),
+                    report.routingKey(),
                     ReportExportRequestedEvent.of(jobId)
             );
         };

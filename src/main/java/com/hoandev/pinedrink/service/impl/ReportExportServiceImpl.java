@@ -5,17 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportType;
 import com.hoandev.pinedrink.mapper.DailyRevenueReportMapper;
 import com.hoandev.pinedrink.mapper.InvoiceReportMapper;
+import com.hoandev.pinedrink.mapper.ProductCatalogReportMapper;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.repository.OrderItemRepository;
 import com.hoandev.pinedrink.repository.OrderRepository;
+import com.hoandev.pinedrink.repository.ProductRepository;
 import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
 import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
 import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
 import com.hoandev.pinedrink.repository.projection.InvoiceItemProjection;
+import com.hoandev.pinedrink.repository.projection.ProductCatalogProjection;
 import com.hoandev.pinedrink.service.JasperReportService;
 import com.hoandev.pinedrink.service.ReportExportService;
 import com.hoandev.pinedrink.service.ReportStorageService;
@@ -30,9 +34,12 @@ import java.util.List;
 /**
  * Implementation mặc định của {@link ReportExportService}.
  * <p>
- * Service này thực hiện luồng xuất báo cáo thực tế sau khi bộ lắng nghe RabbitMQ
- * nhận được thông điệp job. Việc giữ logic này ở tầng service giúp luồng xử lý có thể
- * tái sử dụng và giữ package queue chỉ tập trung vào trách nhiệm vận chuyển thông điệp.
+ * Service này thực hiện luồng xuất báo cáo thực tế sau khi bộ lắng nghe
+ * RabbitMQ
+ * nhận được thông điệp job. Việc giữ logic này ở tầng service giúp luồng xử lý
+ * có thể
+ * tái sử dụng và giữ package queue chỉ tập trung vào trách nhiệm vận chuyển
+ * thông điệp.
  */
 @Slf4j
 @Service
@@ -45,8 +52,10 @@ public class ReportExportServiceImpl implements ReportExportService {
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
     private final InvoiceReportMapper invoiceReportMapper;
     private final DailyRevenueReportMapper dailyRevenueReportMapper;
+    private final ProductCatalogReportMapper productCatalogReportMapper;
 
     /**
      * Thực thi một job xuất báo cáo đang chờ xử lý và lưu trạng thái cuối cùng.
@@ -74,22 +83,12 @@ public class ReportExportServiceImpl implements ReportExportService {
             job.setStartedAt(LocalDateTime.now());
             exportRequestRepository.save(job);
 
-            byte[] pdf;
-            String folder;
-            String filename;
-            if (ReportType.INVOICE.name().equals(job.getReportType())) {
-                pdf = jasperReportService.generateInvoicePdf(buildInvoiceData(job));
-                folder = "invoice";
-                filename = "invoice-" + job.getId() + ".pdf";
-            } else if (ReportType.DAILY_REVENUE.name().equals(job.getReportType())) {
-                pdf = jasperReportService.generateDailyRevenuePdf(buildDailyRevenueData(job));
-                folder = "daily-revenue";
-                filename = "daily-revenue-" + job.getId() + ".pdf";
-            } else {
-                throw new IllegalArgumentException("Unsupported report type: " + job.getReportType());
-            }
-
-            String filePath = reportStorageService.save(pdf, folder, filename);
+            GeneratedReport generatedReport = generateReport(job);
+            String filePath = reportStorageService.save(
+                    generatedReport.bytes(),
+                    generatedReport.folder(),
+                    generatedReport.filename()
+            );
 
             job.setFileUrl(filePath);
             job.setStatus(ExportRequestStatus.DONE.name());
@@ -104,10 +103,40 @@ public class ReportExportServiceImpl implements ReportExportService {
         }
     }
 
+    private GeneratedReport generateReport(ExportRequest job) {
+        ReportType reportType = parseReportType(job.getReportType());
+        return switch (reportType) {
+            case INVOICE -> new GeneratedReport(
+                    jasperReportService.generateInvoicePdf(buildInvoiceData(job)),
+                    "invoice",
+                    "invoice-" + job.getId() + ".pdf"
+            );
+            case DAILY_REVENUE -> new GeneratedReport(
+                    jasperReportService.generateDailyRevenuePdf(buildDailyRevenueData(job)),
+                    "daily-revenue",
+                    "daily-revenue-" + job.getId() + ".pdf"
+            );
+            case PRODUCT_CATALOG -> new GeneratedReport(
+                    jasperReportService.generateProductCatalogPdf(buildProductCatalogData(job)),
+                    "product-catalog",
+                    "product-catalog-" + job.getId() + ".pdf"
+            );
+        };
+    }
+
+    private ReportType parseReportType(String reportType) {
+        try {
+            return ReportType.valueOf(reportType);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Unsupported report type: " + reportType);
+        }
+    }
+
     /**
      * Tạo dữ liệu báo cáo hóa đơn từ filter của job export.
      * <p>
-     * Method đọc orderId/orderCode từ filter, query đơn hàng và dòng hàng từ cơ sở dữ liệu,
+     * Method đọc orderId/orderCode từ filter, query đơn hàng và dòng hàng từ cơ sở
+     * dữ liệu,
      * rồi map sang DTO đầu vào cho Jasper template.
      *
      * @param job export request chứa loại báo cáo và filter JSON
@@ -157,15 +186,22 @@ public class ReportExportServiceImpl implements ReportExportService {
 
         LocalDateTime fromDateTime = fromDate.atStartOfDay();
         LocalDateTime toDateTime = toDate.plusDays(1).atStartOfDay();
-        DailyRevenueSummaryProjection summary = orderRepository.summarizeDailyRevenue(branchId, fromDateTime, toDateTime)
+        DailyRevenueSummaryProjection summary = orderRepository
+                .summarizeDailyRevenue(branchId, fromDateTime, toDateTime)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found: " + branchId));
         List<DailyRevenuePaymentProjection> payments = orderRepository.findDailyRevenuePaymentBreakdown(
                 branchId,
                 fromDateTime,
-                toDateTime
-        );
+                toDateTime);
 
         return dailyRevenueReportMapper.toReportDto(summary, payments, fromDate, toDate);
+    }
+
+    private ProductCatalogReportDto buildProductCatalogData(ExportRequest job) {
+        String status = normalizeFilter(readFilter(job.getFilters(), "status", null));
+        String categoryId = normalizeFilter(readFilter(job.getFilters(), "categoryId", null));
+        List<ProductCatalogProjection> products = productRepository.findProductCatalogReport(status, categoryId);
+        return productCatalogReportMapper.toReportDto(products, status, categoryId);
     }
 
     private String resolveBranchId(ExportRequest job) {
@@ -182,8 +218,8 @@ public class ReportExportServiceImpl implements ReportExportService {
     /**
      * Đọc một field dạng chuỗi từ JSON filter được lưu trên job báo cáo.
      *
-     * @param filters JSON filter được gửi lên khi tạo job
-     * @param field tên field cần đọc
+     * @param filters      JSON filter được gửi lên khi tạo job
+     * @param field        tên field cần đọc
      * @param defaultValue giá trị mặc định khi filter thiếu hoặc không hợp lệ
      * @return giá trị của field hoặc {@code defaultValue}
      */
@@ -211,6 +247,13 @@ public class ReportExportServiceImpl implements ReportExportService {
         }
     }
 
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank() || "ALL".equalsIgnoreCase(value)) {
+            return null;
+        }
+        return value;
+    }
+
     /**
      * Rút gọn thông báo lỗi trước khi lưu vào bản ghi export request.
      *
@@ -222,5 +265,8 @@ public class ReportExportServiceImpl implements ReportExportService {
             return "Unknown error";
         }
         return message.length() > 500 ? message.substring(0, 500) : message;
+    }
+
+    private record GeneratedReport(byte[] bytes, String folder, String filename) {
     }
 }

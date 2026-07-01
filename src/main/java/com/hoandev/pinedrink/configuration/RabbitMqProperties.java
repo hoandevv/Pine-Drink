@@ -13,6 +13,7 @@ public record RabbitMqProperties(
         Channel domainEvents,
         Channel email,
         Channel backgroundJob,
+        Channel report,
         OrderExpiry orderExpiry
 ) {
     /**

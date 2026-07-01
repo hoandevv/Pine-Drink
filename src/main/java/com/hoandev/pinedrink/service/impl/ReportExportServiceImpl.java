@@ -3,13 +3,17 @@ package com.hoandev.pinedrink.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoandev.pinedrink.entity.ExportRequest;
+import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportType;
+import com.hoandev.pinedrink.mapper.DailyRevenueReportMapper;
 import com.hoandev.pinedrink.mapper.InvoiceReportMapper;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.repository.OrderItemRepository;
 import com.hoandev.pinedrink.repository.OrderRepository;
+import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
+import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
 import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
 import com.hoandev.pinedrink.repository.projection.InvoiceItemProjection;
 import com.hoandev.pinedrink.service.JasperReportService;
@@ -19,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +46,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final InvoiceReportMapper invoiceReportMapper;
+    private final DailyRevenueReportMapper dailyRevenueReportMapper;
 
     /**
      * Thực thi một job xuất báo cáo đang chờ xử lý và lưu trạng thái cuối cùng.
@@ -68,13 +74,22 @@ public class ReportExportServiceImpl implements ReportExportService {
             job.setStartedAt(LocalDateTime.now());
             exportRequestRepository.save(job);
 
-            if (!ReportType.INVOICE.name().equals(job.getReportType())) {
+            byte[] pdf;
+            String folder;
+            String filename;
+            if (ReportType.INVOICE.name().equals(job.getReportType())) {
+                pdf = jasperReportService.generateInvoicePdf(buildInvoiceData(job));
+                folder = "invoice";
+                filename = "invoice-" + job.getId() + ".pdf";
+            } else if (ReportType.DAILY_REVENUE.name().equals(job.getReportType())) {
+                pdf = jasperReportService.generateDailyRevenuePdf(buildDailyRevenueData(job));
+                folder = "daily-revenue";
+                filename = "daily-revenue-" + job.getId() + ".pdf";
+            } else {
                 throw new IllegalArgumentException("Unsupported report type: " + job.getReportType());
             }
 
-            byte[] pdf = jasperReportService.generateInvoicePdf(buildInvoiceData(job));
-            String filename = "invoice-" + job.getId() + ".pdf";
-            String filePath = reportStorageService.save(pdf, "invoice", filename);
+            String filePath = reportStorageService.save(pdf, folder, filename);
 
             job.setFileUrl(filePath);
             job.setStatus(ExportRequestStatus.DONE.name());
@@ -132,6 +147,38 @@ public class ReportExportServiceImpl implements ReportExportService {
         throw new IllegalArgumentException("Invoice export requires orderId or orderCode filter");
     }
 
+    private DailyRevenueReportDto buildDailyRevenueData(ExportRequest job) {
+        String branchId = resolveBranchId(job);
+        LocalDate fromDate = readLocalDateFilter(job.getFilters(), "fromDate", LocalDate.now());
+        LocalDate toDate = readLocalDateFilter(job.getFilters(), "toDate", fromDate);
+        if (toDate.isBefore(fromDate)) {
+            throw new IllegalArgumentException("toDate must be greater than or equal to fromDate");
+        }
+
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.plusDays(1).atStartOfDay();
+        DailyRevenueSummaryProjection summary = orderRepository.summarizeDailyRevenue(branchId, fromDateTime, toDateTime)
+                .orElseThrow(() -> new IllegalArgumentException("Branch not found: " + branchId));
+        List<DailyRevenuePaymentProjection> payments = orderRepository.findDailyRevenuePaymentBreakdown(
+                branchId,
+                fromDateTime,
+                toDateTime
+        );
+
+        return dailyRevenueReportMapper.toReportDto(summary, payments, fromDate, toDate);
+    }
+
+    private String resolveBranchId(ExportRequest job) {
+        if (job.getBranch() != null && job.getBranch().getId() != null && !job.getBranch().getId().isBlank()) {
+            return job.getBranch().getId();
+        }
+        String branchId = readFilter(job.getFilters(), "branchId", null);
+        if (branchId != null && !branchId.isBlank()) {
+            return branchId;
+        }
+        throw new IllegalArgumentException("Daily revenue export requires branchId");
+    }
+
     /**
      * Đọc một field dạng chuỗi từ JSON filter được lưu trên job báo cáo.
      *
@@ -149,6 +196,18 @@ public class ReportExportServiceImpl implements ReportExportService {
             return node == null || node.isNull() ? defaultValue : node.asText(defaultValue);
         } catch (Exception e) {
             return defaultValue;
+        }
+    }
+
+    private LocalDate readLocalDateFilter(String filters, String field, LocalDate defaultValue) {
+        String value = readFilter(filters, field, null);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date filter " + field + ": " + value);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.service;
 
+import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
 
 /**
@@ -17,4 +18,12 @@ public interface JasperReportService {
      * @return nội dung PDF dạng byte
      */
     byte[] generateInvoicePdf(InvoiceReportDto data);
+
+    /**
+     * Sinh file PDF báo cáo doanh thu theo ngày/tháng.
+     *
+     * @param data thông tin tổng hợp doanh thu và breakdown theo phương thức thanh toán
+     * @return nội dung PDF dạng byte
+     */
+    byte[] generateDailyRevenuePdf(DailyRevenueReportDto data);
 }

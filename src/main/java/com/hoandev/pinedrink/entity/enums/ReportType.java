@@ -1,7 +1,8 @@
 package com.hoandev.pinedrink.entity.enums;
 
 public enum ReportType implements BaseEnum {
-    INVOICE("INVOICE");
+    INVOICE("INVOICE"),
+    DAILY_REVENUE("DAILY_REVENUE");
 
     private final String value;
 

@@ -126,7 +126,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     private String resolveCashierName(ExportRequest job) {
         if (job.getRequestedBy() == null || job.getRequestedBy().getFullName() == null
                 || job.getRequestedBy().getFullName().isBlank()) {
-            return "System";
+            throw new IllegalArgumentException("Report requested user is missing");
         }
         return job.getRequestedBy().getFullName();
     }

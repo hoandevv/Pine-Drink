@@ -17,6 +17,7 @@ public interface ExportRequestRepository extends JpaRepository<ExportRequest, St
             SELECT e
             FROM ExportRequest e
             LEFT JOIN FETCH e.requestedBy
+            LEFT JOIN FETCH e.branch
             WHERE e.id = :id
             """)
     Optional<ExportRequest> findByIdWithRequestedBy(@Param("id") String id);

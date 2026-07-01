@@ -105,10 +105,12 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting products: categoryId={}", categoryId);
-        PageResponse<ProductResponse> response = productService.getAll(categoryId, pageable);
+        log.info("Getting products: keyword={}, categoryId={}, status={}", keyword, categoryId, status);
+        PageResponse<ProductResponse> response = productService.getAll(keyword, categoryId, status, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Products retrieved successfully"));
     }
 }

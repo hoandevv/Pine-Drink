@@ -137,15 +137,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProductResponse> getAll(String categoryId, Pageable pageable) {
-        Page<Product> products;
-        if (categoryId != null && !categoryId.isBlank()) {
-            categoryRepository.findById(categoryId).orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
-            products = productRepository.findByCategoryId(categoryId, pageable);
-        } else {
-            products = productRepository.findAll(pageable);
-        }
-        List<ProductResponse> content = products.getContent().stream().map(productMapper::toResponse).toList();
+    public PageResponse<ProductResponse> getAll(String keyword, String categoryId, String status, Pageable pageable) {
+        Page<Product> products = productRepository.searchProducts(keyword, categoryId, status, pageable);
+        List<ProductResponse> content = products.getContent().stream()
+                .map(productMapper::toResponse)
+                .toList();
         return PageResponse.from(products, content);
     }
 

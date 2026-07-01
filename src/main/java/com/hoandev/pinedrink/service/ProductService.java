@@ -23,5 +23,5 @@ public interface ProductService {
 
     ProductResponse getById(String id);
 
-    PageResponse<ProductResponse> getAll(String categoryId, Pageable pageable);
+    PageResponse<ProductResponse> getAll(String keyword, String categoryId, String status, Pageable pageable);
 }

@@ -8,9 +8,11 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -312,6 +314,31 @@ public class RabbitMqConfig {
         template.setMessageConverter(messageConverter);
         template.setObservationEnabled(true);
         return template;
+    }
+
+    /**
+     * Factory tạo container listener được tinh chỉnh cho các background job như xuất báo cáo.
+     * <p>
+     * Factory này áp dụng concurrency và prefetch từ {@code app.rabbitmq.background-job}.
+     * Thông điệp xuất báo cáo dùng factory này để quá trình sinh PDF lâu không kéo quá nhiều
+     * job về cùng một instance ứng dụng.
+     *
+     * @param configurer bộ cấu hình của Spring Boot dùng để áp dụng cấu hình listener chung
+     * @param connectionFactory connection factory RabbitMQ do Spring Boot quản lý
+     * @return factory tạo container listener cho các consumer background-job
+     */
+    @Bean
+    public SimpleRabbitListenerContainerFactory backgroundJobListenerContainerFactory(
+            SimpleRabbitListenerContainerFactoryConfigurer configurer,
+            ConnectionFactory connectionFactory
+    ) {
+        var backgroundJob = properties.backgroundJob();
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setConcurrentConsumers(backgroundJob.concurrentConsumers());
+        factory.setMaxConcurrentConsumers(backgroundJob.maxConsumers());
+        factory.setPrefetchCount(backgroundJob.prefetch());
+        return factory;
     }
 
     private Queue realtimeQueue(String name) {

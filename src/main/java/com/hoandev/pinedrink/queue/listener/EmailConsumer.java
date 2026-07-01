@@ -1,4 +1,4 @@
-package com.hoandev.pinedrink.queue.consumer;
+package com.hoandev.pinedrink.queue.listener;
 
 import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;

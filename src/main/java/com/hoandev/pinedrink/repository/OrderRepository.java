@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Order;
+import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,40 @@ public interface OrderRepository extends JpaRepository<Order, String> {
      * @return Optional chứa Order nếu tồn tại
      */
     Optional<Order> findByOrderCode(String orderCode);
+
+    @Query(value = """
+            SELECT
+                o.id AS orderId,
+                o.order_code AS orderCode,
+                o.customer_name AS customerName,
+                o.subtotal_amount AS subtotalAmount,
+                o.discount_amount AS discountAmount,
+                o.total_amount AS totalAmount,
+                COALESCE(o.completed_at, o.created_at) AS orderTime,
+                b.name AS branchName,
+                b.address AS branchAddress
+            FROM od_order o
+            JOIN ce_branch b ON b.id = o.branch_id
+            WHERE o.id = :orderId
+            """, nativeQuery = true)
+    Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderId(@Param("orderId") String orderId);
+
+    @Query(value = """
+            SELECT
+                o.id AS orderId,
+                o.order_code AS orderCode,
+                o.customer_name AS customerName,
+                o.subtotal_amount AS subtotalAmount,
+                o.discount_amount AS discountAmount,
+                o.total_amount AS totalAmount,
+                COALESCE(o.completed_at, o.created_at) AS orderTime,
+                b.name AS branchName,
+                b.address AS branchAddress
+            FROM od_order o
+            JOIN ce_branch b ON b.id = o.branch_id
+            WHERE o.order_code = :orderCode
+            """, nativeQuery = true)
+    Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);
 
     /**
      * Lấy đơn hàng theo id với khóa PESSIMISTIC_WRITE để tránh race condition khi cập nhật.

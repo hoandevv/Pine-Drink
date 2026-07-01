@@ -137,6 +137,10 @@ app:
     private-bucket-name: ${MINIO_PRIVATE_BUCKET_NAME:pine-drink-private}
     presigned-url-expiry: ${MINIO_PRESIGNED_URL_EXPIRY:3600}
 
+  report:
+    storage:
+      local-dir: ${REPORT_LOCAL_DIR:./storage/reports}
+
   momo:
     partner-code: ${MOMO_PARTNER_CODE:}
     access-key: ${MOMO_ACCESS_KEY:}

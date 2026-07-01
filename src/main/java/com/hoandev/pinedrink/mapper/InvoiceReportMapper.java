@@ -1,6 +1,5 @@
 package com.hoandev.pinedrink.mapper;
 
-import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportItemDto;
 import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
@@ -23,14 +22,14 @@ public class InvoiceReportMapper {
     public InvoiceReportDto toReportDto(
             InvoiceHeaderProjection header,
             List<InvoiceItemProjection> items,
-            Account requestedBy
+            String cashierName
     ) {
         return InvoiceReportDto.builder()
-                .branchName(header.getBranchName())
+                .branchName(requireText(header.getBranchName(), "Invoice branch name is missing"))
                 .branchAddress(header.getBranchAddress())
                 .orderCode(header.getOrderCode())
                 .customerName(header.getCustomerName())
-                .cashierName(requestedBy == null ? "System" : requestedBy.getFullName())
+                .cashierName(cashierName)
                 .orderTime(header.getOrderTime().format(INVOICE_TIME_FORMATTER))
                 .subtotal(formatVnd(header.getSubtotalAmount()))
                 .discount(formatVnd(header.getDiscountAmount()))
@@ -59,5 +58,12 @@ public class InvoiceReportMapper {
 
     private String formatVnd(BigDecimal amount) {
         return VND_FORMATTER.format(amount == null ? BigDecimal.ZERO : amount) + " VND";
+    }
+
+    private String requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        return value;
     }
 }

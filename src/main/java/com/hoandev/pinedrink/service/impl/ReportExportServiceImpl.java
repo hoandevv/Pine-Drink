@@ -52,7 +52,7 @@ public class ReportExportServiceImpl implements ReportExportService {
      */
     @Override
     public void export(String jobId) {
-        ExportRequest job = exportRequestRepository.findById(jobId).orElse(null);
+        ExportRequest job = exportRequestRepository.findByIdWithRequestedBy(jobId).orElse(null);
         if (job == null) {
             log.warn("Report export job not found: jobId={}", jobId);
             return;
@@ -105,7 +105,15 @@ public class ReportExportServiceImpl implements ReportExportService {
             throw new IllegalArgumentException("Order has no items: " + header.getOrderId());
         }
 
-        return invoiceReportMapper.toReportDto(header, items, job.getRequestedBy());
+        return invoiceReportMapper.toReportDto(header, items, resolveCashierName(job));
+    }
+
+    private String resolveCashierName(ExportRequest job) {
+        if (job.getRequestedBy() == null || job.getRequestedBy().getFullName() == null
+                || job.getRequestedBy().getFullName().isBlank()) {
+            return "System";
+        }
+        return job.getRequestedBy().getFullName();
     }
 
     private InvoiceHeaderProjection findInvoiceHeader(ExportRequest job) {

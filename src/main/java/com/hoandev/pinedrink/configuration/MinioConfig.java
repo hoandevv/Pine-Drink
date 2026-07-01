@@ -13,13 +13,13 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class MinioConfig {
 
-    @Value("${minio.endpoint}")
+    @Value("${app.minio.endpoint}")
     private String endpoint;
 
-    @Value("${minio.access-key}")
+    @Value("${app.minio.access-key}")
     private String accessKey;
 
-    @Value("${minio.secret-key}")
+    @Value("${app.minio.secret-key}")
     private String secretKey;
 
     @Bean

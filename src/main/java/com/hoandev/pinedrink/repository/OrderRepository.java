@@ -37,7 +37,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                 b.name AS branchName,
                 b.address AS branchAddress
             FROM od_order o
-            JOIN ce_branch b ON b.id = o.branch_id
+            LEFT JOIN ce_branch b ON b.id = o.branch_id
             WHERE o.id = :orderId
             """, nativeQuery = true)
     Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderId(@Param("orderId") String orderId);
@@ -54,7 +54,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                 b.name AS branchName,
                 b.address AS branchAddress
             FROM od_order o
-            JOIN ce_branch b ON b.id = o.branch_id
+            LEFT JOIN ce_branch b ON b.id = o.branch_id
             WHERE o.order_code = :orderCode
             """, nativeQuery = true)
     Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);

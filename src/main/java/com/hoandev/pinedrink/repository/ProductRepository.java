@@ -23,6 +23,21 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     Page<Product> findByCategoryId(String categoryId, Pageable pageable);
 
+    @Query("""
+            SELECT p FROM Product p
+            WHERE (:keyword IS NULL OR :keyword = '' OR 
+                   LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR 
+                   LOWER(p.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:categoryId IS NULL OR :categoryId = '' OR p.category.id = :categoryId)
+              AND (:status IS NULL OR :status = '' OR p.status = :status)
+            """)
+    Page<Product> searchProducts(
+            @Param("keyword") String keyword,
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
     @Query(value = """
             SELECT
                 p.code AS productCode,

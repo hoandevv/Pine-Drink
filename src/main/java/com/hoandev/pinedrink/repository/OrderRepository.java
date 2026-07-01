@@ -1,6 +1,8 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Order;
+import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
+import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
 import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -58,6 +60,51 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             WHERE o.order_code = :orderCode
             """, nativeQuery = true)
     Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);
+
+    @Query(value = """
+            SELECT
+                b.name AS branchName,
+                b.address AS branchAddress,
+                COUNT(o.id) AS totalOrders,
+                COALESCE(SUM(o.subtotal_amount + o.delivery_fee), 0) AS grossRevenue,
+                COALESCE(SUM(o.discount_amount), 0) AS totalDiscount,
+                COALESCE(SUM(o.total_amount), 0) AS netRevenue
+            FROM ce_branch b
+            LEFT JOIN od_order o ON o.branch_id = b.id
+                AND o.created_at >= :fromDate
+                AND o.created_at < :toDate
+                AND o.payment_status = 'PAID'
+                AND o.status <> 'CANCELLED'
+            WHERE b.id = :branchId
+            GROUP BY b.id, b.name, b.address
+            """, nativeQuery = true)
+    Optional<DailyRevenueSummaryProjection> summarizeDailyRevenue(
+            @Param("branchId") String branchId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
+
+    @Query(value = """
+            SELECT
+                COALESCE(o.payment_method, 'UNKNOWN') AS paymentMethod,
+                COUNT(o.id) AS orderCount,
+                COALESCE(SUM(o.subtotal_amount + o.delivery_fee), 0) AS grossAmount,
+                COALESCE(SUM(o.discount_amount), 0) AS discountAmount,
+                COALESCE(SUM(o.total_amount), 0) AS netAmount
+            FROM od_order o
+            WHERE o.branch_id = :branchId
+                AND o.created_at >= :fromDate
+                AND o.created_at < :toDate
+                AND o.payment_status = 'PAID'
+                AND o.status <> 'CANCELLED'
+            GROUP BY COALESCE(o.payment_method, 'UNKNOWN')
+            ORDER BY netAmount DESC
+            """, nativeQuery = true)
+    List<DailyRevenuePaymentProjection> findDailyRevenuePaymentBreakdown(
+            @Param("branchId") String branchId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
 
     /**
      * Lấy đơn hàng theo id với khóa PESSIMISTIC_WRITE để tránh race condition khi cập nhật.

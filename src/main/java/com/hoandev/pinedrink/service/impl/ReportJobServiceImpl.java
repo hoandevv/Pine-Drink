@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.configuration.RabbitMqProperties;
 import com.hoandev.pinedrink.entity.Account;
+import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
@@ -13,6 +14,7 @@ import com.hoandev.pinedrink.mapper.ReportJobMapper;
 import com.hoandev.pinedrink.queue.event.report.ReportExportRequestedEvent;
 import com.hoandev.pinedrink.queue.publisher.EventPublisher;
 import com.hoandev.pinedrink.repository.AccountRepository;
+import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.service.ReportJobService;
 import com.hoandev.pinedrink.service.ReportStorageService;
@@ -29,6 +31,7 @@ public class ReportJobServiceImpl implements ReportJobService {
 
     private final ExportRequestRepository exportRequestRepository;
     private final AccountRepository accountRepository;
+    private final BranchRepository branchRepository;
     private final EventPublisher eventPublisher;
     private final RabbitMqProperties rabbitMqProperties;
     private final ReportStorageService reportStorageService;
@@ -60,6 +63,11 @@ public class ReportJobServiceImpl implements ReportJobService {
         job.setFilters(request.getFilters());
         job.setStatus(ExportRequestStatus.PENDING.name());
         job.setRequestedBy(requestedBy);
+        if (request.getBranchId() != null && !request.getBranchId().isBlank()) {
+            Branch branch = branchRepository.findById(request.getBranchId())
+                    .orElseThrow(() -> new BaseException(ErrorCode.COM_005, "Branch not found"));
+            job.setBranch(branch);
+        }
 
         ExportRequest saved = exportRequestRepository.save(job);
         publishReportExportRequestedAfterCommit(saved.getId());

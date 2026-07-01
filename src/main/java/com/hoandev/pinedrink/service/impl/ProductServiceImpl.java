@@ -18,7 +18,6 @@ import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
-import com.hoandev.pinedrink.utils.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

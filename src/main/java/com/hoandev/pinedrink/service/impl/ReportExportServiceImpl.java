@@ -15,11 +15,11 @@ import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.repository.OrderItemRepository;
 import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
-import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
-import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
-import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
-import com.hoandev.pinedrink.repository.projection.InvoiceItemProjection;
-import com.hoandev.pinedrink.repository.projection.ProductCatalogProjection;
+import com.hoandev.pinedrink.repository.result.DailyRevenuePaymentResult;
+import com.hoandev.pinedrink.repository.result.DailyRevenueSummaryResult;
+import com.hoandev.pinedrink.repository.result.InvoiceHeaderResult;
+import com.hoandev.pinedrink.repository.result.InvoiceItemResult;
+import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import com.hoandev.pinedrink.service.JasperReportService;
 import com.hoandev.pinedrink.service.ReportExportService;
 import com.hoandev.pinedrink.service.ReportStorageService;
@@ -143,8 +143,8 @@ public class ReportExportServiceImpl implements ReportExportService {
      * @return DTO dữ liệu đầu vào cho Jasper report template
      */
     private InvoiceReportDto buildInvoiceData(ExportRequest job) {
-        InvoiceHeaderProjection header = findInvoiceHeader(job);
-        List<InvoiceItemProjection> items = orderItemRepository.findInvoiceItemsByOrderId(header.getOrderId());
+        InvoiceHeaderResult header = findInvoiceHeader(job);
+        List<InvoiceItemResult> items = orderItemRepository.findInvoiceItemsByOrderId(header.getOrderId());
         if (items.isEmpty()) {
             throw new IllegalArgumentException("Order has no items: " + header.getOrderId());
         }
@@ -160,10 +160,10 @@ public class ReportExportServiceImpl implements ReportExportService {
         return job.getRequestedBy().getFullName();
     }
 
-    private InvoiceHeaderProjection findInvoiceHeader(ExportRequest job) {
+    private InvoiceHeaderResult findInvoiceHeader(ExportRequest job) {
         String orderId = readFilter(job.getFilters(), "orderId", null);
         if (orderId != null && !orderId.isBlank()) {
-            return orderRepository.findInvoiceHeaderByOrderId(orderId)
+            return orderRepository.findInvoiceHeaderResultByOrderId(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
         }
 
@@ -186,10 +186,10 @@ public class ReportExportServiceImpl implements ReportExportService {
 
         LocalDateTime fromDateTime = fromDate.atStartOfDay();
         LocalDateTime toDateTime = toDate.plusDays(1).atStartOfDay();
-        DailyRevenueSummaryProjection summary = orderRepository
+        DailyRevenueSummaryResult summary = orderRepository
                 .summarizeDailyRevenue(branchId, fromDateTime, toDateTime)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found: " + branchId));
-        List<DailyRevenuePaymentProjection> payments = orderRepository.findDailyRevenuePaymentBreakdown(
+        List<DailyRevenuePaymentResult> payments = orderRepository.findDailyRevenuePaymentBreakdown(
                 branchId,
                 fromDateTime,
                 toDateTime);
@@ -200,7 +200,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     private ProductCatalogReportDto buildProductCatalogData(ExportRequest job) {
         String status = normalizeFilter(readFilter(job.getFilters(), "status", null));
         String categoryId = normalizeFilter(readFilter(job.getFilters(), "categoryId", null));
-        List<ProductCatalogProjection> products = productRepository.findProductCatalogReport(status, categoryId);
+        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(status, categoryId);
         return productCatalogReportMapper.toReportDto(products, status, categoryId);
     }
 

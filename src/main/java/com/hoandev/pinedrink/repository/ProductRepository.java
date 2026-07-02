@@ -1,15 +1,14 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Product;
-import com.hoandev.pinedrink.repository.projection.ProductCatalogProjection;
+import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
@@ -36,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             Pageable pageable
     );
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT
                 p.code AS productCode,
                 p.name AS productName,
@@ -63,8 +62,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             GROUP BY p.id, p.code, p.name, c.name, p.base_price, p.status,
                 p.preparation_minutes, p.is_featured, p.is_best_seller, p.created_at
             ORDER BY c.display_order ASC, c.name ASC, p.name ASC
-            """, nativeQuery = true)
-    List<ProductCatalogProjection> findProductCatalogReport(
+            """, sqlResultSetMapping = "ProductCatalogResultMapping")
+    java.util.List<ProductCatalogResult> findProductCatalogReport(
             @Param("status") String status,
             @Param("categoryId") String categoryId
     );

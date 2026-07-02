@@ -1,14 +1,12 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Order;
-import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
-import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
-import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
      */
     Optional<Order> findByOrderCode(String orderCode);
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT
                 o.id AS orderId,
                 o.order_code AS orderCode,
@@ -41,10 +39,10 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             FROM od_order o
             LEFT JOIN ce_branch b ON b.id = o.branch_id
             WHERE o.id = :orderId
-            """, nativeQuery = true)
-    Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderId(@Param("orderId") String orderId);
+            """, sqlResultSetMapping = "InvoiceHeaderResultMapping")
+    Optional<com.hoandev.pinedrink.repository.result.InvoiceHeaderResult> findInvoiceHeaderResultByOrderId(@Param("orderId") String orderId);
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT
                 o.id AS orderId,
                 o.order_code AS orderCode,
@@ -58,10 +56,10 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             FROM od_order o
             LEFT JOIN ce_branch b ON b.id = o.branch_id
             WHERE o.order_code = :orderCode
-            """, nativeQuery = true)
-    Optional<InvoiceHeaderProjection> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);
+            """, sqlResultSetMapping = "InvoiceHeaderResultMapping")
+    Optional<com.hoandev.pinedrink.repository.result.InvoiceHeaderResult> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT
                 b.name AS branchName,
                 b.address AS branchAddress,
@@ -77,14 +75,14 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                 AND o.status <> 'CANCELLED'
             WHERE b.id = :branchId
             GROUP BY b.id, b.name, b.address
-            """, nativeQuery = true)
-    Optional<DailyRevenueSummaryProjection> summarizeDailyRevenue(
+            """, sqlResultSetMapping = "DailyRevenueSummaryResultMapping")
+    Optional<com.hoandev.pinedrink.repository.result.DailyRevenueSummaryResult> summarizeDailyRevenue(
             @Param("branchId") String branchId,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate
     );
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT
                 COALESCE(o.payment_method, 'UNKNOWN') AS paymentMethod,
                 COUNT(o.id) AS orderCount,
@@ -99,8 +97,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                 AND o.status <> 'CANCELLED'
             GROUP BY COALESCE(o.payment_method, 'UNKNOWN')
             ORDER BY netAmount DESC
-            """, nativeQuery = true)
-    List<DailyRevenuePaymentProjection> findDailyRevenuePaymentBreakdown(
+            """, sqlResultSetMapping = "DailyRevenuePaymentResultMapping")
+    List<com.hoandev.pinedrink.repository.result.DailyRevenuePaymentResult> findDailyRevenuePaymentBreakdown(
             @Param("branchId") String branchId,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate

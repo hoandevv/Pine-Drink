@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.entity;
 
+import com.hoandev.pinedrink.repository.result.InvoiceItemResult;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,13 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@SqlResultSetMapping(name = "InvoiceItemResultMapping", classes = @ConstructorResult(targetClass = InvoiceItemResult.class, columns = {
+        @ColumnResult(name = "productName", type = String.class),
+        @ColumnResult(name = "variantName", type = String.class),
+        @ColumnResult(name = "quantity", type = Integer.class),
+        @ColumnResult(name = "unitPrice", type = BigDecimal.class),
+        @ColumnResult(name = "lineTotal", type = BigDecimal.class)
+}))
 @Table(name = "od_order_item")
 @AttributeOverrides({
     @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", insertable = false, updatable = false)),

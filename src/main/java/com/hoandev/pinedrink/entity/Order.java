@@ -1,5 +1,8 @@
 package com.hoandev.pinedrink.entity;
 
+import com.hoandev.pinedrink.repository.result.InvoiceHeaderResult;
+import com.hoandev.pinedrink.repository.result.DailyRevenuePaymentResult;
+import com.hoandev.pinedrink.repository.result.DailyRevenueSummaryResult;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +13,34 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
+@SqlResultSetMappings({
+        @SqlResultSetMapping(name = "InvoiceHeaderResultMapping", classes = @ConstructorResult(targetClass = InvoiceHeaderResult.class, columns = {
+                @ColumnResult(name = "orderId", type = String.class),
+                @ColumnResult(name = "orderCode", type = String.class),
+                @ColumnResult(name = "customerName", type = String.class),
+                @ColumnResult(name = "subtotalAmount", type = BigDecimal.class),
+                @ColumnResult(name = "discountAmount", type = BigDecimal.class),
+                @ColumnResult(name = "totalAmount", type = BigDecimal.class),
+                @ColumnResult(name = "orderTime", type = LocalDateTime.class),
+                @ColumnResult(name = "branchName", type = String.class),
+                @ColumnResult(name = "branchAddress", type = String.class)
+        })),
+        @SqlResultSetMapping(name = "DailyRevenueSummaryResultMapping", classes = @ConstructorResult(targetClass = DailyRevenueSummaryResult.class, columns = {
+                @ColumnResult(name = "branchName", type = String.class),
+                @ColumnResult(name = "branchAddress", type = String.class),
+                @ColumnResult(name = "totalOrders", type = Long.class),
+                @ColumnResult(name = "grossRevenue", type = BigDecimal.class),
+                @ColumnResult(name = "totalDiscount", type = BigDecimal.class),
+                @ColumnResult(name = "netRevenue", type = BigDecimal.class)
+        })),
+        @SqlResultSetMapping(name = "DailyRevenuePaymentResultMapping", classes = @ConstructorResult(targetClass = DailyRevenuePaymentResult.class, columns = {
+                @ColumnResult(name = "paymentMethod", type = String.class),
+                @ColumnResult(name = "orderCount", type = Long.class),
+                @ColumnResult(name = "grossAmount", type = BigDecimal.class),
+                @ColumnResult(name = "discountAmount", type = BigDecimal.class),
+                @ColumnResult(name = "netAmount", type = BigDecimal.class)
+        }))
+})
 @Table(name = "od_order")
 public class Order extends BaseEntity {
 

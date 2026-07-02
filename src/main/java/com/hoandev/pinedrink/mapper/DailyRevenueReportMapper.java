@@ -2,8 +2,8 @@ package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
 import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportItemDto;
-import com.hoandev.pinedrink.repository.projection.DailyRevenuePaymentProjection;
-import com.hoandev.pinedrink.repository.projection.DailyRevenueSummaryProjection;
+import com.hoandev.pinedrink.repository.result.DailyRevenuePaymentResult;
+import com.hoandev.pinedrink.repository.result.DailyRevenueSummaryResult;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -23,8 +23,8 @@ public class DailyRevenueReportMapper {
     private static final DecimalFormat VND_FORMATTER = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.US));
 
     public DailyRevenueReportDto toReportDto(
-            DailyRevenueSummaryProjection summary,
-            List<DailyRevenuePaymentProjection> payments,
+            DailyRevenueSummaryResult summary,
+            List<DailyRevenuePaymentResult> payments,
             LocalDate fromDate,
             LocalDate toDate
     ) {
@@ -44,7 +44,7 @@ public class DailyRevenueReportMapper {
                 .build();
     }
 
-    private DailyRevenueReportItemDto toItemDto(DailyRevenuePaymentProjection payment) {
+    private DailyRevenueReportItemDto toItemDto(DailyRevenuePaymentResult payment) {
         return DailyRevenueReportItemDto.builder()
                 .paymentMethod(resolvePaymentMethod(payment.getPaymentMethod()))
                 .orderCount(nullToZero(payment.getOrderCount()))

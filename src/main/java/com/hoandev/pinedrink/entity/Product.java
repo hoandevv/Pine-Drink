@@ -1,15 +1,29 @@
 package com.hoandev.pinedrink.entity;
 
+import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@SqlResultSetMapping(name = "ProductCatalogResultMapping", classes = @ConstructorResult(targetClass = ProductCatalogResult.class, columns = {
+        @ColumnResult(name = "productCode", type = String.class),
+        @ColumnResult(name = "productName", type = String.class),
+        @ColumnResult(name = "categoryName", type = String.class),
+        @ColumnResult(name = "basePrice", type = BigDecimal.class),
+        @ColumnResult(name = "status", type = String.class),
+        @ColumnResult(name = "preparationMinutes", type = Integer.class),
+        @ColumnResult(name = "featured", type = Boolean.class),
+        @ColumnResult(name = "bestSeller", type = Boolean.class),
+        @ColumnResult(name = "variants", type = String.class),
+        @ColumnResult(name = "createdAt", type = LocalDateTime.class)
+}))
 @Table(name = "pr_product", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Product extends BaseEntity {
 

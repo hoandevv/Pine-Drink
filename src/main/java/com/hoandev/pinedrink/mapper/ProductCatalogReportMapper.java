@@ -2,7 +2,7 @@ package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportItemDto;
-import com.hoandev.pinedrink.repository.projection.ProductCatalogProjection;
+import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -20,7 +20,7 @@ public class ProductCatalogReportMapper {
     private static final DecimalFormat VND_FORMATTER = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.US));
 
     public ProductCatalogReportDto toReportDto(
-            List<ProductCatalogProjection> products,
+            List<ProductCatalogResult> products,
             String statusFilter,
             String categoryFilter
     ) {
@@ -36,7 +36,7 @@ public class ProductCatalogReportMapper {
                 .build();
     }
 
-    private ProductCatalogReportItemDto toItemDto(ProductCatalogProjection product) {
+    private ProductCatalogReportItemDto toItemDto(ProductCatalogResult product) {
         return ProductCatalogReportItemDto.builder()
                 .productCode(product.getProductCode())
                 .productName(product.getProductName())

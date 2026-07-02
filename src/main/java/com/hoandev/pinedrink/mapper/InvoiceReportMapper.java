@@ -2,8 +2,8 @@ package com.hoandev.pinedrink.mapper;
 
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
 import com.hoandev.pinedrink.entity.dto.report.InvoiceReportItemDto;
-import com.hoandev.pinedrink.repository.projection.InvoiceHeaderProjection;
-import com.hoandev.pinedrink.repository.projection.InvoiceItemProjection;
+import com.hoandev.pinedrink.repository.result.InvoiceHeaderResult;
+import com.hoandev.pinedrink.repository.result.InvoiceItemResult;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -20,8 +20,8 @@ public class InvoiceReportMapper {
     private static final DecimalFormat VND_FORMATTER = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.US));
 
     public InvoiceReportDto toReportDto(
-            InvoiceHeaderProjection header,
-            List<InvoiceItemProjection> items,
+            InvoiceHeaderResult header,
+            List<InvoiceItemResult> items,
             String cashierName
     ) {
         return InvoiceReportDto.builder()
@@ -40,7 +40,7 @@ public class InvoiceReportMapper {
                 .build();
     }
 
-    private InvoiceReportItemDto toInvoiceItem(InvoiceItemProjection item) {
+    private InvoiceReportItemDto toInvoiceItem(InvoiceItemResult item) {
         return InvoiceReportItemDto.builder()
                 .productName(resolveProductName(item))
                 .quantity(item.getQuantity())
@@ -49,7 +49,7 @@ public class InvoiceReportMapper {
                 .build();
     }
 
-    private String resolveProductName(InvoiceItemProjection item) {
+    private String resolveProductName(InvoiceItemResult item) {
         if (item.getVariantName() == null || item.getVariantName().isBlank()) {
             return item.getProductName();
         }

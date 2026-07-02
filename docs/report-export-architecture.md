@@ -44,26 +44,30 @@ Không filter sẽ xuất toàn bộ sản phẩm:
 
 ```mermaid
 flowchart TD
-    A[Client FE] -->|POST /api/v1/reports/jobs| B[ReportJobController]
+    A[Client FE] -->|"POST /api/v1/reports/jobs"| B[ReportJobController]
     B --> C[ReportJobServiceImpl.createJob]
     C --> D[(rp_export_request<br/>status=PENDING)]
-    C -->|afterCommit| E[Publish ReportExportRequestedEvent]
+    C -->|"afterCommit"| E[Publish ReportExportRequestedEvent]
     E --> F[pine-drink.report.exchange]
-    F -->|routingKey pine-drink.report.export| G[pine-drink.report.queue]
+    F -->|"routingKey pine-drink.report.export"| G[pine-drink.report.queue]
     G --> H[ReportExportListener]
     H --> I[ReportExportServiceImpl.export]
     I --> J{ReportType}
-    J -->|INVOICE| K[Build invoice data]
-    J -->|DAILY_REVENUE| L[Build daily revenue data]
-    J -->|PRODUCT_CATALOG| M[Build product catalog data]
+
+    J -->|"INVOICE"| K[Build invoice data]
+    J -->|"DAILY_REVENUE"| L[Build daily revenue data]
+    J -->|"PRODUCT_CATALOG"| M[Build product catalog data]
+
     K --> N[JasperReportServiceImpl]
     L --> N
     M --> N
+
     N --> O[PDF bytes]
     O --> P[ReportStorageService.save]
     P --> Q[(rp_export_request<br/>status=DONE<br/>file_url)]
-    A -->|GET /api/v1/reports/jobs/{id}| R[Check status]
-    A -->|GET /api/v1/reports/jobs/{id}/download| S[Download PDF]
+
+    A -->|"GET /api/v1/reports/jobs/{id}"| R[Check status]
+    A -->|"GET /api/v1/reports/jobs/{id}/download"| S[Download PDF]
 ```
 
 ## 4. RabbitMQ riêng cho report

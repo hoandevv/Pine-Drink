@@ -13,15 +13,13 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
+    /**
+     * Check if a product with the given code exists.
+     *
+     * @param code the code of the product
+     * @return true if the product exists, false otherwise
+     */
     boolean existsByCode(String code);
-
-    boolean existsByCodeAndIdNot(String code, String id);
-
-    List<Product> findByStatus(String status);
-
-    List<Product> findByCategoryId(String categoryId);
-
-    Page<Product> findByCategoryId(String categoryId, Pageable pageable);
 
     @Query("""
             SELECT p FROM Product p

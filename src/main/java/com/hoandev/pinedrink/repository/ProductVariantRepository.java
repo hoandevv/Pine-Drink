@@ -30,4 +30,11 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     List<ProductVariant> findByProductIdAndStatusOrderByDisplayOrder(
             @Param("productId") String productId,
             @Param("status") String status);
+
+    @Query("SELECT pv FROM ProductVariant pv JOIN FETCH pv.product p " +
+            "WHERE pv.status = :variantStatus AND p.status IN :productStatuses " +
+            "ORDER BY p.name ASC, pv.displayOrder ASC")
+    List<ProductVariant> findActiveVariantsForProducts(
+            @Param("variantStatus") String variantStatus,
+            @Param("productStatuses") List<String> productStatuses);
 }

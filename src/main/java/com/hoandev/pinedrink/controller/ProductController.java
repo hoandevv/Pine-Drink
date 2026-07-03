@@ -6,7 +6,9 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusReque
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.service.ProductService;
+import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductVariantService productVariantService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")
@@ -101,6 +104,13 @@ public class ProductController {
         log.info("Getting product: id={}", id);
         ProductResponse response = productService.getById(id);
         return ResponseEntity.ok(BaseResponse.success(response, "Product retrieved successfully"));
+    }
+
+    @GetMapping("/variants/active")
+    public ResponseEntity<BaseResponse<java.util.List<ProductVariantResponse>>> getAllActiveVariants() {
+        log.info("Getting active variants for active products");
+        java.util.List<ProductVariantResponse> response = productVariantService.getAllActiveForProducts();
+        return ResponseEntity.ok(BaseResponse.success(response, "Active product variants retrieved successfully"));
     }
 
     @GetMapping

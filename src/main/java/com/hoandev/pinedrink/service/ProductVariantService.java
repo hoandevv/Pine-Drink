@@ -23,4 +23,6 @@ public interface ProductVariantService {
     PageResponse<ProductVariantResponse> getAll(String productId, Pageable pageable);
 
     List<ProductVariantResponse> getAllActive(String productId);
+
+    List<ProductVariantResponse> getAllActiveForProducts();
 }

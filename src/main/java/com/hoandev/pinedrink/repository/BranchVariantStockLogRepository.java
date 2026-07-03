@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface BranchVariantStockLogRepository extends JpaRepository<BranchVariantStockLog, String> {
-    List<BranchVariantStockLog> findByDailyStockIdOrderByCreatedAtDesc(String dailyStockId);
     Page<BranchVariantStockLog> findByDailyStockId(String dailyStockId, Pageable pageable);
     Page<BranchVariantStockLog> findByOrderId(String orderId, Pageable pageable);
 }

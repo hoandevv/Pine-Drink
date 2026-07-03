@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,85 +23,6 @@ public interface OrderRepository extends JpaRepository<Order, String> {
      * @return Optional chứa Order nếu tồn tại
      */
     Optional<Order> findByOrderCode(String orderCode);
-
-    @NativeQuery(value = """
-            SELECT
-                o.id AS orderId,
-                o.order_code AS orderCode,
-                o.customer_name AS customerName,
-                o.subtotal_amount AS subtotalAmount,
-                o.discount_amount AS discountAmount,
-                o.total_amount AS totalAmount,
-                COALESCE(o.completed_at, o.created_at) AS orderTime,
-                b.name AS branchName,
-                b.address AS branchAddress
-            FROM od_order o
-            LEFT JOIN ce_branch b ON b.id = o.branch_id
-            WHERE o.id = :orderId
-            """, sqlResultSetMapping = "InvoiceHeaderResultMapping")
-    Optional<com.hoandev.pinedrink.repository.result.InvoiceHeaderResult> findInvoiceHeaderResultByOrderId(@Param("orderId") String orderId);
-
-    @NativeQuery(value = """
-            SELECT
-                o.id AS orderId,
-                o.order_code AS orderCode,
-                o.customer_name AS customerName,
-                o.subtotal_amount AS subtotalAmount,
-                o.discount_amount AS discountAmount,
-                o.total_amount AS totalAmount,
-                COALESCE(o.completed_at, o.created_at) AS orderTime,
-                b.name AS branchName,
-                b.address AS branchAddress
-            FROM od_order o
-            LEFT JOIN ce_branch b ON b.id = o.branch_id
-            WHERE o.order_code = :orderCode
-            """, sqlResultSetMapping = "InvoiceHeaderResultMapping")
-    Optional<com.hoandev.pinedrink.repository.result.InvoiceHeaderResult> findInvoiceHeaderByOrderCode(@Param("orderCode") String orderCode);
-
-    @NativeQuery(value = """
-            SELECT
-                b.name AS branchName,
-                b.address AS branchAddress,
-                COUNT(o.id) AS totalOrders,
-                COALESCE(SUM(o.subtotal_amount + o.delivery_fee), 0) AS grossRevenue,
-                COALESCE(SUM(o.discount_amount), 0) AS totalDiscount,
-                COALESCE(SUM(o.total_amount), 0) AS netRevenue
-            FROM ce_branch b
-            LEFT JOIN od_order o ON o.branch_id = b.id
-                AND o.created_at >= :fromDate
-                AND o.created_at < :toDate
-                AND o.payment_status = 'PAID'
-                AND o.status <> 'CANCELLED'
-            WHERE b.id = :branchId
-            GROUP BY b.id, b.name, b.address
-            """, sqlResultSetMapping = "DailyRevenueSummaryResultMapping")
-    Optional<com.hoandev.pinedrink.repository.result.DailyRevenueSummaryResult> summarizeDailyRevenue(
-            @Param("branchId") String branchId,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate
-    );
-
-    @NativeQuery(value = """
-            SELECT
-                COALESCE(o.payment_method, 'UNKNOWN') AS paymentMethod,
-                COUNT(o.id) AS orderCount,
-                COALESCE(SUM(o.subtotal_amount + o.delivery_fee), 0) AS grossAmount,
-                COALESCE(SUM(o.discount_amount), 0) AS discountAmount,
-                COALESCE(SUM(o.total_amount), 0) AS netAmount
-            FROM od_order o
-            WHERE o.branch_id = :branchId
-                AND o.created_at >= :fromDate
-                AND o.created_at < :toDate
-                AND o.payment_status = 'PAID'
-                AND o.status <> 'CANCELLED'
-            GROUP BY COALESCE(o.payment_method, 'UNKNOWN')
-            ORDER BY netAmount DESC
-            """, sqlResultSetMapping = "DailyRevenuePaymentResultMapping")
-    List<com.hoandev.pinedrink.repository.result.DailyRevenuePaymentResult> findDailyRevenuePaymentBreakdown(
-            @Param("branchId") String branchId,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate
-    );
 
     /**
      * Lấy đơn hàng theo id với khóa PESSIMISTIC_WRITE để tránh race condition khi cập nhật.

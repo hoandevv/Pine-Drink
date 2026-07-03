@@ -20,13 +20,9 @@ public interface VoucherRepository extends JpaRepository<Voucher, String> {
 
     boolean existsByCodeAndIdNot(String code, String id);
 
-    Optional<Voucher> findByCode(String code);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT v FROM Voucher v WHERE v.code = :code")
     Optional<Voucher> findByCodeForUpdate(@Param("code") String code);
-
-    List<Voucher> findByStatus(String status);
 
     @Query("""
             select v from Voucher v

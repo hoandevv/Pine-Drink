@@ -11,7 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface ExportRequestRepository extends JpaRepository<ExportRequest, String> {
-    List<ExportRequest> findByRequestedByIdOrderByCreatedAtDesc(String requestedById);
 
     @Query("""
             SELECT e

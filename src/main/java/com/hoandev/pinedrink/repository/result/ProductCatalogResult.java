@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+/**
+ * Result class for representing product catalog information.
+ */
 @Getter
 @RequiredArgsConstructor
 public class ProductCatalogResult {

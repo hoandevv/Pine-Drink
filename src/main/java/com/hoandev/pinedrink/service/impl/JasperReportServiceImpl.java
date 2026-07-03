@@ -1,7 +1,5 @@
 package com.hoandev.pinedrink.service.impl;
 
-import com.hoandev.pinedrink.entity.dto.report.DailyRevenueReportDto;
-import com.hoandev.pinedrink.entity.dto.report.InvoiceReportDto;
 import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
@@ -32,36 +30,6 @@ import java.util.Map;
 @Slf4j
 @Service
 public class JasperReportServiceImpl implements JasperReportService {
-
-    @Override
-    public byte[] generateInvoicePdf(InvoiceReportDto data) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("branchName", data.getBranchName());
-        params.put("branchAddress", data.getBranchAddress());
-        params.put("orderCode", data.getOrderCode());
-        params.put("customerName", data.getCustomerName());
-        params.put("cashierName", data.getCashierName());
-        params.put("orderTime", data.getOrderTime());
-        params.put("subtotal", data.getSubtotal());
-        params.put("discount", data.getDiscount());
-        params.put("total", data.getTotal());
-        return generatePdf("reports/invoice.jrxml", params, data.getItems(), "Failed to generate invoice PDF");
-    }
-
-    @Override
-    public byte[] generateDailyRevenuePdf(DailyRevenueReportDto data) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("branchName", data.getBranchName());
-        params.put("branchAddress", data.getBranchAddress());
-        params.put("fromDate", data.getFromDate());
-        params.put("toDate", data.getToDate());
-        params.put("generatedAt", data.getGeneratedAt());
-        params.put("totalOrders", data.getTotalOrders());
-        params.put("grossRevenue", data.getGrossRevenue());
-        params.put("totalDiscount", data.getTotalDiscount());
-        params.put("netRevenue", data.getNetRevenue());
-        return generatePdf("reports/daily-revenue.jrxml", params, data.getItems(), "Failed to generate daily revenue PDF");
-    }
 
     @Override
     public byte[] generateProductCatalogPdf(ProductCatalogReportDto data) {

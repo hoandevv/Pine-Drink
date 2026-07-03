@@ -10,8 +10,7 @@ import java.util.List;
 
 @Repository
 public interface OrderItemToppingRepository extends JpaRepository<OrderItemTopping, String> {
-    List<OrderItemTopping> findByOrderItemId(String orderItemId);
-    
+
     @Query("SELECT t FROM OrderItemTopping t WHERE t.orderItem.id IN :orderItemIds")
     List<OrderItemTopping> findByOrderItemIdIn(@Param("orderItemIds") List<String> orderItemIds);
 }

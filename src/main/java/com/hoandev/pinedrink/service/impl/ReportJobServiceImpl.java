@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportFileFormat;
@@ -20,6 +21,8 @@ import com.hoandev.pinedrink.service.ReportJobService;
 import com.hoandev.pinedrink.service.ReportStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -85,6 +88,22 @@ public class ReportJobServiceImpl implements ReportJobService {
     @Transactional(readOnly = true)
     public ReportJobResponse getJob(String jobId, String requestedById) {
         return reportJobMapper.toResponse(getOwnedJob(jobId, requestedById));
+    }
+
+    /**
+     * Trả về lịch sử xuất báo cáo của người dùng đã xác thực.
+     *
+     * @param requestedById id tài khoản của người dùng đã xác thực
+     * @param pageable thông tin phân trang và sắp xếp
+     * @return danh sách job báo cáo đã phân trang
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ReportJobResponse> getJobs(String requestedById, Pageable pageable) {
+        Page<ExportRequest> jobs = exportRequestRepository.findByRequestedById(requestedById, pageable);
+        return PageResponse.from(jobs, jobs.getContent().stream()
+                .map(reportJobMapper::toResponse)
+                .toList());
     }
 
     /**

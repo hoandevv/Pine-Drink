@@ -2,12 +2,16 @@ package com.hoandev.pinedrink.controller;
 
 import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.ReportJobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,6 +49,15 @@ public class ReportJobController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String id) {
         return ResponseEntity.ok(BaseResponse.success(reportJobService.getJob(id, principal.getId())));
+    }
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<BaseResponse<PageResponse<ReportJobResponse>>> getJobs(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.success(reportJobService.getJobs(principal.getId(), pageable),
+                "Report jobs retrieved successfully"));
     }
 
     @GetMapping("/{id}/download")

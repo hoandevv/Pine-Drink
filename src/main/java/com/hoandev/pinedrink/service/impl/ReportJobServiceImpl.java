@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.service.impl;
 
 import com.hoandev.pinedrink.configuration.RabbitMqProperties;
+import com.hoandev.pinedrink.configuration.ReportStorageProperties;
 import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.ExportRequest;
@@ -29,21 +30,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ReportJobServiceImpl implements ReportJobService {
-
-    private static final Duration RUNNING_TIMEOUT = Duration.ofMinutes(15);
-
     private final ExportRequestRepository exportRequestRepository;
     private final AccountRepository accountRepository;
     private final BranchRepository branchRepository;
     private final EventPublisher eventPublisher;
     private final RabbitMqProperties rabbitMqProperties;
+    private final ReportStorageProperties reportStorageProperties;
     private final ReportStorageService reportStorageService;
     private final ReportJobMapper reportJobMapper;
 
@@ -200,7 +198,7 @@ public class ReportJobServiceImpl implements ReportJobService {
         if (!ExportRequestStatus.RUNNING.name().equals(job.getStatus()) || job.getStartedAt() == null) {
             return;
         }
-        if (job.getStartedAt().plus(RUNNING_TIMEOUT).isAfter(LocalDateTime.now())) {
+        if (job.getStartedAt().plus(reportStorageProperties.getRunningTimeout()).isAfter(LocalDateTime.now())) {
             return;
         }
 

@@ -140,6 +140,7 @@ app:
   report:
     storage:
       local-dir: ${REPORT_LOCAL_DIR:./storage/reports}
+      running-timeout: ${REPORT_RUNNING_TIMEOUT:5m}
 
   momo:
     partner-code: ${MOMO_PARTNER_CODE:}

@@ -8,6 +8,7 @@ import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportFileFormat;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -31,6 +32,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -112,6 +114,37 @@ public class ReportJobServiceImpl implements ReportJobService {
         return PageResponse.from(jobs, jobs.getContent().stream()
                 .map(reportJobMapper::toResponse)
                 .toList());
+    }
+
+    /**
+     * Trả về thống kê thật trên toàn bộ job báo cáo của người dùng.
+     * <p>
+     * Job RUNNING quá timeout được tính là failed để khớp logic kiểm tra stale job.
+     *
+     * @param requestedById id tài khoản của người dùng đã xác thực
+     * @return tổng số job và số lượng theo trạng thái chính
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ReportJobStatsResponse getStats(String requestedById) {
+        LocalDateTime staleRunningBefore = LocalDateTime.now().minus(reportStorageProperties.getRunningTimeout());
+        long staleRunning = exportRequestRepository.countStaleByStatus(
+                requestedById,
+                ExportRequestStatus.RUNNING.name(),
+                staleRunningBefore
+        );
+
+        long running = List.of(ExportRequestStatus.PENDING, ExportRequestStatus.RUNNING).stream()
+                .mapToLong(status -> exportRequestRepository.countByStatus(requestedById, status.name()))
+                .sum() - staleRunning;
+
+        return ReportJobStatsResponse.builder()
+                .total(exportRequestRepository.countByRequestedById(requestedById))
+                .completed(exportRequestRepository.countByStatus(requestedById, ExportRequestStatus.DONE.name()))
+                .running(Math.max(running, 0))
+                .failed(exportRequestRepository.countByStatus(requestedById, ExportRequestStatus.FAILED.name())
+                        + staleRunning)
+                .build();
     }
 
     /**

@@ -20,6 +20,7 @@ import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.service.ReportJobService;
 import com.hoandev.pinedrink.service.ReportStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ReportJobServiceImpl implements ReportJobService {
+
+    private static final Duration RUNNING_TIMEOUT = Duration.ofMinutes(15);
 
     private final ExportRequestRepository exportRequestRepository;
     private final AccountRepository accountRepository;
@@ -85,9 +92,11 @@ public class ReportJobServiceImpl implements ReportJobService {
      * @return siêu dữ liệu của job và trạng thái xử lý hiện tại
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ReportJobResponse getJob(String jobId, String requestedById) {
-        return reportJobMapper.toResponse(getOwnedJob(jobId, requestedById));
+        ExportRequest job = getOwnedJob(jobId, requestedById);
+        markStaleRunningJobAsFailed(job);
+        return reportJobMapper.toResponse(job);
     }
 
     /**
@@ -98,9 +107,10 @@ public class ReportJobServiceImpl implements ReportJobService {
      * @return danh sách job báo cáo đã phân trang
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResponse<ReportJobResponse> getJobs(String requestedById, Pageable pageable) {
         Page<ExportRequest> jobs = exportRequestRepository.findByRequestedById(requestedById, pageable);
+        jobs.getContent().forEach(this::markStaleRunningJobAsFailed);
         return PageResponse.from(jobs, jobs.getContent().stream()
                 .map(reportJobMapper::toResponse)
                 .toList());
@@ -150,11 +160,16 @@ public class ReportJobServiceImpl implements ReportJobService {
     private void publishReportExportRequestedAfterCommit(String jobId) {
         Runnable publish = () -> {
             var report = rabbitMqProperties.report();
-            eventPublisher.publish(
-                    report.exchange(),
-                    report.routingKey(),
-                    ReportExportRequestedEvent.of(jobId)
-            );
+            try {
+                eventPublisher.publish(
+                        report.exchange(),
+                        report.routingKey(),
+                        ReportExportRequestedEvent.of(jobId)
+                );
+            } catch (Exception e) {
+                log.error("Failed to publish report export event: jobId={}", jobId, e);
+                markPendingJobAsFailed(jobId, e);
+            }
         };
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -168,6 +183,38 @@ public class ReportJobServiceImpl implements ReportJobService {
         }
 
         publish.run();
+    }
+
+    private void markPendingJobAsFailed(String jobId, Exception e) {
+        exportRequestRepository.findById(jobId)
+                .filter(job -> ExportRequestStatus.PENDING.name().equals(job.getStatus()))
+                .ifPresent(job -> {
+                    job.setStatus(ExportRequestStatus.FAILED.name());
+                    job.setErrorMessage(limitError("Failed to queue report export: " + e.getMessage()));
+                    job.setCompletedAt(LocalDateTime.now());
+                    exportRequestRepository.save(job);
+                });
+    }
+
+    private void markStaleRunningJobAsFailed(ExportRequest job) {
+        if (!ExportRequestStatus.RUNNING.name().equals(job.getStatus()) || job.getStartedAt() == null) {
+            return;
+        }
+        if (job.getStartedAt().plus(RUNNING_TIMEOUT).isAfter(LocalDateTime.now())) {
+            return;
+        }
+
+        job.setStatus(ExportRequestStatus.FAILED.name());
+        job.setErrorMessage("Report export timed out");
+        job.setCompletedAt(LocalDateTime.now());
+        exportRequestRepository.save(job);
+    }
+
+    private String limitError(String message) {
+        if (message == null || message.isBlank()) {
+            return "Failed to queue report export";
+        }
+        return message.length() > 500 ? message.substring(0, 500) : message;
     }
 
 }

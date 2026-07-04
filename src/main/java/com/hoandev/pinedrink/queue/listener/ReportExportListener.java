@@ -36,6 +36,11 @@ public class ReportExportListener {
     )
     public void handleReportExportRequested(ReportExportRequestedEvent event) {
         log.info("Received report export event: eventId={}, jobId={}", event.eventId(), event.jobId());
-        reportExportService.export(event.jobId());
+        try {
+            reportExportService.export(event.jobId());
+        } catch (Exception e) {
+            log.error("Report export listener handled failure without message retry: eventId={}, jobId={}",
+                    event.eventId(), event.jobId(), e);
+        }
     }
 }

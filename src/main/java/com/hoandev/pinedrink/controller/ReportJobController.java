@@ -35,7 +35,7 @@ public class ReportJobController {
     private final ReportJobService reportJobService;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('PERM_REPORT_CREATE')")
     public ResponseEntity<BaseResponse<ReportJobResponse>> createJob(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateReportJobRequest request) {
@@ -45,7 +45,7 @@ public class ReportJobController {
     }
 
     @GetMapping("/stats")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<ReportJobStatsResponse>> getStats(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(BaseResponse.success(reportJobService.getStats(principal.getId()),
@@ -53,7 +53,7 @@ public class ReportJobController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<ReportJobResponse>> getJob(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String id) {
@@ -61,7 +61,7 @@ public class ReportJobController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ReportJobResponse>>> getJobs(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -70,7 +70,7 @@ public class ReportJobController {
     }
 
     @GetMapping("/{id}/download")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<Resource> download(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String id) {

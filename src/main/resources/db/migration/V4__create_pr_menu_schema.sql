@@ -57,7 +57,9 @@ CREATE TABLE pr_product_variant (
     updated_by CHAR(36) NULL,
     UNIQUE KEY uk_pr_variant_product_code (product_id, variant_code),
     CONSTRAINT fk_pr_variant_product FOREIGN KEY (product_id) REFERENCES pr_product(id) ON DELETE CASCADE,
-    INDEX idx_pr_variant_product_status_order (product_id, status, display_order)
+    INDEX idx_pr_variant_product_status_order (product_id, status, display_order),
+    INDEX idx_pr_variant_status (status),
+    INDEX idx_pr_variant_display_order (display_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE pr_topping (

@@ -6,7 +6,9 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusReque
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.service.ProductService;
+import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductVariantService productVariantService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")
@@ -103,12 +106,21 @@ public class ProductController {
         return ResponseEntity.ok(BaseResponse.success(response, "Product retrieved successfully"));
     }
 
+    @GetMapping("/variants/active")
+    public ResponseEntity<BaseResponse<java.util.List<ProductVariantResponse>>> getAllActiveVariants() {
+        log.info("Getting active variants for active products");
+        java.util.List<ProductVariantResponse> response = productVariantService.getAllActiveForProducts();
+        return ResponseEntity.ok(BaseResponse.success(response, "Active product variants retrieved successfully"));
+    }
+
     @GetMapping
     public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting products: categoryId={}", categoryId);
-        PageResponse<ProductResponse> response = productService.getAll(categoryId, pageable);
+        log.info("Getting products: keyword={}, categoryId={}, status={}", keyword, categoryId, status);
+        PageResponse<ProductResponse> response = productService.getAll(keyword, categoryId, status, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Products retrieved successfully"));
     }
 }

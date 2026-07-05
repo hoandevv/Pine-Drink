@@ -1,5 +1,7 @@
 package com.hoandev.pinedrink.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +24,8 @@ import java.util.List;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles {@code @Valid} validation failures from request body DTOs.
@@ -84,6 +88,7 @@ public class GlobalExceptionHandler {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
             return null; // Let Spring handle it with 404
         }
+        log.error("Unhandled exception", ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.COM_002, "Internal server error", null, null);
     }
 

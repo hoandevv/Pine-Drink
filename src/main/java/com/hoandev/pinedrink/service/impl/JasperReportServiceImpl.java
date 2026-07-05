@@ -1,0 +1,56 @@
+package com.hoandev.pinedrink.service.impl;
+
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
+import com.hoandev.pinedrink.exception.BaseException;
+import com.hoandev.pinedrink.exception.ErrorCode;
+import com.hoandev.pinedrink.service.JasperReportService;
+import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+/**Module cần xuất PDF
+ ↓
+ DTO chứa dữ liệu report
+ ↓
+ File .jrxml thiết kế giao diện report
+ ↓
+ Service JasperReport
+ ↓
+ Xuất PDF
+ */
+@Slf4j
+@Service
+public class JasperReportServiceImpl implements JasperReportService {
+
+    @Override
+    public byte[] generateProductCatalogPdf(ProductCatalogReportDto data) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("title", data.getTitle());
+        params.put("generatedAt", data.getGeneratedAt());
+        params.put("statusFilter", data.getStatusFilter());
+        params.put("categoryFilter", data.getCategoryFilter());
+        params.put("totalProducts", data.getTotalProducts());
+        return generatePdf("reports/product-catalog.jrxml", params, data.getItems(), "Failed to generate product catalog PDF");
+    }
+
+    private byte[] generatePdf(String templatePath, Map<String, Object> params, Object rows, String errorMessage) {
+        try (InputStream template = new ClassPathResource(templatePath).getInputStream()) {
+            JasperReport report = JasperCompileManager.compileReport(template);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource((java.util.Collection<?>) rows);
+            JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);
+            return JasperExportManager.exportReportToPdf(print);
+        } catch (Exception e) {
+            log.error(errorMessage, e);
+            throw new BaseException(ErrorCode.COM_002, errorMessage + ": " + e.getMessage());
+        }
+    }
+}

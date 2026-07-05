@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="product-catalog"
+              pageWidth="842"
+              pageHeight="595"
+              orientation="Landscape"
+              columnWidth="802"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20"
+              whenNoDataType="AllSectionsNoDetail">
+
+    <style name="Base" fontName="DejaVu Sans" fontSize="10"/>
+
+    <style name="TitleStyle" style="Base" fontSize="20" isBold="true" forecolor="#1F2937"/>
+
+    <style name="SubHeaderStyle" style="Base" fontSize="10" forecolor="#4B5563"/>
+
+    <style name="TableHeaderStyle" style="Base" fontSize="10" isBold="true" forecolor="#FFFFFF">
+        <box>
+            <topPen lineWidth="0.0"/>
+            <leftPen lineWidth="0.0"/>
+            <bottomPen lineWidth="0.0"/>
+            <rightPen lineWidth="0.0"/>
+        </box>
+    </style>
+
+    <style name="CellStyle" style="Base" fontSize="9.5" forecolor="#1F2937">
+        <box leftPadding="6" rightPadding="6" topPadding="4" bottomPadding="4">
+            <bottomPen lineWidth="0.5" lineColor="#E5E7EB"/>
+        </box>
+    </style>
+
+    <style name="CellStyleAlt" style="CellStyle" mode="Opaque" backcolor="#F9FAFB"/>
+
+    <style name="BadgeYes" style="Base" fontSize="9" isBold="true" forecolor="#15803D" hTextAlign="Center"/>
+    <style name="BadgeNo" style="Base" fontSize="9" forecolor="#9CA3AF" hTextAlign="Center"/>
+    <style name="StatusActive" style="Base" fontSize="9.5" isBold="true" forecolor="#15803D"/>
+    <style name="StatusInactive" style="Base" fontSize="9.5" isBold="true" forecolor="#B91C1C"/>
+
+    <parameter name="title" class="java.lang.String">
+        <defaultValueExpression><![CDATA["DANH SÁCH SẢN PHẨM"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="generatedAt" class="java.lang.String"/>
+    <parameter name="statusFilter" class="java.lang.String"/>
+    <parameter name="categoryFilter" class="java.lang.String"/>
+    <parameter name="totalProducts" class="java.lang.String"/>
+
+    <field name="productCode" class="java.lang.String"/>
+    <field name="productName" class="java.lang.String"/>
+    <field name="categoryName" class="java.lang.String"/>
+    <field name="basePrice" class="java.lang.String"/>
+    <field name="status" class="java.lang.String"/>
+    <field name="preparationMinutes" class="java.lang.String"/>
+    <field name="featured" class="java.lang.String"/>
+    <field name="bestSeller" class="java.lang.String"/>
+    <field name="variants" class="java.lang.String"/>
+    <field name="createdAt" class="java.lang.String"/>
+
+    <variable name="rowCount" class="java.lang.Integer" calculation="Count">
+        <variableExpression><![CDATA[$F{productCode}]]></variableExpression>
+    </variable>
+
+    <!-- ================= TITLE ================= -->
+    <title>
+        <band height="105">
+            <rectangle>
+                <reportElement x="0" y="0" width="802" height="4" backcolor="#111827" mode="Opaque">
+                    <property name="com.jaspersoft.studio.unit.width" value="px"/>
+                </reportElement>
+            </rectangle>
+
+            <textField>
+                <reportElement x="0" y="16" width="802" height="30" style="TitleStyle"/>
+                <textElement textAlignment="Center"><font size="20" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{title}]]></textFieldExpression>
+            </textField>
+
+            <line>
+                <reportElement x="230" y="50" width="342" height="1" forecolor="#D1D5DB"/>
+            </line>
+
+            <textField>
+                <reportElement x="0" y="60" width="266" height="18" style="SubHeaderStyle"/>
+                <textFieldExpression><![CDATA["Trạng thái: " + ($P{statusFilter} == null ? "Tất cả" : $P{statusFilter})]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="268" y="60" width="266" height="18" style="SubHeaderStyle"/>
+                <textElement textAlignment="Center"/>
+                <textFieldExpression><![CDATA["Danh mục: " + ($P{categoryFilter} == null ? "Tất cả" : $P{categoryFilter})]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="536" y="60" width="266" height="18" style="SubHeaderStyle"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Tổng sản phẩm: " + $P{totalProducts}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="0" y="82" width="802" height="16" style="SubHeaderStyle"/>
+                <textElement textAlignment="Right"><font size="8.5" isItalic="true"/></textElement>
+                <textFieldExpression><![CDATA["Tạo lúc: " + $P{generatedAt}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- ================= PAGE HEADER (bảng tiêu đề cột, lặp lại mỗi trang) ================= -->
+    <pageHeader>
+        <band height="32">
+            <rectangle>
+                <reportElement x="0" y="0" width="802" height="30" backcolor="#1F2937" mode="Opaque">
+                    <property name="com.jaspersoft.studio.unit.width" value="px"/>
+                </reportElement>
+            </rectangle>
+
+            <staticText>
+                <reportElement x="0" y="0" width="115" height="30" style="TableHeaderStyle"/>
+                <textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Mã SP]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="115" y="0" width="150" height="30" style="TableHeaderStyle"/>
+                <textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Tên sản phẩm]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="265" y="0" width="90" height="30" style="TableHeaderStyle"/>
+                <textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Danh mục]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="355" y="0" width="85" height="30" style="TableHeaderStyle"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Giá gốc]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="440" y="0" width="70" height="30" style="TableHeaderStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Trạng thái]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="510" y="0" width="45" height="30" style="TableHeaderStyle"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Phút]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="555" y="0" width="42" height="30" style="TableHeaderStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Nổi bật]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="602" y="0" width="42" height="30" style="TableHeaderStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Bán chạy]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="644" y="0" width="158" height="30" style="TableHeaderStyle"/>
+                <textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Biến thể]]></text>
+            </staticText>
+        </band>
+    </pageHeader>
+
+    <!-- ================= DETAIL (dòng dữ liệu, có màu xen kẽ) ================= -->
+    <detail>
+        <band height="30">
+            <printWhenExpression><![CDATA[Boolean.TRUE]]></printWhenExpression>
+
+            <frame>
+                <reportElement x="0" y="0" width="802" height="30" mode="Opaque"
+                               backcolor="#F9FAFB">
+                    <printWhenExpression><![CDATA[$V{rowCount} % 2 == 0]]></printWhenExpression>
+                </reportElement>
+                <box>
+                    <topPen lineWidth="0.0"/>
+                    <leftPen lineWidth="0.0"/>
+                    <bottomPen lineWidth="0.0"/>
+                    <rightPen lineWidth="0.0"/>
+                </box>
+            </frame>
+
+            <textField>
+                <reportElement x="0" y="0" width="115" height="30" style="CellStyle"/>
+                <textElement verticalAlignment="Middle"><font size="8.5"/></textElement>
+                <textFieldExpression><![CDATA[$F{productCode}]]></textFieldExpression>
+            </textField>
+
+            <textField isStretchWithOverflow="true">
+                <reportElement x="115" y="0" width="150" height="30" style="CellStyle"/>
+                <textElement verticalAlignment="Middle"><font size="9.5" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{productName}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="265" y="0" width="90" height="30" style="CellStyle"/>
+                <textElement verticalAlignment="Middle"><font size="9.5"/></textElement>
+                <textFieldExpression><![CDATA[$F{categoryName}]]></textFieldExpression>
+            </textField>
+
+            <textField pattern="#,##0">
+                <reportElement x="355" y="0" width="85" height="30" style="CellStyle"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9.5" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{basePrice} + " đ"]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="440" y="0" width="70" height="30" style="CellStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9.5" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{status}.equalsIgnoreCase("ACTIVE") ? "Hoạt động" : "Ngừng bán"]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="510" y="0" width="45" height="30" style="CellStyle"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9.5"/></textElement>
+                <textFieldExpression><![CDATA[$F{preparationMinutes}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="555" y="0" width="42" height="30" style="CellStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{featured}.equalsIgnoreCase("YES") ? "✓" : "–"]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="602" y="0" width="42" height="30" style="CellStyle"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{bestSeller}.equalsIgnoreCase("YES") ? "✓" : "–"]]></textFieldExpression>
+            </textField>
+
+            <textField isStretchWithOverflow="true">
+                <reportElement x="644" y="0" width="158" height="30" style="CellStyle"/>
+                <textElement verticalAlignment="Middle"><font size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{variants}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- ================= PAGE FOOTER (số trang) ================= -->
+    <pageFooter>
+        <band height="20">
+            <line>
+                <reportElement x="0" y="0" width="802" height="1" forecolor="#E5E7EB"/>
+            </line>
+            <textField>
+                <reportElement x="0" y="3" width="400" height="15" style="Base" forecolor="#9CA3AF"/>
+                <textElement><font size="8" isItalic="true"/></textElement>
+                <textFieldExpression><![CDATA["Báo cáo danh sách sản phẩm"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement x="402" y="3" width="400" height="15" style="Base" forecolor="#6B7280"/>
+                <textElement textAlignment="Right"><font size="8"/></textElement>
+                <textFieldExpression><![CDATA["Trang " + $V{PAGE_NUMBER} + " / " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <!-- ================= SUMMARY (tổng kết cuối báo cáo) ================= -->
+    <summary>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="0" width="802" height="1" forecolor="#1F2937"/>
+            </line>
+            <textField>
+                <reportElement x="0" y="6" width="400" height="20" style="Base"/>
+                <textElement verticalAlignment="Middle"><font size="9.5" isBold="true" isItalic="true"/></textElement>
+                <textFieldExpression><![CDATA["Tổng số dòng hiển thị: " + $V{rowCount}]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+</jasperReport>

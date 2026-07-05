@@ -113,6 +113,17 @@ public class ProductVariantServiceImpl implements ProductVariantService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductVariantResponse> getAllActiveForProducts() {
+        return productVariantRepository.findActiveVariantsForProducts(
+                        ProductVariantStatus.ACTIVE.getValue(),
+                        List.of(ProductStatus.ACTIVE.getValue(), ProductStatus.OUT_OF_STOCK.getValue()))
+                .stream()
+                .map(productVariantMapper::toResponse)
+                .toList();
+    }
+
     private Product getProductOrThrow(String productId) {
         return productRepository.findById(productId).orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_001));
     }

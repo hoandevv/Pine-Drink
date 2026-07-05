@@ -19,15 +19,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
      * @return an {@link Optional} containing the token if found
      */
     Optional<RefreshToken> findByTokenHash(String tokenHash);
-
-    /**
-     * Finds a refresh token by the owning account's ID.
-     *
-     * @param accountId the account ID to search for
-     * @return an {@link Optional} containing the token if found
-     */
-    Optional<RefreshToken> findByAccountId(String accountId);
-
     /**
      * Deletes all refresh tokens associated with a specific account.
      * Used when revoking all sessions (e.g., after password change).

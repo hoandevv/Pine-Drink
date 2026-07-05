@@ -18,16 +18,6 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
      */
     List<RolePermission> findByRoleId(String roleId);
 
-    /**
-     * Finds all role permissions for the specified permission ID.
-     *
-     * @param permissionId the ID of the permission
-     * @return a list of role permissions for the specified permission ID
-     */
-    List<RolePermission> findByPermissionId(String permissionId);
-
-    List<RolePermission> findByRoleIdAndStatus(String roleId, String status);
-
     @Query("""
             select distinct p.code
             from AccountRoleAssignment ara

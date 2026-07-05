@@ -101,9 +101,9 @@ logging:
 app:
   jwt:
     secret: ${JWT_SECRET:}
-    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600}
-    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:86400}
-    reset-token-expiration: ${JWT_RESET_TOKEN_EXPIRATION:900}
+    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+    reset-token-expiration: ${JWT_RESET_TOKEN_EXPIRATION}
 
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
@@ -136,6 +136,11 @@ app:
     public-bucket-name: ${MINIO_PUBLIC_BUCKET_NAME:pine-drink-public}
     private-bucket-name: ${MINIO_PRIVATE_BUCKET_NAME:pine-drink-private}
     presigned-url-expiry: ${MINIO_PRESIGNED_URL_EXPIRY:3600}
+
+  report:
+    storage:
+      local-dir: ${REPORT_LOCAL_DIR:./storage/reports}
+      running-timeout: ${REPORT_RUNNING_TIMEOUT:5m}
 
   momo:
     partner-code: ${MOMO_PARTNER_CODE:}
@@ -240,7 +245,19 @@ app:
       concurrent-consumers: ${APP_RABBITMQ_BACKGROUND_JOB_CONCURRENT_CONSUMERS:2}
       max-consumers: ${APP_RABBITMQ_BACKGROUND_JOB_MAX_CONSUMERS:4}
       prefetch: ${APP_RABBITMQ_BACKGROUND_JOB_PREFETCH:1}
-      export-folder: ${BACKGROUND_JOB_EXPORT_FOLDER:background-jobs/exports}
+
+    report:
+      exchange: ${APP_RABBITMQ_REPORT_EXCHANGE:pine-drink.report.exchange}
+      queue: ${APP_RABBITMQ_REPORT_QUEUE:pine-drink.report.queue}
+      retry-queue: ${APP_RABBITMQ_REPORT_RETRY_QUEUE:pine-drink.report.retry.queue}
+      dlq: ${APP_RABBITMQ_REPORT_DLQ:pine-drink.report.dlq}
+      routing-key: ${APP_RABBITMQ_REPORT_ROUTING_KEY:pine-drink.report.export}
+      retry-routing-key: ${APP_RABBITMQ_REPORT_RETRY_ROUTING_KEY:pine-drink.report.retry}
+      dlq-routing-key: ${APP_RABBITMQ_REPORT_DLQ_ROUTING_KEY:pine-drink.report.failed}
+      retry-ttl-ms: ${APP_RABBITMQ_REPORT_RETRY_TTL_MS:60000}
+      concurrent-consumers: ${APP_RABBITMQ_REPORT_CONCURRENT_CONSUMERS:1}
+      max-consumers: ${APP_RABBITMQ_REPORT_MAX_CONSUMERS:2}
+      prefetch: ${APP_RABBITMQ_REPORT_PREFETCH:1}
 
     queue:
       geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}

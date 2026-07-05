@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.ReportJobService;
 import jakarta.validation.Valid;
@@ -41,6 +42,14 @@ public class ReportJobController {
         ReportJobResponse response = reportJobService.createJob(request, principal.getId());
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(BaseResponse.success(response, "Report job created successfully"));
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<BaseResponse<ReportJobStatsResponse>> getStats(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(BaseResponse.success(reportJobService.getStats(principal.getId()),
+                "Report job stats retrieved successfully"));
     }
 
     @GetMapping("/{id}")

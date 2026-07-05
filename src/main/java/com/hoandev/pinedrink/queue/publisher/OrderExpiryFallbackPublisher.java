@@ -39,7 +39,7 @@ public class OrderExpiryFallbackPublisher {
                         cutoff
                 );
 
-        log.info("Fallback expiry processing {} orders", expiredOrders.size());
+            log.info("Fallback expiry processing {} orders", expiredOrders.size());
 
         expiredOrders.forEach(order -> {
             try {

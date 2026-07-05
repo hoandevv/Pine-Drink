@@ -3,6 +3,7 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 
@@ -43,6 +44,14 @@ public interface ReportJobService {
      * @return danh sách job báo cáo đã phân trang
      */
     PageResponse<ReportJobResponse> getJobs(String requestedById, Pageable pageable);
+
+    /**
+     * Trả về thống kê số lượng job báo cáo theo trạng thái của người dùng đã xác thực.
+     *
+     * @param requestedById id tài khoản của người dùng đã xác thực
+     * @return tổng số job và số lượng theo trạng thái chính
+     */
+    ReportJobStatsResponse getStats(String requestedById);
 
     /**
      * Tải file đã sinh cho một job báo cáo đã hoàn tất.

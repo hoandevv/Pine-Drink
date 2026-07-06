@@ -381,8 +381,11 @@ public class OrderServiceImpl implements OrderService {
                 return newStatus.equals("READY") || newStatus.equals("REJECTED");
             case "READY":
                 return newStatus.equals("DELIVERING") || newStatus.equals("COMPLETED") || newStatus.equals("REJECTED");
+                // mở rộng sau này ch có thể shipper ms có tể confirm
             case "DELIVERING":
-                return newStatus.equals("DELIVERED") || newStatus.equals("REJECTED");
+                return newStatus.equals("DELIVERED")
+                        || newStatus.equals("COMPLETED")
+                        || newStatus.equals("REJECTED");
             case "DELIVERED":
                 return newStatus.equals("COMPLETED");
             case "COMPLETED":

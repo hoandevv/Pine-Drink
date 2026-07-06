@@ -293,6 +293,7 @@ public class VoucherServiceImpl implements VoucherService {
 
     private void replaceBranchScope(Voucher voucher, List<Branch> branches) {
         voucherBranchRepository.deleteByVoucherId(voucher.getId());
+        voucherBranchRepository.flush();
         if (branches.isEmpty()) {
             return;
         }

@@ -56,11 +56,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public TopicExchange backgroundJobExchange() {
-        return new TopicExchange(properties.backgroundJob().exchange());
-    }
-
-    @Bean
     public TopicExchange reportExchange() {
         return new TopicExchange(properties.report().exchange());
     }
@@ -232,51 +227,7 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 4. Background Job — Queues & Bindings
-    // ──────────────────────────────────────────────
-
-    @Bean
-    public Queue backgroundJobQueue() {
-        return QueueBuilder.durable(properties.backgroundJob().queue()).build();
-    }
-
-    @Bean
-    public Queue backgroundJobRetryQueue() {
-        return QueueBuilder.durable(properties.backgroundJob().retryQueue())
-                .withArgument("x-message-ttl", properties.backgroundJob().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.backgroundJob().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.backgroundJob().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue backgroundJobDlq() {
-        return QueueBuilder.durable(properties.backgroundJob().dlq()).build();
-    }
-
-    @Bean
-    public Binding backgroundJobBinding() {
-        return BindingBuilder.bind(backgroundJobQueue())
-                .to(backgroundJobExchange())
-                .with(properties.backgroundJob().routingKey());
-    }
-
-    @Bean
-    public Binding backgroundJobRetryBinding() {
-        return BindingBuilder.bind(backgroundJobRetryQueue())
-                .to(backgroundJobExchange())
-                .with(properties.backgroundJob().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding backgroundJobDlqBinding() {
-        return BindingBuilder.bind(backgroundJobDlq())
-                .to(backgroundJobExchange())
-                .with(properties.backgroundJob().dlqRoutingKey());
-    }
-
-    // ──────────────────────────────────────────────
-    // 5. Report — Queues & Bindings
+    // 4. Report — Queues & Bindings
     // ──────────────────────────────────────────────
 
     @Bean
@@ -320,7 +271,7 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 6. Order Expiry — Delayed Message Exchange
+    // 5. Order Expiry — Delayed Message Exchange
     // ──────────────────────────────────────────────
 
     @Bean
@@ -348,7 +299,7 @@ public class RabbitMqConfig {
     }
 
     // ──────────────────────────────────────────────
-    // 7. Message Converter & RabbitTemplate
+    // 6. Message Converter & RabbitTemplate
     // ──────────────────────────────────────────────
 
     @Bean
@@ -366,32 +317,7 @@ public class RabbitMqConfig {
     }
 
     /**
-     * Factory tạo container listener được tinh chỉnh cho các background job như xuất báo cáo.
-     * <p>
-     * Factory này áp dụng concurrency và prefetch từ {@code app.rabbitmq.background-job}.
-     * Thông điệp xuất báo cáo dùng factory này để quá trình sinh PDF lâu không kéo quá nhiều
-     * job về cùng một instance ứng dụng.
-     *
-     * @param configurer bộ cấu hình của Spring Boot dùng để áp dụng cấu hình listener chung
-     * @param connectionFactory connection factory RabbitMQ do Spring Boot quản lý
-     * @return factory tạo container listener cho các consumer background-job
-     */
-    @Bean
-    public SimpleRabbitListenerContainerFactory backgroundJobListenerContainerFactory(
-            SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connectionFactory
-    ) {
-        var backgroundJob = properties.backgroundJob();
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        configurer.configure(factory, connectionFactory);
-        factory.setConcurrentConsumers(backgroundJob.concurrentConsumers());
-        factory.setMaxConcurrentConsumers(backgroundJob.maxConsumers());
-        factory.setPrefetchCount(backgroundJob.prefetch());
-        return factory;
-    }
-
-    /**
-     * Factory riêng cho report export để job sinh file nặng không chiếm consumer background-job.
+     * Factory riêng cho report export để kiểm soát số job sinh file nặng chạy song song.
      */
     @Bean
     public SimpleRabbitListenerContainerFactory reportListenerContainerFactory(

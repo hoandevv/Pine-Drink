@@ -22,6 +22,7 @@ public interface ExportRequestRepository extends JpaRepository<ExportRequest, St
             WHERE e.id = :id
             """)
     Optional<ExportRequest> findByIdWithRequestedBy(@Param("id") String id);
+
     Page<ExportRequest> findByRequestedById(String requestedById, Pageable pageable);
 
     @Query("""

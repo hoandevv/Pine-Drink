@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * Bộ lắng nghe RabbitMQ cho các job xuất báo cáo.
  * <p>
  * Lớp này là adapter nhắn tin cho chức năng xuất báo cáo. Nó nhận các thông điệp
- * {@link ReportExportRequestedEvent} từ background-job queue và ủy quyền toàn bộ
+ * {@link ReportExportRequestedEvent} từ report queue và ủy quyền toàn bộ
  * nghiệp vụ xử lý cho {@link ReportExportService}.
  */
 @Slf4j
@@ -22,11 +22,9 @@ public class ReportExportListener {
     private final ReportExportService reportExportService;
 
     /**
-     * Consume yêu cầu xuất báo cáo từ background-job queue đã cấu hình.
+     * Consume yêu cầu xuất báo cáo từ report queue đã cấu hình.
      * <p>
-     * Concurrency và prefetch của listener được đọc từ
-     * {@code app.rabbitmq.background-job} để có thể tinh chỉnh việc xuất báo cáo
-     * mà không cần sửa code.
+     * Concurrency và prefetch của listener được đọc từ {@code app.rabbitmq.report}.
      *
      * @param event thông điệp mô tả job báo cáo cần được xuất
      */

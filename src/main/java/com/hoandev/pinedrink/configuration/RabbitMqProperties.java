@@ -12,7 +12,6 @@ public record RabbitMqProperties(
         Realtime realtime,
         Channel domainEvents,
         Channel email,
-        Channel backgroundJob,
         Channel report,
         OrderExpiry orderExpiry
 ) {

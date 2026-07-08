@@ -17,4 +17,7 @@ public class UpdateOrderStatusRequest {
     private String status;
 
     private String reason;
+
+    @Pattern(regexp = "CASH|COD|BANK_TRANSFER", message = "Payment method must be CASH, COD or BANK_TRANSFER")
+    private String paymentMethod;
 }

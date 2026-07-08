@@ -23,6 +23,8 @@ import com.hoandev.pinedrink.repository.*;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.DeliveryFeeService;
 import com.hoandev.pinedrink.service.OrderService;
+import com.hoandev.pinedrink.service.PaymentService;
+import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -70,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
     private final RabbitMqProperties rabbitMqProperties;
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventFactory realtimeEventFactory;
+    private final PaymentService paymentService;
 
     @Override
     @Transactional
@@ -337,6 +340,7 @@ public class OrderServiceImpl implements OrderService {
                 order.setDeliveredAt(now);
                 break;
             case "COMPLETED":
+                recordPaymentIfRequired(order, request);
                 order.setCompletedAt(now);
                 confirmSoldStock(order);
                 break;
@@ -395,6 +399,22 @@ public class OrderServiceImpl implements OrderService {
             default:
                 return false;
         }
+    }
+
+    private void recordPaymentIfRequired(Order order, UpdateOrderStatusRequest request) {
+        if ("PAID".equals(order.getPaymentStatus())) {
+            return;
+        }
+
+        String paymentMethod = request.getPaymentMethod();
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            throw new BaseException(ErrorCode.COM_004);
+        }
+
+        paymentService.recordOfflinePayment(RecordOfflinePaymentRequest.builder()
+                .orderId(order.getId())
+                .paymentMethod(paymentMethod)
+                .build());
     }
 
     @Override

@@ -19,6 +19,6 @@ public class RecordOfflinePaymentRequest {
     private String orderId;
 
     @NotBlank(message = "Payment method is required")
-    @Pattern(regexp = "CASH|COD", message = "Payment method must be CASH or COD")
+    @Pattern(regexp = "CASH|COD|BANK_TRANSFER", message = "Payment method must be CASH, COD or BANK_TRANSFER")
     private String paymentMethod;
 }

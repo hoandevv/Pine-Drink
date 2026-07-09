@@ -53,6 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private static final String METHOD_CASH = "CASH";
     private static final String METHOD_COD = "COD";
+    private static final String METHOD_BANK_TRANSFER = PaymentProvider.BANK_TRANSFER.getValue();
     private static final String METHOD_MOMO = PaymentProvider.MOMO.getValue();
     private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_PAID = PaymentStatus.PAID.getValue();
@@ -298,6 +299,7 @@ public class PaymentServiceImpl implements PaymentService {
         intent.setStatus(STATUS_PAID);
         paymentIntentRepository.save(intent);
 
+        order.setPaymentMethod(transaction.getPaymentMethod());
         order.setPaymentStatus(STATUS_PAID);
         orderRepository.save(order);
 
@@ -308,9 +310,14 @@ public class PaymentServiceImpl implements PaymentService {
         if (ORDER_CANCELLED.equals(order.getStatus()) || ORDER_REJECTED.equals(order.getStatus())) {
             throw new BaseException(ErrorCode.COM_004);
         }
-        if (!paymentMethod.equals(order.getPaymentMethod())) {
+        if (!isOfflineMethod(order.getPaymentMethod())) {
             throw new BaseException(ErrorCode.COM_004);
         }
+    }
+
+    private boolean isOfflineMethod(String paymentMethod) {
+        String normalized = paymentMethod == null ? "" : paymentMethod.trim().toUpperCase();
+        return METHOD_CASH.equals(normalized) || METHOD_COD.equals(normalized) || METHOD_BANK_TRANSFER.equals(normalized);
     }
 
     private PaymentIntent getOrCreateIntent(Order order, String paymentMethod) {
@@ -358,7 +365,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private String normalizeOfflineMethod(String paymentMethod) {
         String normalized = paymentMethod == null ? "" : paymentMethod.trim().toUpperCase();
-        if (!METHOD_CASH.equals(normalized) && !METHOD_COD.equals(normalized)) {
+        if (!METHOD_CASH.equals(normalized) && !METHOD_COD.equals(normalized) && !METHOD_BANK_TRANSFER.equals(normalized)) {
             throw new BaseException(ErrorCode.COM_004);
         }
         return normalized;

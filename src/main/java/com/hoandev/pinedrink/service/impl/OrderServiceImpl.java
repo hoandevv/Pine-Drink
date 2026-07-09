@@ -344,6 +344,11 @@ public class OrderServiceImpl implements OrderService {
                 order.setCompletedAt(now);
                 confirmSoldStock(order);
                 break;
+            case "CANCELLED":
+                order.setCancelledAt(now);
+                order.setCancelReason(request.getReason());
+                releaseStock(order);
+                break;
             case "REJECTED":
                 order.setRejectedAt(now);
                 order.setCancelReason(request.getReason());

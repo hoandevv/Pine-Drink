@@ -298,7 +298,9 @@ public class AuthServiceImpl implements AuthService {
 
         return authMapper.toLoginResponse(accessToken, refreshToken, account);
     }
-
+    /**
+     * Tìm kiếm xem Email có đã đc tạo tài khoản hay chưa
+     * */
     private Account findOrCreateGoogleAccount(GoogleTokenVerifier.GoogleUserInfo googleUser, String email) {
         Optional<Account> googleAccount = accountRepository.findByAuthProviderAndProviderId(
                 Constants.AUTH_PROVIDER_GOOGLE, googleUser.getSubject());
@@ -315,7 +317,6 @@ public class AuthServiceImpl implements AuthService {
         validateGoogleLink(account, googleUser);
         return account;
     }
-
     private void validateGoogleLink(Account account, GoogleTokenVerifier.GoogleUserInfo googleUser) {
         if (Constants.AUTH_PROVIDER_GOOGLE.equals(account.getAuthProvider())) {
             if (account.getProviderId() == null || account.getProviderId().isBlank()) {
@@ -337,8 +338,13 @@ public class AuthServiceImpl implements AuthService {
                 || account.getAuthProvider().isBlank()
                 || Constants.AUTH_PROVIDER_LOCAL.equals(account.getAuthProvider());
     }
-
-    private Account createGoogleAccount(GoogleTokenVerifier.GoogleUserInfo googleUser, String email) {
+     /**
+     * Tạo tài khoản Google mới
+     * @param googleUser thông tin người dùng Google
+     * @param email địa chỉ email
+     * @return tài khoản được tạo
+     */
+     Account createGoogleAccount(GoogleTokenVerifier.GoogleUserInfo googleUser, String email) {
         Account account = new Account();
         account.setUsername(generateUniqueUsername(email));
         account.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));

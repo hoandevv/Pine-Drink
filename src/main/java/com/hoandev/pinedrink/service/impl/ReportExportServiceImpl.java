@@ -106,7 +106,12 @@ public class ReportExportServiceImpl implements ReportExportService {
             throw new IllegalArgumentException("Unsupported report type: " + reportType);
         }
     }
-
+    /**
+     * Thực hiện query và lấy dữ liệu cho báo cáo.
+     *
+     * @param job job xuất báo cáo
+     * @return dữ liệu báo cáo danh mục sản phẩm
+     */
     private ProductCatalogReportDto buildProductCatalogData(ExportRequest job) {
         String status = normalizeFilter(readFilter(job.getFilters(), "status", null));
         String categoryId = normalizeFilter(readFilter(job.getFilters(), "categoryId", null));

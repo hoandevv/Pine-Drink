@@ -8,11 +8,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * RabbitMQ-backed implementation of {@link EventPublisher}.
+ * Hiện thực {@link EventPublisher} dựa trên RabbitMQ.
  * <p>
- * Routes events to the email or domain-events exchange based on the event type.
- * All events are serialized via the {@link RabbitTemplate}'s message converter
- * (configured in {@link com.hoandev.pinedrink.configuration.RabbitMqConfig}).
+ * Định tuyến sự kiện đến exchange email hoặc domain-events dựa theo loại sự kiện.
+ * Tất cả sự kiện được tuần tự hóa thông qua message converter của {@link RabbitTemplate}
+ * (được cấu hình trong {@link com.hoandev.pinedrink.configuration.RabbitMqConfig}).
  */
 @Slf4j
 @Component
@@ -25,10 +25,10 @@ public class RabbitMqEventPublisher implements EventPublisher {
     /**
      * {@inheritDoc}
      * <p>
-     * Routing is determined by event type prefix:
+     * Định tuyến được xác định theo tiền tố loại sự kiện:
      * <ul>
-     *   <li>{@code EMAIL_*} → email exchange</li>
-     *   <li>all others → domain-events exchange</li>
+     *   <li>{@code EMAIL_*} -> email exchange</li>
+     *   <li>các sự kiện còn lại -> domain-events exchange</li>
      * </ul>
      */
     @Override

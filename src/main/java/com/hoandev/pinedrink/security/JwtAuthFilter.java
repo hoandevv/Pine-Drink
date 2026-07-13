@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,27 +22,20 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Filters incoming requests to extract and validate JWT tokens
- * from the Authorization header and sets the security context.
+ * Lọc JWT trong mỗi request.
+ * Lấy Bearer token, kiểm tra token, load user, rồi đưa user vào SecurityContext.
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider,
-                         CustomUserDetailsService customUserDetailsService,
-                         ObjectMapper objectMapper) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.customUserDetailsService = customUserDetailsService;
-        this.objectMapper = objectMapper;
-    }
-
     /**
-     * {@inheritDoc}
+     * Kiểm tra JWT và gán authentication cho request hiện tại.
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -56,17 +50,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (jwtTokenProvider.validateToken(token)) {
                     Claims claims = jwtTokenProvider.parseToken(token);
                     
-                    // Check if this is a reset token (has "type": "reset" claim)
+                    // Reset token có claim type=reset.
                     String tokenType = claims.get("type", String.class);
                     
                     UserPrincipal userPrincipal;
                     if ("reset".equals(tokenType)) {
-                        // Reset token: subject is userId, no username claim
+                        // Reset token dùng subject làm userId.
                         String userId = claims.getSubject();
                         log.debug("Reset token validated for userId: {}", userId);
                         userPrincipal = (UserPrincipal) customUserDetailsService.loadUserById(userId);
                     } else {
-                        // Regular access token: use accountId from subject and roles from claims.
+                        // Access token dùng subject làm accountId, roles lấy từ claim.
                         String accountId = claims.getSubject();
                         @SuppressWarnings("unchecked")
                         List<String> roleAuthorities = claims.get("roles", List.class);
@@ -107,6 +101,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Trả lỗi JSON khi xác thực thất bại.
+     */
     private void writeAuthError(HttpServletResponse response, ErrorCode errorCode, int status) throws IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -117,10 +114,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Extracts the Bearer token from the Authorization header.
-     *
-     * @param request the incoming HTTP request
-     * @return the token string, or null if not present
+     * Lấy token từ header Authorization: Bearer ...
      */
     private String extractToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

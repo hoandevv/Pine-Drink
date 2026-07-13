@@ -17,7 +17,7 @@ public class ProductCatalogResult {
     private final BigDecimal basePrice;
     private final String status;
     private final Integer preparationMinutes;
-    private final Boolean featured;
+    private final Boolean featured; 
     private final Boolean bestSeller;
     private final String variants;
     private final LocalDateTime createdAt;

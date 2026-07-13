@@ -46,21 +46,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (token != null) {
                 log.debug("Token found in request: {}", request.getRequestURI());
-                
+                // validate và parse token.
                 if (jwtTokenProvider.validateToken(token)) {
                     Claims claims = jwtTokenProvider.parseToken(token);
-                    
-                    // Reset token có claim type=reset.
                     String tokenType = claims.get("type", String.class);
-                    
                     UserPrincipal userPrincipal;
                     if ("reset".equals(tokenType)) {
-                        // Reset token dùng subject làm userId.
                         String userId = claims.getSubject();
                         log.debug("Reset token validated for userId: {}", userId);
+                        // load account từ database và build UserPrincipal
                         userPrincipal = (UserPrincipal) customUserDetailsService.loadUserById(userId);
                     } else {
-                        // Access token dùng subject làm accountId, roles lấy từ claim.
                         String accountId = claims.getSubject();
                         @SuppressWarnings("unchecked")
                         List<String> roleAuthorities = claims.get("roles", List.class);

@@ -60,10 +60,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return buildPrincipal(account, roleAuthorities);
     }
-
+    // lấy permission
     public UserPrincipal buildPrincipal(Account account, List<String> roleAuthorities) {
         List<String> permissionAuthorities = permissionCacheService.getPermissionAuthorities(account.getId());
-
+        // nối permission và role lại với nhau, map thành SimpleGrantedAuthority
         List<GrantedAuthority> authorities = Stream.concat(roleAuthorities.stream(), permissionAuthorities.stream())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());

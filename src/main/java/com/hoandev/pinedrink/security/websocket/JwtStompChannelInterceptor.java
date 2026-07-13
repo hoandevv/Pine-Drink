@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.security.CustomUserDetailsService;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import io.jsonwebtoken.Claims;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class JwtStompChannelInterceptor implements ChannelInterceptor {
 
     private static final String BEARER_PREFIX = "Bearer ";
@@ -21,14 +23,6 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
     private final StompSubscribeGuard subscribeGuard;
-
-    public JwtStompChannelInterceptor(JwtTokenProvider jwtTokenProvider,
-                                      CustomUserDetailsService userDetailsService,
-                                      StompSubscribeGuard subscribeGuard) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.userDetailsService = userDetailsService;
-        this.subscribeGuard = subscribeGuard;
-    }
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {

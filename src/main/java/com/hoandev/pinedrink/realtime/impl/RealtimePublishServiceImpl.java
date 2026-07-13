@@ -3,6 +3,7 @@ package com.hoandev.pinedrink.realtime.impl;
 import com.hoandev.pinedrink.realtime.RealtimeDestination;
 import com.hoandev.pinedrink.realtime.RealtimeEvent;
 import com.hoandev.pinedrink.realtime.RealtimePublishService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 /**
@@ -20,13 +21,10 @@ import org.springframework.stereotype.Service;
  * Client/Admin đang subscribe nhận event
  */
 @Service
+@RequiredArgsConstructor
 public class RealtimePublishServiceImpl implements RealtimePublishService {
 
     private final SimpMessagingTemplate messagingTemplate;
-
-    public RealtimePublishServiceImpl(SimpMessagingTemplate messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
 
     @Override
     public <T> void publishToTopic(String destination, RealtimeEvent<T> event) {

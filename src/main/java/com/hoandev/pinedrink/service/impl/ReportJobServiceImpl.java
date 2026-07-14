@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -108,8 +109,16 @@ public class ReportJobServiceImpl implements ReportJobService {
      */
     @Override
     @Transactional
-    public PageResponse<ReportJobResponse> getJobs(String requestedById, Pageable pageable) {
-        Page<ExportRequest> jobs = exportRequestRepository.findByRequestedById(requestedById, pageable);
+    public PageResponse<ReportJobResponse> getJobs(
+            String requestedById,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable) {
+        validateDateRange(fromDate, toDate);
+        LocalDateTime fromDateTime = fromDate == null ? null : fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate == null ? null : toDate.plusDays(1).atStartOfDay();
+        Page<ExportRequest> jobs = exportRequestRepository.findByRequestedByIdAndCreatedAtRange(
+                requestedById, fromDateTime, toDateTime, pageable);
         jobs.getContent().forEach(this::markStaleRunningJobAsFailed);
         return PageResponse.from(jobs, jobs.getContent().stream()
                 .map(reportJobMapper::toResponse)
@@ -235,6 +244,12 @@ public class ReportJobServiceImpl implements ReportJobService {
      *
      * @param job entity của job
      */
+    private void validateDateRange(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new BaseException(ErrorCode.COM_004, "fromDate phải nhỏ hơn hoặc bằng toDate");
+        }
+    }
+
     private void markStaleRunningJobAsFailed(ExportRequest job) {
         if (!ExportRequestStatus.RUNNING.name().equals(job.getStatus()) || job.getStartedAt() == null) {
             return;

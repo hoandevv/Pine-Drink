@@ -7,6 +7,8 @@ import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
+
 /**
  * Service ứng dụng cho các job xuất báo cáo.
  * <p>
@@ -41,9 +43,11 @@ public interface ReportJobService {
      *
      * @param requestedById id tài khoản của người dùng đã xác thực
      * @param pageable thông tin phân trang và sắp xếp
+     * @param fromDate ngày bắt đầu lọc theo thời gian tạo job
+     * @param toDate ngày kết thúc lọc theo thời gian tạo job
      * @return danh sách job báo cáo đã phân trang
      */
-    PageResponse<ReportJobResponse> getJobs(String requestedById, Pageable pageable);
+    PageResponse<ReportJobResponse> getJobs(String requestedById, LocalDate fromDate, LocalDate toDate, Pageable pageable);
 
     /**
      * Trả về thống kê số lượng job báo cáo theo trạng thái của người dùng đã xác thực.

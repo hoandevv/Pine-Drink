@@ -23,7 +23,18 @@ public interface ExportRequestRepository extends JpaRepository<ExportRequest, St
             """)
     Optional<ExportRequest> findByIdWithRequestedBy(@Param("id") String id);
 
-    Page<ExportRequest> findByRequestedById(String requestedById, Pageable pageable);
+    @Query("""
+            SELECT e
+            FROM ExportRequest e
+            WHERE e.requestedBy.id = :requestedById
+              AND (:fromDate IS NULL OR e.createdAt >= :fromDate)
+              AND (:toDate IS NULL OR e.createdAt < :toDate)
+            """)
+    Page<ExportRequest> findByRequestedByIdAndCreatedAtRange(
+            @Param("requestedById") String requestedById,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
 
     @Query("""
             SELECT COUNT(e)

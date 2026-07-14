@@ -1,10 +1,6 @@
 package com.hoandev.pinedrink.service.impl;
 
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.BranchPerformanceResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.DashboardOverviewResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.OrderStatusSummaryResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.RevenueTrendResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.TopProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Dashboard.DashboardDataResponse;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.DashboardRepository;
@@ -17,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,43 +27,22 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public DashboardOverviewResponse getOverview(LocalDate fromDate, LocalDate toDate, String branchId) {
+    public DashboardDataResponse getAllData(LocalDate fromDate, LocalDate toDate, String branchId, Integer limit) {
         validateDateRange(fromDate, toDate);
         String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getOverview(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RevenueTrendResponse> getRevenueTrend(LocalDate fromDate, LocalDate toDate, String branchId) {
-        validateDateRange(fromDate, toDate);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getRevenueTrend(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OrderStatusSummaryResponse> getOrderStatus(LocalDate fromDate, LocalDate toDate, String branchId) {
-        validateDateRange(fromDate, toDate);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getOrderStatus(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<TopProductResponse> getTopProducts(LocalDate fromDate, LocalDate toDate, String branchId, Integer limit) {
-        validateDateRange(fromDate, toDate);
         int normalizedLimit = normalizeLimit(limit);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getTopProducts(fromDate, toDate, allowedBranchId, normalizedLimit);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<BranchPerformanceResponse> getBranchPerformance(LocalDate fromDate, LocalDate toDate) {
-        validateDateRange(fromDate, toDate);
-        accessScopeService.assertSystemAccess();
-        return dashboardRepository.getBranchPerformance(fromDate, toDate);
+        DashboardDataResponse.DashboardDataResponseBuilder builder = DashboardDataResponse.builder()
+                .overview(dashboardRepository.getOverview(fromDate, toDate, allowedBranchId))
+                .revenueTrend(dashboardRepository.getRevenueTrend(fromDate, toDate, allowedBranchId))
+                .orderStatus(dashboardRepository.getOrderStatus(fromDate, toDate, allowedBranchId))
+                .topProducts(dashboardRepository.getTopProducts(fromDate, toDate, allowedBranchId, normalizedLimit));
+
+        if (allowedBranchId == null) {
+            builder.branchPerformance(dashboardRepository.getBranchPerformance(fromDate, toDate));
+        }
+
+        return builder.build();
     }
 
     private void validateDateRange(LocalDate fromDate, LocalDate toDate) {

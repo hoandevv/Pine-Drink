@@ -21,7 +21,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    @GetMapping
+    @GetMapping("/getAllData")
     @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<DashboardDataResponse>> getAllData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,

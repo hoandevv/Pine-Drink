@@ -36,12 +36,12 @@ public class GlobalExceptionHandler {
         List<ErrorResponse.FieldError> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
                 .toList();
-        return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_001, "Validation failed", errors, null);
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_001, ErrorCode.COM_001.getMessage(), errors, null);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ErrorResponse> handleInvalidRequestBody(HttpMessageNotReadableException ex) {
-        return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_001, "Invalid request body", null, null);
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.COM_003, ErrorCode.COM_003.getMessage(), null, null);
     }
 
     /**
@@ -49,7 +49,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BadRequestException.class)
     ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        return build(HttpStatus.BAD_REQUEST, ex.getErrorCode(), ex.getMessage(), null, null);
+        ErrorCode errorCode = ex.getErrorCode();
+        return build(HttpStatus.BAD_REQUEST, errorCode, errorCode.getMessage(), null, null);
     }
 
     /**
@@ -58,8 +59,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
-        HttpStatus status = resolveHttpStatus(ex.getErrorCode());
-        return build(status, ex.getErrorCode(), ex.getMessage(), null, null);
+        ErrorCode errorCode = ex.getErrorCode();
+        HttpStatus status = resolveHttpStatus(errorCode);
+        return build(status, errorCode, errorCode.getMessage(), null, null);
     }
 
     /**
@@ -67,7 +69,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({AuthenticationException.class})
     ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
-        return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTH_001, ex.getMessage(), null, null);
+        return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTH_001, ErrorCode.AUTH_001.getMessage(), null, null);
     }
 
     /**
@@ -75,7 +77,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ErrorResponse> handleForbidden(AccessDeniedException ex) {
-        return build(HttpStatus.FORBIDDEN, ErrorCode.AUTH_007, "Forbidden", null, null);
+        return build(HttpStatus.FORBIDDEN, ErrorCode.AUTH_007, ErrorCode.AUTH_007.getMessage(), null, null);
     }
 
     /**
@@ -89,7 +91,7 @@ public class GlobalExceptionHandler {
             return null; // Let Spring handle it with 404
         }
         log.error("Unhandled exception", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.COM_002, "Internal server error", null, null);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.COM_002, ErrorCode.COM_002.getMessage(), null, null);
     }
 
     private HttpStatus resolveHttpStatus(ErrorCode errorCode) {

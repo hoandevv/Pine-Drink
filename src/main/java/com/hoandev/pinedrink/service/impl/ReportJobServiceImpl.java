@@ -215,7 +215,11 @@ public class ReportJobServiceImpl implements ReportJobService {
 
         publish.run();
     }
-
+    /**
+     * Đánh dấu job fail khi publish event thất bại,
+     *
+     * chỉ áp dụng cho job đang ở trạng thái PENDING.
+     */
     private void markPendingJobAsFailed(String jobId, Exception e) {
         exportRequestRepository.findById(jobId)
                 .filter(job -> ExportRequestStatus.PENDING.name().equals(job.getStatus()))
@@ -226,7 +230,11 @@ public class ReportJobServiceImpl implements ReportJobService {
                     exportRequestRepository.save(job);
                 });
     }
-
+    /**
+     * Đánh dấu job đang chạy nhưng đã hết thời gian chờ -> fail
+     *
+     * @param job entity của job
+     */
     private void markStaleRunningJobAsFailed(ExportRequest job) {
         if (!ExportRequestStatus.RUNNING.name().equals(job.getStatus()) || job.getStartedAt() == null) {
             return;

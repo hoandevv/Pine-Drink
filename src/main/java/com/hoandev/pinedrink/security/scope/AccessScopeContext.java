@@ -3,11 +3,20 @@ package com.hoandev.pinedrink.security.scope;
 import java.util.Set;
 
 /**
- * Describes branch access resolved for the current authenticated account.
- * Full access represents SYSTEM scope; otherwise access is limited to the listed branch IDs.
+ * Mô tả phạm vi truy cập chi nhánh của tài khoản đang được xác thực.
  *
- * @param fullAccess whether current account can access all branches
- * @param branchIds branch IDs granted by active BRANCH scope assignments
+ * Nếu {@code fullAccess = true}, tài khoản có phạm vi SYSTEM
+ * và được phép truy cập tất cả chi nhánh.
+ *
+ * Ngược lại, tài khoản chỉ được phép truy cập các chi nhánh
+ * có mã nằm trong danh sách {@code branchIds}.
+ *
+ * @param fullAccess cho biết tài khoản hiện tại có được truy cập tất cả chi nhánh hay không
+ * @param branchIds tập hợp mã chi nhánh được cấp quyền thông qua
+ *                  các phân quyền có phạm vi BRANCH đang hoạt động
  */
-public record AccessScopeContext(boolean fullAccess, Set<String> branchIds) {
+public record AccessScopeContext(
+        boolean fullAccess,
+        Set<String> branchIds
+) {
 }

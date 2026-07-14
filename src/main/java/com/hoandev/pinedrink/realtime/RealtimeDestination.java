@@ -4,10 +4,6 @@ package com.hoandev.pinedrink.realtime;
  * là class gom toàn bộ đường dẫn WebSocket/STOMP destination về một chỗ.
  */
 public final class RealtimeDestination {
-    public static final String USER_NOTIFICATIONS = "/queue/notifications";
-    public static final String USER_ORDERS = "/queue/orders";
-    public static final String USER_CHAT = "/queue/chat";
-
     private RealtimeDestination() {
     }
 

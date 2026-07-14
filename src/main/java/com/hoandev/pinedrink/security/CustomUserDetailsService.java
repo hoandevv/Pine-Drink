@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.AccountRoleAssignment;
 import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
 import com.hoandev.pinedrink.service.PermissionCacheService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,19 +23,12 @@ import java.util.stream.Stream;
  * Resolves roles via {@link AccountRoleAssignment} and maps them to granted authorities.
  */
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository assignmentRepository;
     private final PermissionCacheService permissionCacheService;
-
-    public CustomUserDetailsService(AccountRepository accountRepository,
-                                    AccountRoleAssignmentRepository assignmentRepository,
-                                    PermissionCacheService permissionCacheService) {
-        this.accountRepository = accountRepository;
-        this.assignmentRepository = assignmentRepository;
-        this.permissionCacheService = permissionCacheService;
-    }
 
     /**
      * {@inheritDoc}
@@ -66,10 +60,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return buildPrincipal(account, roleAuthorities);
     }
-
+    // lấy permission
     public UserPrincipal buildPrincipal(Account account, List<String> roleAuthorities) {
         List<String> permissionAuthorities = permissionCacheService.getPermissionAuthorities(account.getId());
-
+        // nối permission và role lại với nhau, map thành SimpleGrantedAuthority
         List<GrantedAuthority> authorities = Stream.concat(roleAuthorities.stream(), permissionAuthorities.stream())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());

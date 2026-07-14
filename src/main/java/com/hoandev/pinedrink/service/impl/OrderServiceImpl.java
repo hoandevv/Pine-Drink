@@ -229,7 +229,9 @@ public class OrderServiceImpl implements OrderService {
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
+                        //delay
                         sendOrderExpiryMessage(orderId);
+                        // realtime
                         publishOrderCreatedEvent(orderId, orderCode, branchId, customerAccountId, totalAmount);
                     }
                 }

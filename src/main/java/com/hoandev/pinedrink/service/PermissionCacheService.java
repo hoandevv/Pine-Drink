@@ -55,6 +55,7 @@ public class PermissionCacheService {
         }
 
         log.debug("Permission cache miss for accountId={}, loading from DB", accountId);
+        // Load permissions from DB
         List<String> authorities = rolePermissionRepository.findActivePermissionCodesByAccountId(accountId, LocalDateTime.now())
                 .stream()
                 .map(permissionCode -> "PERM_" + permissionCode)
@@ -62,6 +63,7 @@ public class PermissionCacheService {
                 .toList();
 
         try {
+            // cache permissions redis
             redisTemplate.opsForValue().set(cacheKey, String.join(CACHE_VALUE_DELIMITER, authorities), CACHE_TTL);
         } catch (Exception e) {
             log.warn("Permission cache write failed for accountId={}", accountId, e);

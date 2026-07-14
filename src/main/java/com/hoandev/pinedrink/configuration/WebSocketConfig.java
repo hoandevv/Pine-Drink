@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.configuration;
 
 import com.hoandev.pinedrink.security.websocket.JwtStompChannelInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -15,16 +16,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  */
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtStompChannelInterceptor jwtStompChannelInterceptor;
     private final RabbitMqProperties rabbitMqProperties;
-
-    public WebSocketConfig(JwtStompChannelInterceptor jwtStompChannelInterceptor,
-                           RabbitMqProperties rabbitMqProperties) {
-        this.jwtStompChannelInterceptor = jwtStompChannelInterceptor;
-        this.rabbitMqProperties = rabbitMqProperties;
-    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

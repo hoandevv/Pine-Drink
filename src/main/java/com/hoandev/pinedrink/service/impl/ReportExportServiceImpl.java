@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -115,8 +116,19 @@ public class ReportExportServiceImpl implements ReportExportService {
     private ProductCatalogReportDto buildProductCatalogData(ExportRequest job) {
         String status = normalizeFilter(readFilter(job.getFilters(), "status", null));
         String categoryId = normalizeFilter(readFilter(job.getFilters(), "categoryId", null));
-        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(status, categoryId);
+        LocalDateTime fromDate = parseStartOfDay(readFilter(job.getFilters(), "fromDate", null));
+        LocalDateTime toDate = parseExclusiveEndOfDay(readFilter(job.getFilters(), "toDate", null));
+        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(
+                status, categoryId, fromDate, toDate);
         return productCatalogReportMapper.toReportDto(products, status, categoryId);
+    }
+
+    private LocalDateTime parseStartOfDay(String value) {
+        return value == null || value.isBlank() ? null : LocalDate.parse(value).atStartOfDay();
+    }
+
+    private LocalDateTime parseExclusiveEndOfDay(String value) {
+        return value == null || value.isBlank() ? null : LocalDate.parse(value).plusDays(1).atStartOfDay();
     }
 
     /**

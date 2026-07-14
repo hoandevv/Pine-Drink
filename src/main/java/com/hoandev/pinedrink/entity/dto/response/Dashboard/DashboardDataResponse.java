@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.entity.dto.response.Dashboard;
 
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
 import lombok.*;
 
 import java.util.List;
@@ -15,4 +16,5 @@ public class DashboardDataResponse {
     private List<OrderStatusSummaryResponse> orderStatus;
     private List<TopProductResponse> topProducts;
     private List<BranchPerformanceResponse> branchPerformance;
+    private List<BranchResponse> availableBranches;
 }

@@ -35,6 +35,8 @@ public interface BranchVariantDailyStockService {
      * @return the daily stock response
      */
     DailyStockResponse setQuota(SetDailyStockQuotaRequest request);
+    
+    DailyStockResponse getById(String dailyStockId);
     /**
      * Updates the quota for a specific daily stock.
      * @param dailyStockId the ID of the daily stock

@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportOptionsResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 
@@ -49,13 +50,15 @@ public interface ReportJobService {
      */
     PageResponse<ReportJobResponse> getJobs(String requestedById, LocalDate fromDate, LocalDate toDate, Pageable pageable);
 
+    ReportJobStatsResponse getStats(String requestedById);
+
     /**
-     * Trả về thống kê số lượng job báo cáo theo trạng thái của người dùng đã xác thực.
+     * Trả về dữ liệu khởi tạo cho trang báo cáo.
      *
      * @param requestedById id tài khoản của người dùng đã xác thực
-     * @return tổng số job và số lượng theo trạng thái chính
+     * @return danh mục active dùng cho filter và thống kê job báo cáo
      */
-    ReportJobStatsResponse getStats(String requestedById);
+    ReportOptionsResponse getOptions(String requestedById);
 
     /**
      * Tải file đã sinh cho một job báo cáo đã hoàn tất.

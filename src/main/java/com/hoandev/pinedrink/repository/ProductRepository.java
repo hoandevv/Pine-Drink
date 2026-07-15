@@ -1,6 +1,7 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.Product;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
 import com.hoandev.pinedrink.repository.custom.ProductRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,35 @@ public interface ProductRepository extends JpaRepository<Product, String>, Produ
               AND (:status IS NULL OR :status = '' OR p.status = :status)
             """)
     Page<Product> searchProducts(
+            @Param("keyword") String keyword,
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT new com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse(
+                p.id,
+                p.code,
+                p.name,
+                p.imageUrl,
+                p.basePrice,
+                p.preparationMinutes,
+                p.isFeatured,
+                p.isBestSeller,
+                c.id,
+                c.name,
+                p.status
+            )
+            FROM Product p
+            JOIN p.category c
+            WHERE (:keyword IS NULL OR :keyword = '' OR
+                   LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                   LOWER(p.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId)
+              AND (:status IS NULL OR :status = '' OR p.status = :status)
+            """)
+    Page<ProductSummaryResponse> searchProductSummaries(
             @Param("keyword") String keyword,
             @Param("categoryId") String categoryId,
             @Param("status") String status,

@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductRequest;
 import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +23,8 @@ public interface ProductService {
     void delete(String id);
 
     ProductResponse getById(String id);
+
+    PageResponse<ProductSummaryResponse> getSummaries(String keyword, String categoryId, String status, Pageable pageable);
 
     PageResponse<ProductResponse> getAll(String keyword, String categoryId, String status, Pageable pageable);
 }

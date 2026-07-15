@@ -7,6 +7,7 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductRequest;
 import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -133,6 +134,13 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductResponse getById(String id) {
         return productMapper.toResponse(getProductOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ProductSummaryResponse> getSummaries(String keyword, String categoryId, String status, Pageable pageable) {
+        Page<ProductSummaryResponse> products = productRepository.searchProductSummaries(keyword, categoryId, status, pageable);
+        return PageResponse.from(products);
     }
 
     @Override

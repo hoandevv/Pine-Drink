@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusReque
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.service.ProductVariantService;
@@ -114,13 +115,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<ProductResponse>>> getAll(
+    public ResponseEntity<BaseResponse<PageResponse<ProductSummaryResponse>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting products: keyword={}, categoryId={}, status={}", keyword, categoryId, status);
-        PageResponse<ProductResponse> response = productService.getAll(keyword, categoryId, status, pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Products retrieved successfully"));
+        log.info("Getting product summaries: keyword={}, categoryId={}, status={}", keyword, categoryId, status);
+        PageResponse<ProductSummaryResponse> response = productService.getSummaries(keyword, categoryId, status, pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Product summaries retrieved successfully"));
     }
 }

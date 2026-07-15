@@ -114,7 +114,7 @@ public class ProductController {
         return ResponseEntity.ok(BaseResponse.success(response, "Active product variants retrieved successfully"));
     }
 
-    @GetMapping
+    @GetMapping("/summaries")
     public ResponseEntity<BaseResponse<PageResponse<ProductSummaryResponse>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryId,

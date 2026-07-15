@@ -45,10 +45,6 @@ public interface ProductRepository extends JpaRepository<Product, String>, Produ
                 p.name,
                 p.imageUrl,
                 p.basePrice,
-                p.preparationMinutes,
-                p.isFeatured,
-                p.isBestSeller,
-                c.id,
                 c.name,
                 p.status
             )
@@ -59,11 +55,13 @@ public interface ProductRepository extends JpaRepository<Product, String>, Produ
                    LOWER(p.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR :categoryId = '' OR c.id = :categoryId)
               AND (:status IS NULL OR :status = '' OR p.status = :status)
+              AND (:categoryStatus IS NULL OR :categoryStatus = '' OR c.status = :categoryStatus)
             """)
     Page<ProductSummaryResponse> searchProductSummaries(
             @Param("keyword") String keyword,
             @Param("categoryId") String categoryId,
             @Param("status") String status,
+            @Param("categoryStatus") String categoryStatus,
             Pageable pageable
     );
 

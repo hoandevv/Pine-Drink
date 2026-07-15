@@ -145,7 +145,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> getSummaries(String keyword, String categoryId, String status, Pageable pageable) {
-        Page<ProductSummaryResponse> products = productRepository.searchProductSummaries(keyword, categoryId, status, pageable);
+        Page<ProductSummaryResponse> products = productRepository.searchProductSummaries(
+                keyword,
+                categoryId,
+                status,
+                ProductStatus.ACTIVE.getValue().equals(status) ? ProductStatus.ACTIVE.getValue() : null,
+                pageable);
         return PageResponse.from(products);
     }
 

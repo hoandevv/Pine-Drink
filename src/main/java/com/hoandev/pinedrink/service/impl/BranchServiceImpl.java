@@ -4,7 +4,9 @@ import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchSummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.BranchStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -93,20 +95,45 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<BranchResponse> getAll(Pageable pageable) {
+    public PageResponse<BranchSummaryResponse> getAll(Pageable pageable) {
         AccessScopeContext scope = accessScopeService.resolveCurrentScope();
         Page<Branch> branches = scope.fullAccess()
                 ? branchRepository.findAll(pageable)
                 : findScopedBranches(scope, pageable);
-        List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
+        List<BranchSummaryResponse> content = branches.getContent().stream().map(branchMapper::toSummaryResponse).toList();
         return PageResponse.from(branches, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<BranchResponse> getAllActive(Pageable pageable) {
-        Page<Branch> branches = branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable);
-        List<BranchResponse> content = branches.getContent().stream().map(branchMapper::toResponse).toList();
+    public PageResponse<BranchSummaryResponse> getSummaries(Pageable pageable) {
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findAll(pageable)
+                : findScopedBranches(scope, pageable);
+        List<BranchSummaryResponse> content = branches.getContent().stream().map(branchMapper::toSummaryResponse).toList();
+        return PageResponse.from(branches, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<BranchOptionResponse> getAllActive(Pageable pageable) {
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
+                : findScopedActiveBranches(scope, pageable);
+        List<BranchOptionResponse> content = branches.getContent().stream().map(branchMapper::toOptionResponse).toList();
+        return PageResponse.from(branches, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<BranchOptionResponse> getActiveOptions(Pageable pageable) {
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        Page<Branch> branches = scope.fullAccess()
+                ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
+                : findScopedActiveBranches(scope, pageable);
+        List<BranchOptionResponse> content = branches.getContent().stream().map(branchMapper::toOptionResponse).toList();
         return PageResponse.from(branches, content);
     }
 

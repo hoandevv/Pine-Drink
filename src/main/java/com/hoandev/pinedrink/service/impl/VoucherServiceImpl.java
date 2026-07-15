@@ -8,6 +8,7 @@ import com.hoandev.pinedrink.entity.dto.request.Voucher.UpdateVoucherRequest;
 import com.hoandev.pinedrink.entity.dto.request.Voucher.UpdateVoucherStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherResponse;
+import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.DiscountType;
 import com.hoandev.pinedrink.entity.enums.EntityStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -136,38 +137,35 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<VoucherResponse> getAll(String keyword, String status, String discountType,
-                                                String branchId, LocalDateTime activeAt, Pageable pageable) {
-        String normalizedBranchId = normalizeOptional(branchId);
-        if (normalizedBranchId != null) {
-            branchRepository.findById(normalizedBranchId).orElseThrow(branchNotFound());
-        }
-
-        Page<Voucher> vouchers = voucherRepository.search(
-                normalizeOptional(keyword),
-                normalizeOptional(status),
-                normalizeDiscountType(discountType),
-                normalizedBranchId,
-                activeAt,
-                pageable
-        );
-
-        Map<String, List<String>> branchIdsByVoucherId = getBranchIdsByVoucherIds(
-                vouchers.getContent().stream().map(Voucher::getId).toList()
-        );
-
-        List<VoucherResponse> content = vouchers.getContent().stream()
-                .map(voucher -> voucherMapper.toResponse(
-                        voucher,
-                        branchIdsByVoucherId.getOrDefault(voucher.getId(), Collections.emptyList())
-                ))
+    public PageResponse<VoucherSummaryResponse> getAll(String keyword, String status, String discountType,
+                                                       String branchId, LocalDateTime activeAt, Pageable pageable) {
+        Page<Voucher> vouchers = searchVouchers(keyword, status, discountType, branchId, activeAt, pageable);
+        List<VoucherSummaryResponse> content = vouchers.getContent().stream()
+                .map(voucherMapper::toSummaryResponse)
                 .toList();
         return PageResponse.from(vouchers, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<VoucherResponse> getAvailableForCustomer(String branchId, Pageable pageable) {
+    public PageResponse<VoucherSummaryResponse> getSummaries(String keyword, String status, String discountType,
+                                                            String branchId, LocalDateTime activeAt, Pageable pageable) {
+        Page<Voucher> vouchers = searchVouchers(keyword, status, discountType, branchId, activeAt, pageable);
+        List<VoucherSummaryResponse> content = vouchers.getContent().stream()
+                .map(voucherMapper::toSummaryResponse)
+                .toList();
+        return PageResponse.from(vouchers, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<VoucherSummaryResponse> getAvailableForCustomer(String branchId, Pageable pageable) {
+        return getAvailableSummariesForCustomer(branchId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<VoucherSummaryResponse> getAvailableSummariesForCustomer(String branchId, Pageable pageable) {
         String normalizedBranchId = normalizeOptional(branchId);
         if (normalizedBranchId == null) {
             throw new BaseException(ErrorCode.COM_004);
@@ -183,18 +181,26 @@ public class VoucherServiceImpl implements VoucherService {
                 pageable
         );
 
-        Map<String, List<String>> branchIdsByVoucherId = getBranchIdsByVoucherIds(
-                vouchers.getContent().stream().map(Voucher::getId).toList()
-        );
-
-        List<VoucherResponse> content = vouchers.getContent().stream()
-                .map(voucher -> voucherMapper.toResponse(
-                        voucher,
-                        branchIdsByVoucherId.getOrDefault(voucher.getId(), Collections.emptyList())
-                ))
+        List<VoucherSummaryResponse> content = vouchers.getContent().stream()
+                .map(voucherMapper::toSummaryResponse)
                 .toList();
-
         return PageResponse.from(vouchers, content);
+    }
+
+    private Page<Voucher> searchVouchers(String keyword, String status, String discountType,
+                                         String branchId, LocalDateTime activeAt, Pageable pageable) {
+        String normalizedBranchId = normalizeOptional(branchId);
+        if (normalizedBranchId != null) {
+            branchRepository.findById(normalizedBranchId).orElseThrow(branchNotFound());
+        }
+        return voucherRepository.search(
+                normalizeOptional(keyword),
+                normalizeOptional(status),
+                normalizeDiscountType(discountType),
+                normalizedBranchId,
+                activeAt,
+                pageable
+        );
     }
 
     private Voucher getVoucherOrThrow(String id) {

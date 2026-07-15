@@ -4,7 +4,9 @@ import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchSummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.BranchService;
 import jakarta.validation.Valid;
@@ -70,18 +72,34 @@ public class BranchController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAll(
+    public ResponseEntity<BaseResponse<PageResponse<BranchSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting branches");
-        PageResponse<BranchResponse> response = branchService.getAll(pageable);
+        PageResponse<BranchSummaryResponse> response = branchService.getAll(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Branches retrieved successfully"));
     }
 
+    @GetMapping("/summaries")
+    public ResponseEntity<BaseResponse<PageResponse<BranchSummaryResponse>>> getSummaries(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        log.info("Getting branch summaries");
+        PageResponse<BranchSummaryResponse> response = branchService.getSummaries(pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Branch summaries retrieved successfully"));
+    }
+
     @GetMapping("/active")
-    public ResponseEntity<BaseResponse<PageResponse<BranchResponse>>> getAllActive(
+    public ResponseEntity<BaseResponse<PageResponse<BranchOptionResponse>>> getAllActive(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting active branches");
-        PageResponse<BranchResponse> response = branchService.getAllActive(pageable);
+        PageResponse<BranchOptionResponse> response = branchService.getAllActive(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Active branches retrieved successfully"));
+    }
+
+    @GetMapping("/active/options")
+    public ResponseEntity<BaseResponse<PageResponse<BranchOptionResponse>>> getActiveOptions(
+            @PageableDefault(size = 100, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        log.info("Getting active branch options");
+        PageResponse<BranchOptionResponse> response = branchService.getActiveOptions(pageable);
+        return ResponseEntity.ok(BaseResponse.success(response, "Active branch options retrieved successfully"));
     }
 }

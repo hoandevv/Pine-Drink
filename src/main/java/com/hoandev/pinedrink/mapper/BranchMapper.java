@@ -3,7 +3,9 @@ package com.hoandev.pinedrink.mapper;
 import com.hoandev.pinedrink.entity.Branch;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchSummaryResponse;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,6 +41,40 @@ public class BranchMapper {
                 .status(branch.getStatus())
                 .createdAt(branch.getCreatedAt())
                 .updatedAt(branch.getUpdatedAt())
+                .build();
+    }
+
+    public BranchSummaryResponse toSummaryResponse(Branch branch) {
+        if (branch == null) {
+            return null;
+        }
+
+        return BranchSummaryResponse.builder()
+                .id(branch.getId())
+                .code(branch.getCode())
+                .name(branch.getName())
+                .address(branch.getAddress())
+                .phone(branch.getPhone())
+                .supportsPickup(branch.isSupportsPickup())
+                .supportsDelivery(branch.isSupportsDelivery())
+                .averagePreparationMinutes(branch.getAveragePreparationMinutes())
+                .status(branch.getStatus())
+                .build();
+    }
+
+    public BranchOptionResponse toOptionResponse(Branch branch) {
+        if (branch == null) {
+            return null;
+        }
+
+        return BranchOptionResponse.builder()
+                .id(branch.getId())
+                .code(branch.getCode())
+                .name(branch.getName())
+                .address(branch.getAddress())
+                .supportsPickup(branch.isSupportsPickup())
+                .supportsDelivery(branch.isSupportsDelivery())
+                .averagePreparationMinutes(branch.getAveragePreparationMinutes())
                 .build();
     }
 

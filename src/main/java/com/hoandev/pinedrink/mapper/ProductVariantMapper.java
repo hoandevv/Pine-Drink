@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.ProductVariant;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateProductVariantRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantRequest;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -35,6 +36,28 @@ public class ProductVariantMapper {
                 .status(variant.getStatus())
                 .createdAt(variant.getCreatedAt())
                 .updatedAt(variant.getUpdatedAt())
+                .build();
+    }
+
+    public ProductVariantSummaryResponse toSummaryResponse(ProductVariant variant) {
+        if (variant == null) {
+            return null;
+        }
+
+        Product product = variant.getProduct();
+        BigDecimal basePrice = product != null && product.getBasePrice() != null ? product.getBasePrice() : BigDecimal.ZERO;
+        BigDecimal priceDelta = variant.getPriceDelta() != null ? variant.getPriceDelta() : BigDecimal.ZERO;
+
+        return ProductVariantSummaryResponse.builder()
+                .id(variant.getId())
+                .productId(product != null ? product.getId() : null)
+                .variantCode(variant.getVariantCode())
+                .variantName(variant.getVariantName())
+                .sizeLabel(variant.getSizeLabel())
+                .priceDelta(priceDelta)
+                .finalPrice(basePrice.add(priceDelta))
+                .displayOrder(variant.getDisplayOrder())
+                .status(variant.getStatus())
                 .build();
     }
 

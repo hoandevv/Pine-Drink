@@ -9,6 +9,7 @@ import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemToppingResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.DiscountType;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -295,6 +296,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getCustomerOrderSummaries(String customerId, Pageable pageable) {
+        Page<Order> ordersPage = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getBranchOrders(String branchId, String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
@@ -309,6 +320,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getBranchOrderSummaries(String branchId, String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status, pageable);
+        } else {
+            ordersPage = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId, pageable);
+        }
+
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getAllOrders(String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
@@ -318,6 +345,22 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<OrderResponse> responses = toOrderResponseList(ordersPage.getContent());
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getAllOrderSummaries(String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+        } else {
+            ordersPage = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
         return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
     }
 

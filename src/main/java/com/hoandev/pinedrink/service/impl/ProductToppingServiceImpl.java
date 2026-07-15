@@ -7,6 +7,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductTopp
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.entity.enums.ProductToppingStatus;
 import com.hoandev.pinedrink.entity.enums.ToppingStatus;
@@ -94,17 +95,17 @@ public class ProductToppingServiceImpl implements ProductToppingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductToppingResponse> getAll(String productId) {
+    public List<ProductToppingSummaryResponse> getAll(String productId) {
         getProductOrThrow(productId);
         return productToppingRepository.findByProductId(productId)
                 .stream()
-                .map(productToppingMapper::toResponse)
+                .map(productToppingMapper::toSummaryResponse)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductToppingResponse> getAllActive(String productId) {
+    public List<ProductToppingSummaryResponse> getAllActive(String productId) {
         Product product = getProductOrThrow(productId);
         if (!ProductStatus.ACTIVE.getValue().equals(product.getStatus()) && !ProductStatus.OUT_OF_STOCK.getValue().equals(product.getStatus())) {
             return List.of();
@@ -112,7 +113,7 @@ public class ProductToppingServiceImpl implements ProductToppingService {
         return productToppingRepository.findByProductIdAndStatus(productId, ProductToppingStatus.ACTIVE.getValue())
                 .stream()
                 .filter(item -> item.getTopping() != null && ToppingStatus.ACTIVE.getValue().equals(item.getTopping().getStatus()))
-                .map(productToppingMapper::toResponse)
+                .map(productToppingMapper::toSummaryResponse)
                 .toList();
     }
 

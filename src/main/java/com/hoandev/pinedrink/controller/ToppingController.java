@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingStat
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import com.hoandev.pinedrink.service.ToppingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -105,17 +106,17 @@ public class ToppingController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<ToppingResponse>>> getAll(
+    public ResponseEntity<BaseResponse<PageResponse<ToppingSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting toppings");
-        PageResponse<ToppingResponse> response = toppingService.getAll(pageable);
+        PageResponse<ToppingSummaryResponse> response = toppingService.getAll(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Toppings retrieved successfully"));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<BaseResponse<List<ToppingResponse>>> getAllActive() {
+    public ResponseEntity<BaseResponse<List<ToppingSummaryResponse>>> getAllActive() {
         log.info("Getting active toppings");
-        List<ToppingResponse> response = toppingService.getAllActive();
+        List<ToppingSummaryResponse> response = toppingService.getAllActive();
         return ResponseEntity.ok(BaseResponse.success(response, "Active toppings retrieved successfully"));
     }
 }

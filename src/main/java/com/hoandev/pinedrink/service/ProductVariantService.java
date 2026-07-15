@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVari
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -20,9 +21,9 @@ public interface ProductVariantService {
 
     ProductVariantResponse getById(String productId, String variantId);
 
-    PageResponse<ProductVariantResponse> getAll(String productId, Pageable pageable);
+    PageResponse<ProductVariantSummaryResponse> getAll(String productId, Pageable pageable);
 
-    List<ProductVariantResponse> getAllActive(String productId);
+    List<ProductVariantSummaryResponse> getAllActive(String productId);
 
-    List<ProductVariantResponse> getAllActiveForProducts();
+    List<ProductVariantSummaryResponse> getAllActiveForProducts();
 }

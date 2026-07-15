@@ -7,6 +7,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVari
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVariantStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.entity.enums.ProductVariantStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -93,34 +94,34 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProductVariantResponse> getAll(String productId, Pageable pageable) {
+    public PageResponse<ProductVariantSummaryResponse> getAll(String productId, Pageable pageable) {
         getProductOrThrow(productId);
         Page<ProductVariant> variants = productVariantRepository.findByProductId(productId, pageable);
-        List<ProductVariantResponse> content = variants.getContent().stream().map(productVariantMapper::toResponse).toList();
+        List<ProductVariantSummaryResponse> content = variants.getContent().stream().map(productVariantMapper::toSummaryResponse).toList();
         return PageResponse.from(variants, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductVariantResponse> getAllActive(String productId) {
+    public List<ProductVariantSummaryResponse> getAllActive(String productId) {
         Product product = getProductOrThrow(productId);
         if (!ProductStatus.ACTIVE.getValue().equals(product.getStatus()) && !ProductStatus.OUT_OF_STOCK.getValue().equals(product.getStatus())) {
             return List.of();
         }
         return productVariantRepository.findByProductIdAndStatusOrderByDisplayOrder(productId, ProductVariantStatus.ACTIVE.getValue())
                 .stream()
-                .map(productVariantMapper::toResponse)
+                .map(productVariantMapper::toSummaryResponse)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductVariantResponse> getAllActiveForProducts() {
+    public List<ProductVariantSummaryResponse> getAllActiveForProducts() {
         return productVariantRepository.findActiveVariantsForProducts(
                         ProductVariantStatus.ACTIVE.getValue(),
                         List.of(ProductStatus.ACTIVE.getValue(), ProductStatus.OUT_OF_STOCK.getValue()))
                 .stream()
-                .map(productVariantMapper::toResponse)
+                .map(productVariantMapper::toSummaryResponse)
                 .toList();
     }
 

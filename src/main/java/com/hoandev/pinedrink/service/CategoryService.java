@@ -3,7 +3,9 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Category.CreateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategoryOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Category.CategoryResponse;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategorySummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +27,11 @@ public interface CategoryService {
 
     CategoryResponse getById(String id);
 
-    PageResponse<CategoryResponse> getAll(Pageable pageable);
+    PageResponse<CategorySummaryResponse> getAll(Pageable pageable);
 
-    List<CategoryResponse> getAllActive();
+    PageResponse<CategorySummaryResponse> getSummaries(Pageable pageable);
+
+    List<CategoryOptionResponse> getAllActive();
+
+    List<CategoryOptionResponse> getActiveOptions();
 }

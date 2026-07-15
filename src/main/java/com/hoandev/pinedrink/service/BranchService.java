@@ -3,7 +3,9 @@ package com.hoandev.pinedrink.service;
 import com.hoandev.pinedrink.entity.dto.request.Branch.CreateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchRequest;
 import com.hoandev.pinedrink.entity.dto.request.Branch.UpdateBranchStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchSummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -59,7 +61,9 @@ public interface BranchService {
      * @param pageable thông tin phân trang
      * @return danh sách chi nhánh
      */
-    PageResponse<BranchResponse> getAll(Pageable pageable);
+    PageResponse<BranchSummaryResponse> getAll(Pageable pageable);
+
+    PageResponse<BranchSummaryResponse> getSummaries(Pageable pageable);
 
     /**
      * Lấy danh sách chi nhánh đang hoạt động (phân trang).
@@ -67,5 +71,7 @@ public interface BranchService {
      * @param pageable thông tin phân trang
      * @return danh sách chi nhánh đang hoạt động
      */
-    PageResponse<BranchResponse> getAllActive(Pageable pageable);
+    PageResponse<BranchOptionResponse> getAllActive(Pageable pageable);
+
+    PageResponse<BranchOptionResponse> getActiveOptions(Pageable pageable);
 }

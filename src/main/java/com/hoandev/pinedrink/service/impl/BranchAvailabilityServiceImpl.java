@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class BranchAvailabilityServiceImpl implements BranchAvailabilityService {
+    private static final String ACTIVE = "ACTIVE";
+
     private final BranchProductAvailabilityRepository branchProductAvailabilityRepository;
     private final BranchToppingAvailabilityRepository branchToppingAvailabilityRepository;
     private final BranchRepository branchRepository;
@@ -121,7 +123,10 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
     @Transactional(readOnly = true)
     public BranchProductAvailabilityResponse getPublicProductAvailability(String branchId, String id) {
         getBranchOrThrow(branchId);
-        return branchAvailabilityMapper.toProductResponse(getProductAvailabilityOrThrow(branchId, id));
+        BranchProductAvailability availability = branchProductAvailabilityRepository
+                .findPublicByIdAndBranchId(id, branchId, ACTIVE, ACTIVE)
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_010));
+        return branchAvailabilityMapper.toProductResponse(availability);
     }
     /**
      * Retrieves all public product availability entries for a branch.
@@ -132,7 +137,7 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
     @Transactional(readOnly = true)
     public List<BranchProductAvailabilityResponse> getPublicProductAvailabilities(String branchId) {
         getBranchOrThrow(branchId);
-        return branchProductAvailabilityRepository.findByBranchId(branchId).stream()
+        return branchProductAvailabilityRepository.findPublicByBranchId(branchId, ACTIVE, ACTIVE).stream()
                 .map(branchAvailabilityMapper::toProductResponse)
                 .toList();
     }

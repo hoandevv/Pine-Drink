@@ -97,6 +97,7 @@ public class OrderServiceImpl implements OrderService {
         if (cartItems.isEmpty()) {
             throw new BaseException(ErrorCode.COM_005);
         }
+        validateOrderableCartItems(cartItems);
 
         // Tạo đơn hàng
         Order order = new Order();
@@ -238,6 +239,18 @@ public class OrderServiceImpl implements OrderService {
         );
 
         return toOrderResponse(order);
+    }
+
+    private void validateOrderableCartItems(List<CartItem> cartItems) {
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            if (product == null || !"ACTIVE".equals(product.getStatus())) {
+                throw new BaseException(ErrorCode.PRODUCT_002);
+            }
+            if (product.getCategory() == null || !"ACTIVE".equals(product.getCategory().getStatus())) {
+                throw new BaseException(ErrorCode.PRODUCT_002);
+            }
+        }
     }
 
     @Override

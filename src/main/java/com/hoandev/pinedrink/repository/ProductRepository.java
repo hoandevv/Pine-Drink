@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.repository.custom.ProductRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,11 +28,13 @@ public interface ProductRepository extends JpaRepository<Product, String>, Produ
                    LOWER(p.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR :categoryId = '' OR p.category.id = :categoryId)
               AND (:status IS NULL OR :status = '' OR p.status = :status)
+              AND (:categoryStatus IS NULL OR :categoryStatus = '' OR p.category.status = :categoryStatus)
             """)
     Page<Product> searchProducts(
             @Param("keyword") String keyword,
             @Param("categoryId") String categoryId,
             @Param("status") String status,
+            @Param("categoryStatus") String categoryStatus,
             Pageable pageable
     );
 
@@ -62,5 +65,18 @@ public interface ProductRepository extends JpaRepository<Product, String>, Produ
             @Param("categoryId") String categoryId,
             @Param("status") String status,
             Pageable pageable
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Product p
+            SET p.status = :productStatus
+            WHERE p.category.id = :categoryId
+              AND p.status = :currentStatus
+            """)
+    int updateStatusByCategoryIdAndStatus(
+            @Param("categoryId") String categoryId,
+            @Param("currentStatus") String currentStatus,
+            @Param("productStatus") String productStatus
     );
 }

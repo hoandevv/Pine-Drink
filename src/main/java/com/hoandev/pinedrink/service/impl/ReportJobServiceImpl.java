@@ -39,6 +39,8 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class ReportJobServiceImpl implements ReportJobService {
+    private static final long MAX_REPORT_RANGE_DAYS = 366;
+
     private final ExportRequestRepository exportRequestRepository;
     private final AccountRepository accountRepository;
     private final BranchRepository branchRepository;
@@ -62,7 +64,7 @@ public class ReportJobServiceImpl implements ReportJobService {
     @Transactional
     public ReportJobResponse createJob(CreateReportJobRequest request, String requestedById) {
         if (request.getFileFormat() != ReportFileFormat.PDF) {
-            throw new BaseException(ErrorCode.COM_004, "Only PDF report export is supported now");
+            throw new BaseException(ErrorCode.REPORT_001);
         }
 
         Account requestedBy = accountRepository.findById(requestedById)
@@ -168,7 +170,7 @@ public class ReportJobServiceImpl implements ReportJobService {
     public Resource download(String jobId, String requestedById) {
         ExportRequest job = getOwnedJob(jobId, requestedById);
         if (!ExportRequestStatus.DONE.name().equals(job.getStatus()) || job.getFileUrl() == null) {
-            throw new BaseException(ErrorCode.COM_004, "Report file is not ready");
+            throw new BaseException(ErrorCode.REPORT_002);
         }
         return reportStorageService.load(job.getFileUrl());
     }
@@ -182,7 +184,7 @@ public class ReportJobServiceImpl implements ReportJobService {
      */
     private ExportRequest getOwnedJob(String jobId, String requestedById) {
         ExportRequest job = exportRequestRepository.findById(jobId)
-                .orElseThrow(() -> new BaseException(ErrorCode.COM_005, "Report job not found"));
+                .orElseThrow(() -> new BaseException(ErrorCode.REPORT_003));
         if (job.getRequestedBy() == null || !requestedById.equals(job.getRequestedBy().getId())) {
             throw new BaseException(ErrorCode.AUTH_007);
         }
@@ -246,7 +248,10 @@ public class ReportJobServiceImpl implements ReportJobService {
      */
     private void validateDateRange(LocalDate fromDate, LocalDate toDate) {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
-            throw new BaseException(ErrorCode.COM_004, "fromDate phải nhỏ hơn hoặc bằng toDate");
+            throw new BaseException(ErrorCode.REPORT_004);
+        }
+        if (fromDate != null && toDate != null && java.time.temporal.ChronoUnit.DAYS.between(fromDate, toDate) > MAX_REPORT_RANGE_DAYS) {
+            throw new BaseException(ErrorCode.REPORT_007);
         }
     }
 

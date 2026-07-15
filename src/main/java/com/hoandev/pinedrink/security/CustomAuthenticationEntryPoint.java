@@ -37,7 +37,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setCharacterEncoding("UTF-8");
 
         BaseResponse<Void> errorResponse = BaseResponse.error(
-                "AUTH_012",
+                "AUTH_028",
                 "Authentication required. Please provide a valid access token.",
                 null
         );

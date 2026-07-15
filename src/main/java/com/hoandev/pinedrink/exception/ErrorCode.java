@@ -37,6 +37,7 @@ public enum ErrorCode {
     AUTH_025("AUTH_025", "Tài khoản đã có mật khẩu đăng nhập"),
     AUTH_026("AUTH_026", "Tài khoản chưa thiết lập mật khẩu đăng nhập"),
     AUTH_027("AUTH_027", "Mật khẩu xác nhận không khớp"),
+    AUTH_028("AUTH_027", "Yêu cầu này cần phải đăng nhập"),
     AUTH_GOOGLE_001("AUTH_GOOGLE_001", "Thiếu mã xác thực Google"),
     AUTH_GOOGLE_002("AUTH_GOOGLE_002", "Mã xác thực Google không hợp lệ"),
     AUTH_GOOGLE_003("AUTH_GOOGLE_003", "Email Google chưa được xác minh"),
@@ -108,6 +109,14 @@ public enum ErrorCode {
     VOUCHER_005("VOUCHER_005", "Không thể xóa voucher vì đã có lịch sử sử dụng"),
     VOUCHER_006("VOUCHER_006", "Trạng thái voucher không hợp lệ"),
     VOUCHER_007("VOUCHER_007", "Phạm vi chi nhánh của voucher không hợp lệ"),
+
+    REPORT_001("REPORT_001", "Chỉ hỗ trợ xuất báo cáo định dạng PDF"),
+    REPORT_002("REPORT_002", "File báo cáo chưa sẵn sàng"),
+    REPORT_003("REPORT_003", "Không tìm thấy job báo cáo"),
+    REPORT_004("REPORT_004", "fromDate phải nhỏ hơn hoặc bằng toDate"),
+    REPORT_005("REPORT_005", "Ngày bắt đầu không được nằm trong tương lai"),
+    REPORT_006("REPORT_006", "Ngày kết thúc không được nằm trong tương lai"),
+    REPORT_007("REPORT_007", "Khoảng ngày báo cáo không được vượt quá 366 ngày"),
 
     CHAT_001("CHAT_001", "Không tìm thấy phòng chat"),
     CHAT_002("CHAT_002", "Bạn không có quyền truy cập phòng chat này"),

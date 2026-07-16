@@ -1,4 +1,4 @@
-﻿package com.hoandev.pinedrink.entity.dto.response.Report;
+package com.hoandev.pinedrink.entity.dto.response.Report;
 
 import com.hoandev.pinedrink.entity.dto.response.Category.CategoryOptionResponse;
 import lombok.Builder;

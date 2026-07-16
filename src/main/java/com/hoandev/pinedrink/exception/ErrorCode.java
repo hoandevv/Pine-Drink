@@ -67,6 +67,7 @@ public enum ErrorCode {
     BRANCH_010("BRANCH_010", "Không tìm thấy cấu hình bán topping tại chi nhánh"),
     BRANCH_011("BRANCH_011", "Cấu hình bán topping tại chi nhánh đã tồn tại"),
     BRANCH_012("BRANCH_012", "Thời gian bắt đầu phải trước thời gian kết thúc"),
+    BRANCH_013("BRANCH_013", "Chi nhánh hiện không trong giờ hoạt động"),
 
     CATEGORY_001("CATEGORY_001", "Không tìm thấy danh mục"),
     CATEGORY_002("CATEGORY_002", "Mã danh mục đã tồn tại"),

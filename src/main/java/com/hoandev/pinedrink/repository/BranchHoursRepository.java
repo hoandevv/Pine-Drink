@@ -9,6 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface BranchHoursRepository extends JpaRepository<BranchHours, String> {
+
+    Optional<BranchHours> findByBranchIdAndDayOfWeek(String branchId, int dayOfWeek);
+
     List<BranchHours> findByBranchId(String branchId);
 
     Optional<BranchHours> findByIdAndBranchId(String id, String branchId);

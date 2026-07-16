@@ -41,6 +41,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -74,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventFactory realtimeEventFactory;
     private final PaymentService paymentService;
+    private final BranchHoursRepository branchHoursRepository;
 
     @Override
     @Transactional
@@ -88,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
         // Xác thực chi nhánh
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+        validateBranchOpen(branch.getId(), request.getPickupTime());
 
         // Lấy giỏ hàng đang hoạt động với khóa pessimistic để tránh race condition
         Cart cart = cartRepository.findByCustomerIdAndBranchIdAndStatusForUpdate(customerId, request.getBranchId(), "ACTIVE")
@@ -784,5 +787,19 @@ public class OrderServiceImpl implements OrderService {
 
             return orderMapper.toResponse(order, itemResponses);
         }).collect(Collectors.toList());
+    }
+    private void validateBranchOpen(String branchId, LocalDateTime requestedTime) {
+        LocalDateTime time = requestedTime == null ? LocalDateTime.now() : requestedTime;
+        int dayOfWeek = time.getDayOfWeek().getValue();
+        LocalTime currentTime = time.toLocalTime();
+
+        BranchHours branchHours = branchHoursRepository.findByBranchIdAndDayOfWeek(branchId, dayOfWeek)
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_005));
+
+        if (branchHours.isClosed()
+                || currentTime.isBefore(branchHours.getOpenTime())
+                || !currentTime.isBefore(branchHours.getCloseTime())) {
+            throw new BaseException(ErrorCode.BRANCH_013);
+        }
     }
 }

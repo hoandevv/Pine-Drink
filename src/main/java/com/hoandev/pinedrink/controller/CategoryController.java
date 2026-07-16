@@ -108,7 +108,7 @@ public class CategoryController {
         return ResponseEntity.ok(BaseResponse.success(response, "Category retrieved successfully"));
     }
 
-    @GetMapping({"", "/summaries"})
+    @GetMapping
     public ResponseEntity<BaseResponse<PageResponse<CategorySummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("Getting categories");
@@ -116,7 +116,7 @@ public class CategoryController {
         return ResponseEntity.ok(BaseResponse.success(response, "Categories retrieved successfully"));
     }
 
-    @GetMapping({"/active", "/active/options"})
+    @GetMapping("/active")
     public ResponseEntity<BaseResponse<List<CategoryOptionResponse>>> getAllActive() {
         log.info("Getting active categories");
         List<CategoryOptionResponse> response = categoryService.getActiveOptions();

@@ -71,7 +71,7 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch retrieved successfully"));
     }
 
-    @GetMapping({"", "/summaries"})
+    @GetMapping
     public ResponseEntity<BaseResponse<PageResponse<BranchSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting branches");
@@ -79,7 +79,7 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branches retrieved successfully"));
     }
 
-    @GetMapping({"/active", "/active/options"})
+    @GetMapping("/active")
     public ResponseEntity<BaseResponse<PageResponse<BranchOptionResponse>>> getAllActive(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting active branches");

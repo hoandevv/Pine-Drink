@@ -84,7 +84,7 @@ public class VoucherController {
         return ResponseEntity.ok(BaseResponse.success(response, "Voucher retrieved successfully"));
     }
 
-    @GetMapping({"", "/summaries"})
+    @GetMapping
     @PreAuthorize("hasAuthority('PERM_VOUCHER_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<VoucherSummaryResponse>>> getAll(
             @RequestParam(required = false) String keyword,

@@ -12,7 +12,9 @@ import com.hoandev.pinedrink.entity.enums.BranchStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.BranchMapper;
+import com.hoandev.pinedrink.mapper.BranchHoursMapper;
 import com.hoandev.pinedrink.repository.BranchRepository;
+import com.hoandev.pinedrink.repository.BranchHoursRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
@@ -26,13 +28,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
+    private final BranchHoursRepository branchHoursRepository;
     private final BranchMapper branchMapper;
+    private final BranchHoursMapper branchHoursMapper;
     private final CodeGenerator codeGenerator;
     private final AccessScopeService accessScopeService;
 
@@ -122,7 +128,7 @@ public class BranchServiceImpl implements BranchService {
         Page<Branch> branches = scope.fullAccess()
                 ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
                 : findScopedActiveBranches(scope, pageable);
-        List<BranchOptionResponse> content = branches.getContent().stream().map(branchMapper::toOptionResponse).toList();
+        List<BranchOptionResponse> content = mapOptionsWithHours(branches.getContent());
         return PageResponse.from(branches, content);
     }
 
@@ -133,8 +139,30 @@ public class BranchServiceImpl implements BranchService {
         Page<Branch> branches = scope.fullAccess()
                 ? branchRepository.findByStatus(BranchStatus.ACTIVE.getValue(), pageable)
                 : findScopedActiveBranches(scope, pageable);
-        List<BranchOptionResponse> content = branches.getContent().stream().map(branchMapper::toOptionResponse).toList();
+        List<BranchOptionResponse> content = mapOptionsWithHours(branches.getContent());
         return PageResponse.from(branches, content);
+    }
+
+    private List<BranchOptionResponse> mapOptionsWithHours(List<Branch> branches) {
+        if (branches.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, List<com.hoandev.pinedrink.entity.BranchHours>> hoursByBranchId = branchHoursRepository
+                .findByBranchIdIn(branches.stream().map(Branch::getId).toList())
+                .stream()
+                .collect(Collectors.groupingBy(branchHours -> branchHours.getBranch().getId()));
+
+        return branches.stream()
+                .map(branch -> {
+                    BranchOptionResponse response = branchMapper.toOptionResponse(branch);
+                    response.setHours(hoursByBranchId.getOrDefault(branch.getId(), List.of())
+                            .stream()
+                            .map(branchHoursMapper::toResponse)
+                            .toList());
+                    return response;
+                })
+                .toList();
     }
 
     private Page<Branch> findScopedBranches(AccessScopeContext scope, Pageable pageable) {

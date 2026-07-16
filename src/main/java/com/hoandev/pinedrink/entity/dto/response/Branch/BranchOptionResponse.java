@@ -3,6 +3,8 @@ package com.hoandev.pinedrink.entity.dto.response.Branch;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 public class BranchOptionResponse {
@@ -13,4 +15,5 @@ public class BranchOptionResponse {
     private boolean supportsPickup;
     private boolean supportsDelivery;
     private int averagePreparationMinutes;
+    private List<BranchHoursResponse> hours;
 }

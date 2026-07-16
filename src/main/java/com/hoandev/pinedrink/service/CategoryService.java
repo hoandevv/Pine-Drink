@@ -27,11 +27,7 @@ public interface CategoryService {
 
     CategoryResponse getById(String id);
 
-    PageResponse<CategorySummaryResponse> getAll(Pageable pageable);
-
     PageResponse<CategorySummaryResponse> getSummaries(Pageable pageable);
-
-    List<CategoryOptionResponse> getAllActive();
 
     List<CategoryOptionResponse> getActiveOptions();
 }

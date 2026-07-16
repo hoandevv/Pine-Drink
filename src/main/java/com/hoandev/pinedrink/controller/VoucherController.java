@@ -84,7 +84,7 @@ public class VoucherController {
         return ResponseEntity.ok(BaseResponse.success(response, "Voucher retrieved successfully"));
     }
 
-    @GetMapping
+    @GetMapping({"", "/summaries"})
     @PreAuthorize("hasAuthority('PERM_VOUCHER_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<VoucherSummaryResponse>>> getAll(
             @RequestParam(required = false) String keyword,
@@ -94,22 +94,8 @@ public class VoucherController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime activeAt,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting vouchers: status={}, discountType={}, branchId={}", status, discountType, branchId);
-        PageResponse<VoucherSummaryResponse> response = voucherService.getAll(keyword, status, discountType, branchId, activeAt, pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Vouchers retrieved successfully"));
-    }
-
-    @GetMapping("/summaries")
-    @PreAuthorize("hasAuthority('PERM_VOUCHER_VIEW')")
-    public ResponseEntity<BaseResponse<PageResponse<VoucherSummaryResponse>>> getSummaries(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String discountType,
-            @RequestParam(required = false) String branchId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime activeAt,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting voucher summaries: status={}, discountType={}, branchId={}", status, discountType, branchId);
         PageResponse<VoucherSummaryResponse> response = voucherService.getSummaries(keyword, status, discountType, branchId, activeAt, pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Voucher summaries retrieved successfully"));
+        return ResponseEntity.ok(BaseResponse.success(response, "Vouchers retrieved successfully"));
     }
 
     @GetMapping("/customer/available/summaries")

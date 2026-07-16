@@ -108,33 +108,18 @@ public class CategoryController {
         return ResponseEntity.ok(BaseResponse.success(response, "Category retrieved successfully"));
     }
 
-    @GetMapping
+    @GetMapping({"", "/summaries"})
     public ResponseEntity<BaseResponse<PageResponse<CategorySummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("Getting categories");
-        PageResponse<CategorySummaryResponse> response = categoryService.getAll(pageable);
+        PageResponse<CategorySummaryResponse> response = categoryService.getSummaries(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Categories retrieved successfully"));
     }
 
-    @GetMapping("/summaries")
-    public ResponseEntity<BaseResponse<PageResponse<CategorySummaryResponse>>> getSummaries(
-            @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
-        log.info("Getting category summaries");
-        PageResponse<CategorySummaryResponse> response = categoryService.getSummaries(pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Category summaries retrieved successfully"));
-    }
-
-    @GetMapping("/active")
+    @GetMapping({"/active", "/active/options"})
     public ResponseEntity<BaseResponse<List<CategoryOptionResponse>>> getAllActive() {
         log.info("Getting active categories");
-        List<CategoryOptionResponse> response = categoryService.getAllActive();
-        return ResponseEntity.ok(BaseResponse.success(response, "Active categories retrieved successfully"));
-    }
-
-    @GetMapping("/active/options")
-    public ResponseEntity<BaseResponse<List<CategoryOptionResponse>>> getActiveOptions() {
-        log.info("Getting active category options");
         List<CategoryOptionResponse> response = categoryService.getActiveOptions();
-        return ResponseEntity.ok(BaseResponse.success(response, "Active category options retrieved successfully"));
+        return ResponseEntity.ok(BaseResponse.success(response, "Active categories retrieved successfully"));
     }
 }

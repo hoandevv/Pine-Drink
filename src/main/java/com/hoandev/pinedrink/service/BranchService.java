@@ -61,8 +61,6 @@ public interface BranchService {
      * @param pageable thông tin phân trang
      * @return danh sách chi nhánh
      */
-    PageResponse<BranchSummaryResponse> getAll(Pageable pageable);
-
     PageResponse<BranchSummaryResponse> getSummaries(Pageable pageable);
 
     /**
@@ -71,7 +69,5 @@ public interface BranchService {
      * @param pageable thông tin phân trang
      * @return danh sách chi nhánh đang hoạt động
      */
-    PageResponse<BranchOptionResponse> getAllActive(Pageable pageable);
-
     PageResponse<BranchOptionResponse> getActiveOptions(Pageable pageable);
 }

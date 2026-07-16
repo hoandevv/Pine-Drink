@@ -62,9 +62,6 @@ public interface VoucherService {
      * @param pageable     the pagination information
      * @return the page of voucher responses
      */
-    PageResponse<VoucherSummaryResponse> getAll(String keyword, String status, String discountType,
-                                                 String branchId, LocalDateTime activeAt, Pageable pageable);
-
     PageResponse<VoucherSummaryResponse> getSummaries(String keyword, String status, String discountType,
                                                        String branchId, LocalDateTime activeAt, Pageable pageable);
 

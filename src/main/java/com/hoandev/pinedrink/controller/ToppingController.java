@@ -85,7 +85,6 @@ public class ToppingController {
     public ResponseEntity<BaseResponse<ToppingResponse>> updateStatus(
             @PathVariable String id,
             @Valid @RequestBody UpdateToppingStatusRequest request) {
-        log.info("Updating topping status: id={}, status={}", id, request.getStatus());
         ToppingResponse response = toppingService.updateStatus(id, request);
         return ResponseEntity.ok(BaseResponse.success(response, "Topping status updated successfully"));
     }
@@ -94,13 +93,11 @@ public class ToppingController {
     @PreAuthorize("hasAuthority('PERM_TOPPING_DELETE')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String id) {
         log.info("Deleting topping: id={}", id);
-        toppingService.delete(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Topping deleted successfully"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<ToppingResponse>> getById(@PathVariable String id) {
-        log.info("Getting topping: id={}", id);
         ToppingResponse response = toppingService.getById(id);
         return ResponseEntity.ok(BaseResponse.success(response, "Topping retrieved successfully"));
     }
@@ -108,14 +105,12 @@ public class ToppingController {
     @GetMapping
     public ResponseEntity<BaseResponse<PageResponse<ToppingSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting toppings");
         PageResponse<ToppingSummaryResponse> response = toppingService.getAll(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Toppings retrieved successfully"));
     }
 
     @GetMapping("/active")
     public ResponseEntity<BaseResponse<List<ToppingSummaryResponse>>> getAllActive() {
-        log.info("Getting active toppings");
         List<ToppingSummaryResponse> response = toppingService.getAllActive();
         return ResponseEntity.ok(BaseResponse.success(response, "Active toppings retrieved successfully"));
     }

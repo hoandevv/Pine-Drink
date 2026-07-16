@@ -145,27 +145,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CategorySummaryResponse> getAll(Pageable pageable) {
-        Page<Category> categories = categoryRepository.findAll(pageable);
-        List<CategorySummaryResponse> content = categories.getContent().stream().map(categoryMapper::toSummaryResponse).toList();
-        return PageResponse.from(categories, content);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public PageResponse<CategorySummaryResponse> getSummaries(Pageable pageable) {
         Page<Category> categories = categoryRepository.findAll(pageable);
         List<CategorySummaryResponse> content = categories.getContent().stream().map(categoryMapper::toSummaryResponse).toList();
         return PageResponse.from(categories, content);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CategoryOptionResponse> getAllActive() {
-        return categoryRepository.findByStatusOrderByDisplayOrder(CategoryStatus.ACTIVE.getValue())
-                .stream()
-                .map(categoryMapper::toOptionResponse)
-                .toList();
     }
 
     @Override

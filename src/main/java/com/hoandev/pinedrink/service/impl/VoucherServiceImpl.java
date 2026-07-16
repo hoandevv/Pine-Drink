@@ -137,17 +137,6 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<VoucherSummaryResponse> getAll(String keyword, String status, String discountType,
-                                                       String branchId, LocalDateTime activeAt, Pageable pageable) {
-        Page<Voucher> vouchers = searchVouchers(keyword, status, discountType, branchId, activeAt, pageable);
-        List<VoucherSummaryResponse> content = vouchers.getContent().stream()
-                .map(voucherMapper::toSummaryResponse)
-                .toList();
-        return PageResponse.from(vouchers, content);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public PageResponse<VoucherSummaryResponse> getSummaries(String keyword, String status, String discountType,
                                                             String branchId, LocalDateTime activeAt, Pageable pageable) {
         Page<Voucher> vouchers = searchVouchers(keyword, status, discountType, branchId, activeAt, pageable);

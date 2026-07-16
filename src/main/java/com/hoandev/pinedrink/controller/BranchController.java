@@ -71,35 +71,19 @@ public class BranchController {
         return ResponseEntity.ok(BaseResponse.success(response, "Branch retrieved successfully"));
     }
 
-    @GetMapping
+    @GetMapping({"", "/summaries"})
     public ResponseEntity<BaseResponse<PageResponse<BranchSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting branches");
-        PageResponse<BranchSummaryResponse> response = branchService.getAll(pageable);
+        PageResponse<BranchSummaryResponse> response = branchService.getSummaries(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Branches retrieved successfully"));
     }
 
-    @GetMapping("/summaries")
-    public ResponseEntity<BaseResponse<PageResponse<BranchSummaryResponse>>> getSummaries(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting branch summaries");
-        PageResponse<BranchSummaryResponse> response = branchService.getSummaries(pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Branch summaries retrieved successfully"));
-    }
-
-    @GetMapping("/active")
+    @GetMapping({"/active", "/active/options"})
     public ResponseEntity<BaseResponse<PageResponse<BranchOptionResponse>>> getAllActive(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Getting active branches");
-        PageResponse<BranchOptionResponse> response = branchService.getAllActive(pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Active branches retrieved successfully"));
-    }
-
-    @GetMapping("/active/options")
-    public ResponseEntity<BaseResponse<PageResponse<BranchOptionResponse>>> getActiveOptions(
-            @PageableDefault(size = 100, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        log.info("Getting active branch options");
         PageResponse<BranchOptionResponse> response = branchService.getActiveOptions(pageable);
-        return ResponseEntity.ok(BaseResponse.success(response, "Active branch options retrieved successfully"));
+        return ResponseEntity.ok(BaseResponse.success(response, "Active branches retrieved successfully"));
     }
 }

@@ -7,7 +7,7 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
-import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
@@ -164,9 +164,9 @@ public class ProductController {
      * @return danh sách {@link ProductVariantResponse}
      */
     @GetMapping("/variants/active")
-    public ResponseEntity<BaseResponse<java.util.List<ProductVariantResponse>>> getAllActiveVariants() {
+    public ResponseEntity<BaseResponse<java.util.List<ProductVariantSummaryResponse>>> getAllActiveVariants() {
         log.info("Getting active variants for active products");
-        java.util.List<ProductVariantResponse> response = productVariantService.getAllActiveForProducts();
+        java.util.List<ProductVariantSummaryResponse> response = productVariantService.getAllActiveForProducts();
         return ResponseEntity.ok(BaseResponse.success(response, "Active product variants retrieved successfully"));
     }
 

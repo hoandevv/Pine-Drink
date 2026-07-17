@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.Topping;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.CreateToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingRequest;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,6 +25,22 @@ public class ToppingMapper {
                 .status(topping.getStatus())
                 .createdAt(topping.getCreatedAt())
                 .updatedAt(topping.getUpdatedAt())
+                .build();
+    }
+
+    public ToppingSummaryResponse toSummaryResponse(Topping topping) {
+        if (topping == null) {
+            return null;
+        }
+
+        return ToppingSummaryResponse.builder()
+                .id(topping.getId())
+                .code(topping.getCode())
+                .name(topping.getName())
+                .price(topping.getPrice())
+                .imageUrl(topping.getImageUrl())
+                .groupName(topping.getGroupName())
+                .status(topping.getStatus())
                 .build();
     }
 

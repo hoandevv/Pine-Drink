@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.OrderItemTopping;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemToppingResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -54,6 +55,29 @@ public class OrderMapper {
                 .cancelledAt(order.getCancelledAt())
                 .rejectedAt(order.getRejectedAt())
                 .cancelReason(order.getCancelReason())
+                .build();
+    }
+
+    public OrderSummaryResponse toSummaryResponse(Order order) {
+        if (order == null) {
+            return null;
+        }
+
+        return OrderSummaryResponse.builder()
+                .id(order.getId())
+                .orderCode(order.getOrderCode())
+                .status(order.getStatus())
+                .branchId(order.getBranch() != null ? order.getBranch().getId() : null)
+                .branchName(order.getBranch() != null ? order.getBranch().getName() : null)
+                .customerId(order.getCustomer() != null ? order.getCustomer().getId() : null)
+                .customerName(order.getCustomerName())
+                .customerPhone(order.getCustomerPhone())
+                .orderType(order.getOrderType())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
+                .totalAmount(order.getTotalAmount())
+                .pickupTime(order.getPickupTime())
+                .createdAt(order.getCreatedAt())
                 .build();
     }
 

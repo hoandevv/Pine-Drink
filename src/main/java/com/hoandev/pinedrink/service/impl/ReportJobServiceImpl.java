@@ -9,6 +9,7 @@ import com.hoandev.pinedrink.entity.dto.request.Report.CreateReportJobRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportOptionsResponse;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportFileFormat;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -19,6 +20,7 @@ import com.hoandev.pinedrink.queue.publisher.EventPublisher;
 import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
+import com.hoandev.pinedrink.service.CategoryService;
 import com.hoandev.pinedrink.service.ReportJobService;
 import com.hoandev.pinedrink.service.ReportStorageService;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,7 @@ public class ReportJobServiceImpl implements ReportJobService {
     private final RabbitMqProperties rabbitMqProperties;
     private final ReportStorageProperties reportStorageProperties;
     private final ReportStorageService reportStorageService;
+    private final CategoryService categoryService;
     private final ReportJobMapper reportJobMapper;
 
     /**
@@ -155,6 +158,15 @@ public class ReportJobServiceImpl implements ReportJobService {
                 .running(Math.max(running, 0))
                 .failed(exportRequestRepository.countByStatus(requestedById, ExportRequestStatus.FAILED.name())
                         + staleRunning)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReportOptionsResponse getOptions(String requestedById) {
+        return ReportOptionsResponse.builder()
+                .categories(categoryService.getActiveOptions())
+                .stats(getStats(requestedById))
                 .build();
     }
 

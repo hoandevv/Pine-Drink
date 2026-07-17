@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.Voucher.UpdateVoucherRequest;
 import com.hoandev.pinedrink.entity.dto.request.Voucher.UpdateVoucherStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherResponse;
+import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherSummaryResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
@@ -61,8 +62,10 @@ public interface VoucherService {
      * @param pageable     the pagination information
      * @return the page of voucher responses
      */
-    PageResponse<VoucherResponse> getAll(String keyword, String status, String discountType,
-                                          String branchId, LocalDateTime activeAt, Pageable pageable);
+    PageResponse<VoucherSummaryResponse> getSummaries(String keyword, String status, String discountType,
+                                                       String branchId, LocalDateTime activeAt, Pageable pageable);
 
-    PageResponse<VoucherResponse> getAvailableForCustomer(String branchId, Pageable pageable);
+    PageResponse<VoucherSummaryResponse> getAvailableForCustomer(String branchId, Pageable pageable);
+
+    PageResponse<VoucherSummaryResponse> getAvailableSummariesForCustomer(String branchId, Pageable pageable);
 }

@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.dto.request.Order.CancelOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.CreateOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -52,6 +53,8 @@ public interface OrderService {
      * @return page of orders
      */
     Page<OrderResponse> getCustomerOrders(String customerId, Pageable pageable);
+
+    Page<OrderSummaryResponse> getCustomerOrderSummaries(String customerId, Pageable pageable);
     
     /**
      * Get all orders for a branch
@@ -63,6 +66,8 @@ public interface OrderService {
      */
     Page<OrderResponse> getBranchOrders(String branchId, String status, Pageable pageable);
 
+    Page<OrderSummaryResponse> getBranchOrderSummaries(String branchId, String status, Pageable pageable);
+
     /**
      * Get all orders for admin dashboards.
      *
@@ -71,6 +76,8 @@ public interface OrderService {
      * @return page of orders
      */
     Page<OrderResponse> getAllOrders(String status, Pageable pageable);
+
+    Page<OrderSummaryResponse> getAllOrderSummaries(String status, Pageable pageable);
     
     /**
      * Update order status

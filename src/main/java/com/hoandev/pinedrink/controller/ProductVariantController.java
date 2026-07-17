@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductVari
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -89,18 +90,18 @@ public class ProductVariantController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<ProductVariantResponse>>> getAll(
+    public ResponseEntity<BaseResponse<PageResponse<ProductVariantSummaryResponse>>> getAll(
             @PathVariable String productId,
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("Getting product variants: productId={}", productId);
-        PageResponse<ProductVariantResponse> response = productVariantService.getAll(productId, pageable);
+        PageResponse<ProductVariantSummaryResponse> response = productVariantService.getAll(productId, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Product variants retrieved successfully"));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<BaseResponse<List<ProductVariantResponse>>> getAllActive(@PathVariable String productId) {
+    public ResponseEntity<BaseResponse<List<ProductVariantSummaryResponse>>> getAllActive(@PathVariable String productId) {
         log.info("Getting active product variants: productId={}", productId);
-        List<ProductVariantResponse> response = productVariantService.getAllActive(productId);
+        List<ProductVariantSummaryResponse> response = productVariantService.getAllActive(productId);
         return ResponseEntity.ok(BaseResponse.success(response, "Active product variants retrieved successfully"));
     }
 }

@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.Topping;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingSummaryResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,6 +36,29 @@ public class ProductToppingMapper {
                 .status(productTopping.getStatus())
                 .createdAt(productTopping.getCreatedAt())
                 .updatedAt(productTopping.getUpdatedAt())
+                .build();
+    }
+
+    public ProductToppingSummaryResponse toSummaryResponse(ProductTopping productTopping) {
+        if (productTopping == null) {
+            return null;
+        }
+
+        Product product = productTopping.getProduct();
+        Topping topping = productTopping.getTopping();
+
+        return ProductToppingSummaryResponse.builder()
+                .id(productTopping.getId())
+                .productId(product != null ? product.getId() : null)
+                .toppingId(topping != null ? topping.getId() : null)
+                .toppingCode(topping != null ? topping.getCode() : null)
+                .toppingName(topping != null ? topping.getName() : null)
+                .toppingPrice(topping != null ? topping.getPrice() : null)
+                .toppingImageUrl(topping != null ? topping.getImageUrl() : null)
+                .toppingGroupName(topping != null ? topping.getGroupName() : null)
+                .isDefault(productTopping.isDefault())
+                .maxQuantity(productTopping.getMaxQuantity())
+                .status(productTopping.getStatus())
                 .build();
     }
 

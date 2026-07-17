@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.AssignProductTopp
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingRequest;
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingSummaryResponse;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface ProductToppingService {
 
     ProductToppingResponse getById(String productId, String productToppingId);
 
-    List<ProductToppingResponse> getAll(String productId);
+    List<ProductToppingSummaryResponse> getAll(String productId);
 
-    List<ProductToppingResponse> getAllActive(String productId);
+    List<ProductToppingSummaryResponse> getAllActive(String productId);
 }

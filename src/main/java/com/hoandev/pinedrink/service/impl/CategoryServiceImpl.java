@@ -4,7 +4,9 @@ import com.hoandev.pinedrink.entity.Category;
 import com.hoandev.pinedrink.entity.dto.request.Category.CreateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategoryOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Category.CategoryResponse;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategorySummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.CategoryStatus;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
@@ -143,18 +145,18 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CategoryResponse> getAll(Pageable pageable) {
+    public PageResponse<CategorySummaryResponse> getSummaries(Pageable pageable) {
         Page<Category> categories = categoryRepository.findAll(pageable);
-        List<CategoryResponse> content = categories.getContent().stream().map(categoryMapper::toResponse).toList();
+        List<CategorySummaryResponse> content = categories.getContent().stream().map(categoryMapper::toSummaryResponse).toList();
         return PageResponse.from(categories, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllActive() {
+    public List<CategoryOptionResponse> getActiveOptions() {
         return categoryRepository.findByStatusOrderByDisplayOrder(CategoryStatus.ACTIVE.getValue())
                 .stream()
-                .map(categoryMapper::toResponse)
+                .map(categoryMapper::toOptionResponse)
                 .toList();
     }
 

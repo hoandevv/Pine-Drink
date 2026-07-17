@@ -51,6 +51,12 @@ public class DailyStockController {
         return ResponseEntity.ok(BaseResponse.success(response, "Daily stock availability retrieved successfully"));
     }
 
+    @GetMapping("/admin/daily-stocks/{id}")
+    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
+    public ResponseEntity<BaseResponse<DailyStockResponse>> getById(@PathVariable String id) {
+        return ResponseEntity.ok(BaseResponse.success(dailyStockService.getById(id), "Daily stock retrieved successfully"));
+    }
+
     @PostMapping("/admin/daily-stocks")
     @PreAuthorize("hasAuthority('PERM_PRODUCT_UPDATE')")
     public ResponseEntity<BaseResponse<DailyStockResponse>> setQuota(@Valid @RequestBody SetDailyStockQuotaRequest request) {

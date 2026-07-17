@@ -78,6 +78,15 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public DailyStockResponse getById(String dailyStockId) {
+        BranchVariantDailyStock stock = stockRepository.findById(dailyStockId)
+                .orElseThrow(() -> new BaseException(ErrorCode.DAILY_STOCK_001));
+        accessScopeService.assertCanAccessBranch(stock.getBranch().getId());
+        return dailyStockMapper.toResponse(stock);
+    }
+
+    @Override
     @Transactional
     public DailyStockResponse updateQuota(String dailyStockId, UpdateDailyStockQuotaRequest request) {
         BranchVariantDailyStock stock = stockRepository.findByIdForUpdate(dailyStockId).orElseThrow(() -> new BaseException(ErrorCode.DAILY_STOCK_001));

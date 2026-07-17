@@ -21,10 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Lọc JWT trong mỗi request.
- * Lấy Bearer token, kiểm tra token, load user, rồi đưa user vào SecurityContext.
- */
+// 2: Thực hiện đọc Token -> Xác nhận xem có quyền được thao tác hay không
 @Component
 @Slf4j
 @RequiredArgsConstructor

@@ -15,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Supplier;
-
+// 1: Tầng RateLimit chặn spam
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 

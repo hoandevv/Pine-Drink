@@ -1,0 +1,112 @@
+{
+	"info": {
+		"_postman_id": "pine-drink-report-api",
+		"name": "PineDrink - Report API",
+		"description": "API test cho chức năng Xuất Báo Cáo (Report Export)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "jobId",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "1. Create Report Job",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.code === 202 || jsonData.code === 200) {",
+							"    var jobId = jsonData.data.jobId;",
+							"    pm.collectionVariables.set('jobId', jobId);",
+							"    console.log('Job ID saved: ' + jobId);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"reportType\": \"INVOICE\",\n  \"fileFormat\": \"PDF\",\n  \"filters\": \"{\\\"startDate\\\":\\\"2024-01-01\\\",\\\"endDate\\\":\\\"2024-12-31\\\"}\",\n  \"branchId\": null\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/reports/jobs",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "reports", "jobs"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Job Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"console.log('Job Status:', jsonData.data.status);"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/reports/jobs/{{jobId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "reports", "jobs", "{{jobId}}"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Download Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/reports/jobs/{{jobId}}/download",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "reports", "jobs", "{{jobId}}", "download"]
+				}
+			},
+			"response": []
+		}
+	]
+}

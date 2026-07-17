@@ -1,0 +1,130 @@
+{
+  "info": {
+    "name": "Pine Drink - Profile Management",
+    "description": "API collection for user profile management including get profile, update profile, change password, and upload avatar",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "profile"]
+        },
+        "description": "Get current authenticated user's profile information"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Nguyen Van A Updated\",\n  \"phone\": \"0987654321\",\n  \"avatarUrl\": \"https://example.com/avatar.jpg\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "profile"]
+        },
+        "description": "Update user profile information (fullName, phone, avatarUrl)"
+      },
+      "response": []
+    },
+    {
+      "name": "Change Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"OldPass123!\",\n  \"newPassword\": \"NewPass123!\",\n  \"confirmPassword\": \"NewPass123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/profile/password",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "profile", "password"]
+        },
+        "description": "Change user password. Requires current password validation."
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Avatar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/path/to/avatar.jpg",
+              "description": "Avatar image file (jpg, jpeg, png, gif, webp - max 5MB)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/profile/avatar",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "profile", "avatar"]
+        },
+        "description": "Upload new avatar image. Automatically deletes old avatar. Max size: 5MB. Allowed formats: jpg, jpeg, png, gif, webp"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

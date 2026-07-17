@@ -1,0 +1,85 @@
+### Pine Drink Auth API – Complete Flow
+### ========================================
+### @baseUrl = http://localhost:8080
+### @email = testuser@example.com
+### @password = Test@123456
+### @siteKey = DEFAULT
+
+### -------------------------------------------------------------------
+### 1. Register
+### -------------------------------------------------------------------
+### Creates a new INACTIVE account. OTP is sent to email / server log.
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "{{password}}",
+  "fullName": "Test User",
+  "email": "{{email}}",
+  "phone": "0987654321",
+  "siteKey": "{{siteKey}}"
+}
+
+### -------------------------------------------------------------------
+### 2. Verify OTP
+### -------------------------------------------------------------------
+### Replace "otp" with the actual 6-digit code from server log or email.
+POST {{baseUrl}}/api/v1/auth/register/verify-otp
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otp": "123456"
+}
+
+### -------------------------------------------------------------------
+### 2b. Resend OTP (60s cooldown)
+### -------------------------------------------------------------------
+POST {{baseUrl}}/api/v1/auth/register/resend-otp
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### -------------------------------------------------------------------
+### 3. Login
+### -------------------------------------------------------------------
+### Returns access_token and refresh_token.
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{email}}",
+  "password": "{{password}}"
+}
+
+### -------------------------------------------------------------------
+### 4. Get Profile (requires Bearer token)
+### -------------------------------------------------------------------
+### @accessToken = <paste access token here>
+GET {{baseUrl}}/api/v1/auth/me
+Authorization: Bearer {{accessToken}}
+
+### -------------------------------------------------------------------
+### 5. Refresh Token
+### -------------------------------------------------------------------
+### @refreshToken = <paste refresh token here>
+POST {{baseUrl}}/api/v1/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### -------------------------------------------------------------------
+### 6. Logout
+### -------------------------------------------------------------------
+### Revokes the refresh token.
+POST {{baseUrl}}/api/v1/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

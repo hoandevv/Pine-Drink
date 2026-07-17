@@ -4,6 +4,7 @@ import com.hoandev.pinedrink.entity.Voucher;
 import com.hoandev.pinedrink.entity.dto.request.Voucher.CreateVoucherRequest;
 import com.hoandev.pinedrink.entity.dto.request.Voucher.UpdateVoucherRequest;
 import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherResponse;
+import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherSummaryResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -73,6 +74,27 @@ public class VoucherMapper {
                 .branchIds(branchIds)
                 .createdAt(voucher.getCreatedAt())
                 .updatedAt(voucher.getUpdatedAt())
+                .build();
+    }
+
+    public VoucherSummaryResponse toSummaryResponse(Voucher voucher) {
+        if (voucher == null) {
+            return null;
+        }
+
+        return VoucherSummaryResponse.builder()
+                .id(voucher.getId())
+                .code(voucher.getCode())
+                .name(voucher.getName())
+                .discountType(voucher.getDiscountType())
+                .discountValue(voucher.getDiscountValue())
+                .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                .minOrderAmount(voucher.getMinOrderAmount())
+                .usageLimit(voucher.getUsageLimit())
+                .usedCount(voucher.getUsedCount())
+                .startAt(voucher.getStartAt())
+                .endAt(voucher.getEndAt())
+                .status(voucher.getStatus())
                 .build();
     }
 

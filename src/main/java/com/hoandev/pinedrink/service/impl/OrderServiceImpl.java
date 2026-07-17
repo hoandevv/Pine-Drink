@@ -9,6 +9,7 @@ import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemToppingResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.DiscountType;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -40,6 +41,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -73,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventFactory realtimeEventFactory;
     private final PaymentService paymentService;
+    private final BranchHoursRepository branchHoursRepository;
 
     @Override
     @Transactional
@@ -87,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
         // Xác thực chi nhánh
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_001));
+        validateBranchOpen(branch.getId(), request.getPickupTime());
 
         // Lấy giỏ hàng đang hoạt động với khóa pessimistic để tránh race condition
         Cart cart = cartRepository.findByCustomerIdAndBranchIdAndStatusForUpdate(customerId, request.getBranchId(), "ACTIVE")
@@ -97,6 +101,7 @@ public class OrderServiceImpl implements OrderService {
         if (cartItems.isEmpty()) {
             throw new BaseException(ErrorCode.COM_005);
         }
+        validateOrderableCartItems(cartItems);
 
         // Tạo đơn hàng
         Order order = new Order();
@@ -240,6 +245,18 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(order);
     }
 
+    private void validateOrderableCartItems(List<CartItem> cartItems) {
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            if (product == null || !"ACTIVE".equals(product.getStatus())) {
+                throw new BaseException(ErrorCode.PRODUCT_002);
+            }
+            if (product.getCategory() == null || !"ACTIVE".equals(product.getCategory().getStatus())) {
+                throw new BaseException(ErrorCode.PRODUCT_002);
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(String orderId, String customerId) {
@@ -282,6 +299,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getCustomerOrderSummaries(String customerId, Pageable pageable) {
+        Page<Order> ordersPage = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getBranchOrders(String branchId, String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
@@ -296,6 +323,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getBranchOrderSummaries(String branchId, String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status, pageable);
+        } else {
+            ordersPage = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId, pageable);
+        }
+
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getAllOrders(String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
@@ -305,6 +348,22 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<OrderResponse> responses = toOrderResponseList(ordersPage.getContent());
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getAllOrderSummaries(String status, Pageable pageable) {
+        Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+        } else {
+            ordersPage = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+
+        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
+                .map(orderMapper::toSummaryResponse)
+                .toList();
         return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
     }
 
@@ -728,5 +787,19 @@ public class OrderServiceImpl implements OrderService {
 
             return orderMapper.toResponse(order, itemResponses);
         }).collect(Collectors.toList());
+    }
+    private void validateBranchOpen(String branchId, LocalDateTime requestedTime) {
+        LocalDateTime time = requestedTime == null ? LocalDateTime.now() : requestedTime;
+        int dayOfWeek = time.getDayOfWeek().getValue();
+        LocalTime currentTime = time.toLocalTime();
+
+        BranchHours branchHours = branchHoursRepository.findByBranchIdAndDayOfWeek(branchId, dayOfWeek)
+                .orElseThrow(() -> new BaseException(ErrorCode.BRANCH_005));
+
+        if (branchHours.isClosed()
+                || currentTime.isBefore(branchHours.getOpenTime())
+                || !currentTime.isBefore(branchHours.getCloseTime())) {
+            throw new BaseException(ErrorCode.BRANCH_013);
+        }
     }
 }

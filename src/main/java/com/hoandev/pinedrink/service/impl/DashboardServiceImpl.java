@@ -1,12 +1,13 @@
 package com.hoandev.pinedrink.service.impl;
 
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.BranchPerformanceResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.DashboardOverviewResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.OrderStatusSummaryResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.RevenueTrendResponse;
-import com.hoandev.pinedrink.entity.dto.response.Dashboard.TopProductResponse;
+import com.hoandev.pinedrink.entity.Branch;
+import com.hoandev.pinedrink.entity.dto.response.Branch.BranchResponse;
+import com.hoandev.pinedrink.entity.dto.response.Dashboard.DashboardDataResponse;
+import com.hoandev.pinedrink.entity.enums.BranchStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
+import com.hoandev.pinedrink.mapper.BranchMapper;
+import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.repository.DashboardRepository;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
@@ -28,47 +29,30 @@ public class DashboardServiceImpl implements DashboardService {
     private static final long MAX_RANGE_DAYS = 366;
 
     private final DashboardRepository dashboardRepository;
+    private final BranchRepository branchRepository;
+    private final BranchMapper branchMapper;
     private final AccessScopeService accessScopeService;
 
     @Override
     @Transactional(readOnly = true)
-    public DashboardOverviewResponse getOverview(LocalDate fromDate, LocalDate toDate, String branchId) {
+    public DashboardDataResponse getAllData(LocalDate fromDate, LocalDate toDate, String branchId, Integer limit) {
         validateDateRange(fromDate, toDate);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getOverview(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RevenueTrendResponse> getRevenueTrend(LocalDate fromDate, LocalDate toDate, String branchId) {
-        validateDateRange(fromDate, toDate);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getRevenueTrend(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OrderStatusSummaryResponse> getOrderStatus(LocalDate fromDate, LocalDate toDate, String branchId) {
-        validateDateRange(fromDate, toDate);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getOrderStatus(fromDate, toDate, allowedBranchId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<TopProductResponse> getTopProducts(LocalDate fromDate, LocalDate toDate, String branchId, Integer limit) {
-        validateDateRange(fromDate, toDate);
+        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
+        String allowedBranchId = resolveBranchFilter(branchId, scope);
         int normalizedLimit = normalizeLimit(limit);
-        String allowedBranchId = resolveBranchFilter(branchId);
-        return dashboardRepository.getTopProducts(fromDate, toDate, allowedBranchId, normalizedLimit);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<BranchPerformanceResponse> getBranchPerformance(LocalDate fromDate, LocalDate toDate) {
-        validateDateRange(fromDate, toDate);
-        accessScopeService.assertSystemAccess();
-        return dashboardRepository.getBranchPerformance(fromDate, toDate);
+        DashboardDataResponse.DashboardDataResponseBuilder builder = DashboardDataResponse.builder()
+                .overview(dashboardRepository.getOverview(fromDate, toDate, allowedBranchId))
+                .revenueTrend(dashboardRepository.getRevenueTrend(fromDate, toDate, allowedBranchId))
+                .orderStatus(dashboardRepository.getOrderStatus(fromDate, toDate, allowedBranchId))
+                .topProducts(dashboardRepository.getTopProducts(fromDate, toDate, allowedBranchId, normalizedLimit))
+                .availableBranches(resolveAvailableBranches(scope));
+
+        if (allowedBranchId == null) {
+            builder.branchPerformance(dashboardRepository.getBranchPerformance(fromDate, toDate));
+        }
+
+        return builder.build();
     }
 
     private void validateDateRange(LocalDate fromDate, LocalDate toDate) {
@@ -83,9 +67,8 @@ public class DashboardServiceImpl implements DashboardService {
         }
     }
 
-    private String resolveBranchFilter(String branchId) {
+    private String resolveBranchFilter(String branchId, AccessScopeContext scope) {
         String normalizedBranchId = normalizeNullable(branchId);
-        AccessScopeContext scope = accessScopeService.resolveCurrentScope();
         if (scope.fullAccess()) {
             return normalizedBranchId;
         }
@@ -96,6 +79,17 @@ public class DashboardServiceImpl implements DashboardService {
             throw new BaseException(ErrorCode.AUTH_007);
         }
         return normalizedBranchId;
+    }
+
+    private List<BranchResponse> resolveAvailableBranches(AccessScopeContext scope) {
+        if (!scope.fullAccess() && scope.branchIds().isEmpty()) {
+            return List.of();
+        }
+        List<Branch> branches = scope.fullAccess()
+                ? branchRepository.findByStatusOrderByCreatedAtDesc(BranchStatus.ACTIVE.getValue())
+                : branchRepository.findActiveBranchesByIds(
+                scope.branchIds(), BranchStatus.ACTIVE.getValue());
+        return branches.stream().map(branchMapper::toResponse).toList();
     }
 
     private int normalizeLimit(Integer limit) {

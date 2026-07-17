@@ -23,6 +23,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Triển khai {@link AccessScopeService}.
+ */
 @Service
 @RequiredArgsConstructor
 public class AccessScopeServiceImpl implements AccessScopeService {
@@ -140,11 +143,11 @@ public class AccessScopeServiceImpl implements AccessScopeService {
     }
 
     /**
-     * Checks whether a target account has at least one active BRANCH scope shared with the caller.
+     * Kiểm tra xem tài khoản mục tiêu có ít nhất một phạm vi BRANCH đang hoạt động chung với người gọi không.
      *
-     * @param targetAccountId account being accessed
-     * @param allowedBranchIds branch IDs granted to the current caller
-     * @return true when target account belongs to one allowed branch
+     * @param targetAccountId tài khoản đang được truy cập
+     * @param allowedBranchIds các ID chi nhánh được cấp cho người gọi hiện tại
+     * @return true khi tài khoản mục tiêu thuộc một trong các chi nhánh được phép
      */
     private boolean hasSharedBranchScope(String targetAccountId, Set<String> allowedBranchIds) {
         if (allowedBranchIds.isEmpty()) {

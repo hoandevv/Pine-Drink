@@ -3,7 +3,9 @@ package com.hoandev.pinedrink.mapper;
 import com.hoandev.pinedrink.entity.Category;
 import com.hoandev.pinedrink.entity.dto.request.Category.CreateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryRequest;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategoryOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Category.CategoryResponse;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategorySummaryResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,6 +26,34 @@ public class CategoryMapper {
                 .status(category.getStatus())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
+                .build();
+    }
+
+    public CategorySummaryResponse toSummaryResponse(Category category) {
+        if (category == null) {
+            return null;
+        }
+
+        return CategorySummaryResponse.builder()
+                .id(category.getId())
+                .code(category.getCode())
+                .name(category.getName())
+                .imageUrl(category.getImageUrl())
+                .displayOrder(category.getDisplayOrder())
+                .status(category.getStatus())
+                .build();
+    }
+
+    public CategoryOptionResponse toOptionResponse(Category category) {
+        if (category == null) {
+            return null;
+        }
+
+        return CategoryOptionResponse.builder()
+                .id(category.getId())
+                .code(category.getCode())
+                .name(category.getName())
+                .imageUrl(category.getImageUrl())
                 .build();
     }
 

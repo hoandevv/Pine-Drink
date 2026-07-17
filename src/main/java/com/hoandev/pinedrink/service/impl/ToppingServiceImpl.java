@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingRequ
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.entity.enums.ToppingStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -127,18 +128,18 @@ public class ToppingServiceImpl implements ToppingService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ToppingResponse> getAll(Pageable pageable) {
+    public PageResponse<ToppingSummaryResponse> getAll(Pageable pageable) {
         Page<Topping> toppings = toppingRepository.findAll(pageable);
-        List<ToppingResponse> content = toppings.getContent().stream().map(toppingMapper::toResponse).toList();
+        List<ToppingSummaryResponse> content = toppings.getContent().stream().map(toppingMapper::toSummaryResponse).toList();
         return PageResponse.from(toppings, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ToppingResponse> getAllActive() {
+    public List<ToppingSummaryResponse> getAllActive() {
         return toppingRepository.findByStatus(ToppingStatus.ACTIVE.getValue())
                 .stream()
-                .map(toppingMapper::toResponse)
+                .map(toppingMapper::toSummaryResponse)
                 .toList();
     }
 

@@ -7,6 +7,8 @@ import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductRequest;
 import com.hoandev.pinedrink.entity.dto.request.Product.UpdateProductStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
+import com.hoandev.pinedrink.entity.enums.CategoryStatus;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -51,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
         accessScopeService.assertSystemAccess();
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
+        validateActiveCategory(category);
         String productCode = resolveCreateCode();
         Product product = productMapper.toEntity(request, category);
         String uploadedImageUrl = uploadProductImage(imageFile);
@@ -84,6 +87,7 @@ public class ProductServiceImpl implements ProductService {
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
+            validateActiveCategory(category);
             product.setCategory(category);
         }
         productMapper.updateEntity(product, request);
@@ -110,6 +114,9 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateStatus(String id, UpdateProductStatusRequest request) {
         accessScopeService.assertSystemAccess();
         Product product = getProductOrThrow(id);
+        if (ProductStatus.ACTIVE.getValue().equals(request.getStatus().getValue())) {
+            validateActiveCategory(product.getCategory());
+        }
         product.setStatus(request.getStatus().getValue());
         product = productRepository.save(product);
         log.info("Product status updated: id={}, code={}, status={}", product.getId(), product.getCode(), product.getStatus());
@@ -137,8 +144,25 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<ProductSummaryResponse> getSummaries(String keyword, String categoryId, String status, Pageable pageable) {
+        Page<ProductSummaryResponse> products = productRepository.searchProductSummaries(
+                keyword,
+                categoryId,
+                status,
+                ProductStatus.ACTIVE.getValue().equals(status) ? ProductStatus.ACTIVE.getValue() : null,
+                pageable);
+        return PageResponse.from(products);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<ProductResponse> getAll(String keyword, String categoryId, String status, Pageable pageable) {
-        Page<Product> products = productRepository.searchProducts(keyword, categoryId, status, pageable);
+        Page<Product> products = productRepository.searchProducts(
+                keyword,
+                categoryId,
+                status,
+                ProductStatus.ACTIVE.getValue().equals(status) ? ProductStatus.ACTIVE.getValue() : null,
+                pageable);
         List<ProductResponse> content = products.getContent().stream()
                 .map(productMapper::toResponse)
                 .toList();
@@ -155,6 +179,12 @@ public class ProductServiceImpl implements ProductService {
             throw new BaseException(ErrorCode.PRODUCT_002);
         }
         return generatedCode;
+    }
+
+    private void validateActiveCategory(Category category) {
+        if (!CategoryStatus.ACTIVE.getValue().equals(category.getStatus())) {
+            throw new BaseException(ErrorCode.PRODUCT_004);
+        }
     }
 
     private String uploadProductImage(MultipartFile imageFile) {

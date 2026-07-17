@@ -2,6 +2,7 @@ package com.hoandev.pinedrink.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.exception.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,8 +38,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setCharacterEncoding("UTF-8");
 
         BaseResponse<Void> errorResponse = BaseResponse.error(
-                "AUTH_013",
-                "Access denied. You don't have permission to access this resource.",
+                ErrorCode.AUTH_007.getCode(),
+                ErrorCode.AUTH_007.getMessage(),
                 null
         );
 

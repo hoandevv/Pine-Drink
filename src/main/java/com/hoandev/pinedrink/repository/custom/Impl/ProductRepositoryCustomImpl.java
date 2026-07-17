@@ -7,6 +7,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,7 +21,8 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<ProductCatalogResult> findProductCatalogReport(String status, String categoryId) {
+    public List<ProductCatalogResult> findProductCatalogReport(
+            String status, String categoryId, LocalDateTime fromDate, LocalDateTime toDate) {
         Query query = entityManager.createNativeQuery("""
                 SELECT
                     p.code AS productCode,
@@ -45,12 +47,16 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
                 LEFT JOIN pr_product_variant pv ON pv.product_id = p.id
                 WHERE (:status IS NULL OR p.status = :status)
                     AND (:categoryId IS NULL OR p.category_id = :categoryId)
+                    AND (:fromDate IS NULL OR p.created_at >= :fromDate)
+                    AND (:toDate IS NULL OR p.created_at < :toDate)
                 GROUP BY p.id, p.code, p.name, c.name, p.base_price, p.status,
                     p.preparation_minutes, p.is_featured, p.is_best_seller, p.created_at
                 ORDER BY c.display_order ASC, c.name ASC, p.name ASC
                 """, "ProductCatalogResultMapping");
         query.setParameter("status", status);
         query.setParameter("categoryId", categoryId);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
         return query.getResultList();
     }
 }

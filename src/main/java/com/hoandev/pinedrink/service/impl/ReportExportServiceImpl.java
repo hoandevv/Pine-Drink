@@ -6,6 +6,8 @@ import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportType;
+import com.hoandev.pinedrink.exception.BaseException;
+import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.ProductCatalogReportMapper;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +37,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ReportExportServiceImpl implements ReportExportService {
+
+    private static final long MAX_REPORT_RANGE_DAYS = 366;
 
     private final ExportRequestRepository exportRequestRepository;
     private final JasperReportService jasperReportService;
@@ -115,8 +120,38 @@ public class ReportExportServiceImpl implements ReportExportService {
     private ProductCatalogReportDto buildProductCatalogData(ExportRequest job) {
         String status = normalizeFilter(readFilter(job.getFilters(), "status", null));
         String categoryId = normalizeFilter(readFilter(job.getFilters(), "categoryId", null));
-        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(status, categoryId);
+        LocalDateTime fromDate = parseStartOfDay(readFilter(job.getFilters(), "fromDate", null));
+        LocalDateTime toDate = parseExclusiveEndOfDay(readFilter(job.getFilters(), "toDate", null));
+        validateDateRange(fromDate, toDate);
+        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(
+                status, categoryId, fromDate, toDate);
         return productCatalogReportMapper.toReportDto(products, status, categoryId);
+    }
+
+    private LocalDateTime parseStartOfDay(String value) {
+        return value == null || value.isBlank() ? null : LocalDate.parse(value).atStartOfDay();
+    }
+
+    private LocalDateTime parseExclusiveEndOfDay(String value) {
+        return value == null || value.isBlank() ? null : LocalDate.parse(value).plusDays(1).atStartOfDay();
+    }
+
+    private void validateDateRange(LocalDateTime fromDate, LocalDateTime toDate) {
+        LocalDate today = LocalDate.now();
+
+        if (fromDate != null && toDate != null && !fromDate.isBefore(toDate)) {
+            throw new BaseException(ErrorCode.REPORT_004);
+        }
+        if (fromDate != null && fromDate.toLocalDate().isAfter(today)) {
+            throw new BaseException(ErrorCode.REPORT_005);
+        }
+
+        if (toDate != null && toDate.toLocalDate().minusDays(1).isAfter(today)) {
+            throw new BaseException(ErrorCode.REPORT_006);
+        }
+        if (fromDate != null && toDate != null && java.time.Duration.between(fromDate, toDate).toDays() > MAX_REPORT_RANGE_DAYS) {
+            throw new BaseException(ErrorCode.REPORT_007);
+        }
     }
 
     /**

@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobResponse;
 import com.hoandev.pinedrink.entity.dto.response.Report.ReportJobStatsResponse;
+import com.hoandev.pinedrink.entity.dto.response.Report.ReportOptionsResponse;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.ReportJobService;
 import jakarta.validation.Valid;
@@ -24,8 +25,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/reports/jobs")
@@ -52,6 +57,14 @@ public class ReportJobController {
                 "Report job stats retrieved successfully"));
     }
 
+    @GetMapping("/options")
+    @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
+    public ResponseEntity<BaseResponse<ReportOptionsResponse>> getOptions(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(BaseResponse.success(reportJobService.getOptions(principal.getId()),
+                "Report options retrieved successfully"));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<ReportJobResponse>> getJob(
@@ -64,8 +77,10 @@ public class ReportJobController {
     @PreAuthorize("hasAuthority('PERM_REPORT_VIEW')")
     public ResponseEntity<BaseResponse<PageResponse<ReportJobResponse>>> getJobs(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.success(reportJobService.getJobs(principal.getId(), pageable),
+        return ResponseEntity.ok(BaseResponse.success(reportJobService.getJobs(principal.getId(), fromDate, toDate, pageable),
                 "Report jobs retrieved successfully"));
     }
 

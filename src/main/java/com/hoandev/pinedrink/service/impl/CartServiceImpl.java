@@ -81,6 +81,9 @@ public class CartServiceImpl implements CartService {
         if (!ACTIVE.equals(product.getStatus())) {
             throw new BaseException(ErrorCode.PRODUCT_002);
         }
+        if (product.getCategory() == null || !ACTIVE.equals(product.getCategory().getStatus())) {
+            throw new BaseException(ErrorCode.PRODUCT_002);
+        }
 
         ProductVariant variant = getVariant(request.getVariantId(), product.getId());
 

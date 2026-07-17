@@ -4,14 +4,18 @@ import com.hoandev.pinedrink.entity.Category;
 import com.hoandev.pinedrink.entity.dto.request.Category.CreateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryRequest;
 import com.hoandev.pinedrink.entity.dto.request.Category.UpdateCategoryStatusRequest;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategoryOptionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Category.CategoryResponse;
+import com.hoandev.pinedrink.entity.dto.response.Category.CategorySummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.enums.CategoryStatus;
 import com.hoandev.pinedrink.entity.enums.FileVisibility;
+import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.CategoryMapper;
 import com.hoandev.pinedrink.repository.CategoryRepository;
+import com.hoandev.pinedrink.repository.ProductRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.CategoryService;
 import com.hoandev.pinedrink.service.FileStorageService;
@@ -31,6 +35,7 @@ import java.util.List;
 @Slf4j
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final CategoryMapper categoryMapper;
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
@@ -100,9 +105,15 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse updateStatus(String id, UpdateCategoryStatusRequest request) {
         accessScopeService.assertSystemAccess();
         Category category = getCategoryOrThrow(id);
+        String oldStatus = category.getStatus();
         category.setStatus(request.getStatus().getValue());
         category = categoryRepository.save(category);
+        int affectedProducts = syncProductsByCategoryStatus(category, oldStatus);
         log.info("Category status updated: id={}, code={}, status={}", category.getId(), category.getCode(), category.getStatus());
+        if (affectedProducts > 0) {
+            log.info("Products synced by category status update: categoryId={}, oldStatus={}, newStatus={}, count={}",
+                    category.getId(), oldStatus, category.getStatus(), affectedProducts);
+        }
         return categoryMapper.toResponse(category);
     }
 
@@ -116,7 +127,14 @@ public class CategoryServiceImpl implements CategoryService {
         }
         category.setStatus(CategoryStatus.INACTIVE.getValue());
         categoryRepository.save(category);
+        int affectedProducts = updateProductsByCategory(
+                category.getId(),
+                ProductStatus.ACTIVE.getValue(),
+                ProductStatus.INACTIVE.getValue());
         log.info("Category deleted (soft): id={}, code={}", category.getId(), category.getCode());
+        if (affectedProducts > 0) {
+            log.info("Products inactivated by category delete: categoryId={}, count={}", category.getId(), affectedProducts);
+        }
     }
 
     @Override
@@ -127,18 +145,18 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CategoryResponse> getAll(Pageable pageable) {
+    public PageResponse<CategorySummaryResponse> getSummaries(Pageable pageable) {
         Page<Category> categories = categoryRepository.findAll(pageable);
-        List<CategoryResponse> content = categories.getContent().stream().map(categoryMapper::toResponse).toList();
+        List<CategorySummaryResponse> content = categories.getContent().stream().map(categoryMapper::toSummaryResponse).toList();
         return PageResponse.from(categories, content);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllActive() {
+    public List<CategoryOptionResponse> getActiveOptions() {
         return categoryRepository.findByStatusOrderByDisplayOrder(CategoryStatus.ACTIVE.getValue())
                 .stream()
-                .map(categoryMapper::toResponse)
+                .map(categoryMapper::toOptionResponse)
                 .toList();
     }
 
@@ -183,5 +201,29 @@ public class CategoryServiceImpl implements CategoryService {
 
     private boolean isManagedCategoryImage(String imageUrl) {
         return imageUrl.startsWith("categories/") || imageUrl.contains("/categories/");
+    }
+
+    private int syncProductsByCategoryStatus(Category category, String oldStatus) {
+        String newStatus = category.getStatus();
+        if (oldStatus.equals(newStatus)) {
+            return 0;
+        }
+        if (CategoryStatus.INACTIVE.getValue().equals(newStatus)) {
+            return updateProductsByCategory(
+                    category.getId(),
+                    ProductStatus.ACTIVE.getValue(),
+                    ProductStatus.INACTIVE.getValue());
+        }
+        if (CategoryStatus.ACTIVE.getValue().equals(newStatus)) {
+            return updateProductsByCategory(
+                    category.getId(),
+                    ProductStatus.INACTIVE.getValue(),
+                    ProductStatus.ACTIVE.getValue());
+        }
+        return 0;
+    }
+
+    private int updateProductsByCategory(String categoryId, String currentStatus, String productStatus) {
+        return productRepository.updateStatusByCategoryIdAndStatus(categoryId, currentStatus, productStatus);
     }
 }

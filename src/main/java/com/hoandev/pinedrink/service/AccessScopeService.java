@@ -5,53 +5,53 @@ import com.hoandev.pinedrink.entity.Scope;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 
 /**
- * Resolves and enforces account scope access across branch-aware services.
+ * Giải quyết và thực thi quyền truy cập phạm vi tài khoản trên các dịch vụ nhận biết chi nhánh.
  */
 public interface AccessScopeService {
 
     /**
-     * Resolves scope grants for the current authenticated account.
+     * Giải quyết quyền cấp phạm vi cho tài khoản hiện tại đã xác thực.
      *
-     * @return scope context for the current account
+     * @return phạm vi cho tài khoản hiện tại
      */
     AccessScopeContext resolveCurrentScope();
     /**
-     * Resolves scope grants for a specific account.
+     * Giải quyết quyền cấp phạm vi cho một tài khoản cụ thể.
      *
-     * @param accountId the account ID to resolve
-     * @return scope context for the target account
+     * @param accountId ID tài khoản cần giải quyết
+     * @return phạm vi cho tài khoản mục tiêu
      */
     AccessScopeContext resolveScopeByAccountId(String accountId);
-    /**Ensures that the current account has SYSTEM-level access.
-     *
+    /**
+     * Đảm bảo tài khoản hiện tại có quyền truy cập cấp SYSTEM.
      */
     void assertSystemAccess();
-    /** Ensures that the current account can view or use data from the given branch.
-     *
+    /**
+     * Đảm bảo tài khoản hiện tại có thể xem hoặc sử dụng dữ liệu từ chi nhánh được chỉ định.
      */
     void assertCanAccessBranch(String branchId);
     /**
-     * Ensures that the current account can view the given order.
+     * Đảm bảo tài khoản hiện tại có thể xem đơn hàng được chỉ định.
      */
     void assertCanViewOrder(Order order);
     /**
-     * Ensures that the current account can manage (create/update/delete) data in the given branch.
-     * */
+     * Đảm bảo tài khoản hiện tại có thể quản lý (tạo/cập nhật/xóa) dữ liệu trong chi nhánh được chỉ định.
+     */
     void assertCanManageBranch(String branchId);
     /**
-     * Ensures that the current account can manage data within the given branch.
-     * */
+     * Đảm bảo tài khoản hiện tại có thể quản lý dữ liệu trong chi nhánh được chỉ định.
+     */
     void assertCanDeleteBranch(String branchId);
     /**
-     * Ensures that the current account can delete or deactivate the given branch.
-     * */
+     * Đảm bảo tài khoản hiện tại có thể xóa hoặc vô hiệu hóa chi nhánh được chỉ định.
+     */
     void assertCanAccessAccount(String targetAccountId);
     /**
-     * Ensures that the current account can access the target account.
-     * */
+     * Đảm bảo tài khoản hiện tại có thể truy cập tài khoản mục tiêu.
+     */
     void assertCanAccessScope(Scope scope);
     /**
-     * Ensures that the current account can access the target scope.
-     * */
+     * Đảm bảo tài khoản hiện tại có thể truy cập phạm vi mục tiêu.
+     */
     void assertCanManageTargetScope(String scopeType, String branchId);
 }

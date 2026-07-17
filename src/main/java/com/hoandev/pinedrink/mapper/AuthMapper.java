@@ -67,8 +67,12 @@ public class AuthMapper {
      * @return scope access summary
      */
     public AccountResponse.ScopeAccessResponse buildScopeAccess(String accountId) {
+        return buildScopeAccess(accountId, LocalDateTime.now());
+    }
+
+    private AccountResponse.ScopeAccessResponse buildScopeAccess(String accountId, LocalDateTime now) {
         List<AccountRoleAssignment> assignments = assignmentRepository.findActiveAssignmentsByAccountId(
-                accountId, LocalDateTime.now());
+                accountId, now);
 
         boolean systemAccess = assignments.stream()
                 .anyMatch(assignment -> Constants.SCOPE_SYSTEM.equals(assignment.getScope().getScopeType()));

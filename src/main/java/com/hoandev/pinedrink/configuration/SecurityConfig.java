@@ -2,16 +2,13 @@ package com.hoandev.pinedrink.configuration;
 
 import com.hoandev.pinedrink.security.CustomAccessDeniedHandler;
 import com.hoandev.pinedrink.security.CustomAuthenticationEntryPoint;
-import com.hoandev.pinedrink.security.CustomUserDetailsService;
 import com.hoandev.pinedrink.security.JwtAuthFilter;
-import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -112,12 +109,12 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/api/v1/branches/*/hours/**", "GET")).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/products/**",
-                                "/api/v1/categories/**",
-                                "/api/v1/toppings/**",
-                                "/api/v1/branches/active",
-                                "/api/v1/branches/{branchId}/daily-stocks",
-                                "/api/v1/branches/{branchId}/availability/products/**",
-                                "/api/v1/branches/{branchId}/availability/toppings/**"
+                                 "/api/v1/categories/**",
+                                 "/api/v1/toppings/**",
+                                 "/api/v1/branches/active",
+                                 "/api/v1/branches/{branchId}/daily-stocks",
+                                 "/api/v1/branches/{branchId}/availability/products/**",
+                                 "/api/v1/branches/{branchId}/availability/toppings/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

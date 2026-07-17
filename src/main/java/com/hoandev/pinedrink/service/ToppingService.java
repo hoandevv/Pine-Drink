@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingRequ
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,7 +26,7 @@ public interface ToppingService {
 
     ToppingResponse getById(String id);
 
-    PageResponse<ToppingResponse> getAll(Pageable pageable);
+    PageResponse<ToppingSummaryResponse> getAll(Pageable pageable);
 
-    List<ToppingResponse> getAllActive();
+    List<ToppingSummaryResponse> getAllActive();
 }

@@ -6,6 +6,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateToppingStat
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import com.hoandev.pinedrink.service.ToppingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -84,7 +85,6 @@ public class ToppingController {
     public ResponseEntity<BaseResponse<ToppingResponse>> updateStatus(
             @PathVariable String id,
             @Valid @RequestBody UpdateToppingStatusRequest request) {
-        log.info("Updating topping status: id={}, status={}", id, request.getStatus());
         ToppingResponse response = toppingService.updateStatus(id, request);
         return ResponseEntity.ok(BaseResponse.success(response, "Topping status updated successfully"));
     }
@@ -93,29 +93,25 @@ public class ToppingController {
     @PreAuthorize("hasAuthority('PERM_TOPPING_DELETE')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String id) {
         log.info("Deleting topping: id={}", id);
-        toppingService.delete(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Topping deleted successfully"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<ToppingResponse>> getById(@PathVariable String id) {
-        log.info("Getting topping: id={}", id);
         ToppingResponse response = toppingService.getById(id);
         return ResponseEntity.ok(BaseResponse.success(response, "Topping retrieved successfully"));
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<ToppingResponse>>> getAll(
+    public ResponseEntity<BaseResponse<PageResponse<ToppingSummaryResponse>>> getAll(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("Getting toppings");
-        PageResponse<ToppingResponse> response = toppingService.getAll(pageable);
+        PageResponse<ToppingSummaryResponse> response = toppingService.getAll(pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Toppings retrieved successfully"));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<BaseResponse<List<ToppingResponse>>> getAllActive() {
-        log.info("Getting active toppings");
-        List<ToppingResponse> response = toppingService.getAllActive();
+    public ResponseEntity<BaseResponse<List<ToppingSummaryResponse>>> getAllActive() {
+        List<ToppingSummaryResponse> response = toppingService.getAllActive();
         return ResponseEntity.ok(BaseResponse.success(response, "Active toppings retrieved successfully"));
     }
 }

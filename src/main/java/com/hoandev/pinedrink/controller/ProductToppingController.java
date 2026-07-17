@@ -5,6 +5,7 @@ import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductTopp
 import com.hoandev.pinedrink.entity.dto.request.ProductTopping.UpdateProductToppingStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingSummaryResponse;
 import com.hoandev.pinedrink.service.ProductToppingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -85,16 +86,16 @@ public class ProductToppingController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<ProductToppingResponse>>> getAll(@PathVariable String productId) {
+    public ResponseEntity<BaseResponse<List<ProductToppingSummaryResponse>>> getAll(@PathVariable String productId) {
         log.info("Getting product toppings: productId={}", productId);
-        List<ProductToppingResponse> response = productToppingService.getAll(productId);
+        List<ProductToppingSummaryResponse> response = productToppingService.getAll(productId);
         return ResponseEntity.ok(BaseResponse.success(response, "Product toppings retrieved successfully"));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<BaseResponse<List<ProductToppingResponse>>> getAllActive(@PathVariable String productId) {
+    public ResponseEntity<BaseResponse<List<ProductToppingSummaryResponse>>> getAllActive(@PathVariable String productId) {
         log.info("Getting active product toppings: productId={}", productId);
-        List<ProductToppingResponse> response = productToppingService.getAllActive(productId);
+        List<ProductToppingSummaryResponse> response = productToppingService.getAllActive(productId);
         return ResponseEntity.ok(BaseResponse.success(response, "Active product toppings retrieved successfully"));
     }
 }

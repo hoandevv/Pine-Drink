@@ -170,13 +170,16 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
         for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            ProductVariant variant = cartItem.getVariant();
+
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setVariant(cartItem.getVariant());
-            orderItem.setProductCode(cartItem.getProduct().getCode());
-            orderItem.setProductName(cartItem.getProduct().getName());
-            orderItem.setVariantName(cartItem.getVariant() != null ? cartItem.getVariant().getVariantName() : null);
+            orderItem.setProduct(product);
+            orderItem.setVariant(variant);
+            orderItem.setProductCode(product.getCode());
+            orderItem.setProductName(product.getName());
+            orderItem.setVariantName(variant != null ? variant.getVariantName() : null);
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setSugarLevel(cartItem.getSugarLevel());
             orderItem.setIceLevel(cartItem.getIceLevel());
@@ -190,11 +193,13 @@ public class OrderServiceImpl implements OrderService {
             // Tạo topping đơn hàng từ topping giỏ hàng đã tải trước
             List<CartItemTopping> cartToppings = toppingsByCartItemId.getOrDefault(cartItem.getId(), new ArrayList<>());
             for (CartItemTopping cartTopping : cartToppings) {
+                Topping topping = cartTopping.getTopping();
+
                 OrderItemTopping orderTopping = new OrderItemTopping();
                 orderTopping.setOrderItem(orderItem);
-                orderTopping.setTopping(cartTopping.getTopping());
-                orderTopping.setToppingCode(cartTopping.getTopping().getCode());
-                orderTopping.setToppingName(cartTopping.getTopping().getName());
+                orderTopping.setTopping(topping);
+                orderTopping.setToppingCode(topping.getCode());
+                orderTopping.setToppingName(topping.getName());
                 orderTopping.setQuantity(cartTopping.getQuantity());
                 orderTopping.setUnitPrice(cartTopping.getUnitPrice());
                 orderTopping.setTotalPrice(cartTopping.getTotalPrice());
@@ -202,10 +207,10 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // Đặt giữ tồn kho
-            if (cartItem.getVariant() != null) {
+            if (variant != null) {
                 dailyStockService.reserve(
                     branch.getId(),
-                    cartItem.getVariant().getId(),
+                    variant.getId(),
                     LocalDate.now(),
                     cartItem.getQuantity(),
                     order.getId()
@@ -265,10 +270,8 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
 
         // Kiểm tra quyền sở hữu nếu customerId được cung cấp (cho vai trò khách hàng)
-        if (customerId != null && order.getCustomer() != null) {
-            if (!order.getCustomer().getId().equals(customerId)) {
-                throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
-            }
+        if (customerId != null && !isCustomerOrder(order, customerId)) {
+            throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
         }
 
         return toOrderResponse(order);
@@ -281,10 +284,8 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
 
         // Kiểm tra quyền sở hữu nếu customerId được cung cấp (cho vai trò khách hàng)
-        if (customerId != null && order.getCustomer() != null) {
-            if (!order.getCustomer().getId().equals(customerId)) {
-                throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
-            }
+        if (customerId != null && !isCustomerOrder(order, customerId)) {
+            throw new BaseException(ErrorCode.AUTH_007); // Insufficient permissions
         }
 
         return toOrderResponse(order);
@@ -420,8 +421,8 @@ public class OrderServiceImpl implements OrderService {
 
         // Publish realtime event after transaction commit
         String orderCode = order.getOrderCode();
-        String branchId = order.getBranch().getId();
-        String customerAccountId = order.getCustomer() != null ? order.getCustomer().getId() : null;
+        String branchId = getBranchId(order);
+        String customerAccountId = getCustomerId(order);
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
@@ -485,16 +486,17 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
 
         // Xác minh quyền sở hữu
-        if (!order.getCustomer().getId().equals(customerId)) {
+        if (!isCustomerOrder(order, customerId)) {
             throw new BaseException(ErrorCode.AUTH_007);
         }
 
         String currentStatus = order.getStatus();
-        if (!orderProperties.getCancel().getAllowedStatuses().contains(currentStatus)) {
+        OrderProperties.Cancel cancelProperties = orderProperties.getCancel();
+        if (!cancelProperties.getAllowedStatuses().contains(currentStatus)) {
             throw new BaseException(ErrorCode.COM_004);
         }
 
-        Integer timeoutMinutes = orderProperties.getCancel().getTimeoutMinutes();
+        Integer timeoutMinutes = cancelProperties.getTimeoutMinutes();
         if (timeoutMinutes != null && timeoutMinutes > 0
                 && order.getCreatedAt().plusMinutes(timeoutMinutes).isBefore(LocalDateTime.now())) {
             throw new BaseException(ErrorCode.COM_004);
@@ -513,8 +515,8 @@ public class OrderServiceImpl implements OrderService {
 
         // Publish realtime event after transaction commit
         String orderCode = order.getOrderCode();
-        String branchId = order.getBranch().getId();
-        String customerAccountId = order.getCustomer() != null ? order.getCustomer().getId() : null;
+        String branchId = getBranchId(order);
+        String customerAccountId = getCustomerId(order);
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
@@ -570,11 +572,13 @@ public class OrderServiceImpl implements OrderService {
 
     private void releaseStock(Order order) {
         List<OrderItem> items = orderItemRepository.findByOrderIdWithVariant(order.getId());
+        String branchId = getBranchId(order);
         for (OrderItem item : items) {
-            if (item.getVariant() != null) {
+            ProductVariant variant = item.getVariant();
+            if (variant != null) {
                 dailyStockService.release(
-                    order.getBranch().getId(),
-                    item.getVariant().getId(),
+                    branchId,
+                    variant.getId(),
                     LocalDate.now(),
                     item.getQuantity(),
                     order.getId()
@@ -585,11 +589,13 @@ public class OrderServiceImpl implements OrderService {
 
     private void confirmSoldStock(Order order) {
         List<OrderItem> items = orderItemRepository.findByOrderIdWithVariant(order.getId());
+        String branchId = getBranchId(order);
         for (OrderItem item : items) {
-            if (item.getVariant() != null) {
+            ProductVariant variant = item.getVariant();
+            if (variant != null) {
                 dailyStockService.confirmSold(
-                    order.getBranch().getId(),
-                    item.getVariant().getId(),
+                    branchId,
+                    variant.getId(),
                     LocalDate.now(),
                     item.getQuantity(),
                     order.getId()
@@ -755,13 +761,11 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
 
         return orders.stream()
-                .map(order -> toOrderListItemResponse(order, itemsByOrderId.get(order.getId())))
+                .map(order -> toOrderListItemResponse(order, itemsByOrderId.getOrDefault(order.getId(), new ArrayList<>())))
                 .toList();
     }
 
     private OrderListItemResponse toOrderListItemResponse(Order order, List<OrderItem> items) {
-        List<OrderItem> safeItems = items != null ? items : new ArrayList<>();
-
         return OrderListItemResponse.builder()
                 .id(order.getId())
                 .orderCode(order.getOrderCode())
@@ -771,9 +775,22 @@ public class OrderServiceImpl implements OrderService {
                 .paymentStatus(order.getPaymentStatus())
                 .totalAmount(order.getTotalAmount())
                 .createdAt(order.getCreatedAt())
-                .totalItems(safeItems.size())
-                .itemsPreview(buildItemsPreview(safeItems))
+                .totalItems(items.size())
+                .itemsPreview(buildItemsPreview(items))
                 .build();
+    }
+
+    private boolean isCustomerOrder(Order order, String customerId) {
+        return customerId != null && customerId.equals(getCustomerId(order));
+    }
+
+    private String getCustomerId(Order order) {
+        CustomerProfile customer = order.getCustomer();
+        return customer != null ? customer.getId() : null;
+    }
+
+    private String getBranchId(Order order) {
+        return order.getBranch().getId();
     }
 
     private String buildItemsPreview(List<OrderItem> items) {

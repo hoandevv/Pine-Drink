@@ -8,8 +8,8 @@ import com.hoandev.pinedrink.entity.dto.request.Order.CreateOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderItemToppingResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderListItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
-import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import com.hoandev.pinedrink.entity.enums.DiscountType;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -44,6 +44,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -299,11 +300,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderSummaryResponse> getCustomerOrderSummaries(String customerId, Pageable pageable) {
+    public Page<OrderListItemResponse> getCustomerOrderSummaries(String customerId, Pageable pageable) {
         Page<Order> ordersPage = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
-        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
-                .map(orderMapper::toSummaryResponse)
-                .toList();
+        List<OrderListItemResponse> responses = toOrderListItemResponses(ordersPage.getContent());
         return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
     }
 
@@ -323,7 +322,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderSummaryResponse> getBranchOrderSummaries(String branchId, String status, Pageable pageable) {
+    public Page<OrderListItemResponse> getBranchOrderSummaries(String branchId, String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
             ordersPage = orderRepository.findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status, pageable);
@@ -331,9 +330,7 @@ public class OrderServiceImpl implements OrderService {
             ordersPage = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId, pageable);
         }
 
-        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
-                .map(orderMapper::toSummaryResponse)
-                .toList();
+        List<OrderListItemResponse> responses = toOrderListItemResponses(ordersPage.getContent());
         return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
     }
 
@@ -353,7 +350,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderSummaryResponse> getAllOrderSummaries(String status, Pageable pageable) {
+    public Page<OrderListItemResponse> getAllOrderSummaries(String status, Pageable pageable) {
         Page<Order> ordersPage;
         if (status != null && !status.isEmpty()) {
             ordersPage = orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
@@ -361,9 +358,7 @@ public class OrderServiceImpl implements OrderService {
             ordersPage = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
         }
 
-        List<OrderSummaryResponse> responses = ordersPage.getContent().stream()
-                .map(orderMapper::toSummaryResponse)
-                .toList();
+        List<OrderListItemResponse> responses = toOrderListItemResponses(ordersPage.getContent());
         return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
     }
 
@@ -746,6 +741,61 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         return orderMapper.toResponse(order, itemResponses);
+    }
+
+    private List<OrderListItemResponse> toOrderListItemResponses(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<String> orderIds = orders.stream()
+                .map(Order::getId)
+                .toList();
+        Map<String, List<OrderItem>> itemsByOrderId = orderItemRepository.findByOrderIdIn(orderIds).stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        return orders.stream()
+                .map(order -> toOrderListItemResponse(order, itemsByOrderId.get(order.getId())))
+                .toList();
+    }
+
+    private OrderListItemResponse toOrderListItemResponse(Order order, List<OrderItem> items) {
+        List<OrderItem> safeItems = items != null ? items : new ArrayList<>();
+
+        return OrderListItemResponse.builder()
+                .id(order.getId())
+                .orderCode(order.getOrderCode())
+                .status(order.getStatus())
+                .customerName(order.getCustomerName())
+                .orderType(order.getOrderType())
+                .paymentStatus(order.getPaymentStatus())
+                .totalAmount(order.getTotalAmount())
+                .createdAt(order.getCreatedAt())
+                .totalItems(safeItems.size())
+                .itemsPreview(buildItemsPreview(safeItems))
+                .build();
+    }
+
+    private String buildItemsPreview(List<OrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return "No items";
+        }
+
+        OrderItem firstItem = items.get(0);
+        String itemName = firstItem.getProductName();
+        if (itemName == null || itemName.isBlank()) {
+            itemName = "Item";
+        }
+
+        String preview = itemName + " x" + firstItem.getQuantity();
+        int restCount = items.size() - 1;
+        if (restCount > 0) {
+            preview += " and " + restCount + " other item";
+            if (restCount > 1) {
+                preview += "s";
+            }
+        }
+        return preview;
     }
 
     private List<OrderResponse> toOrderResponseList(List<Order> orders) {

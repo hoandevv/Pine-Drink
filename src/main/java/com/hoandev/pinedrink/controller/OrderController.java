@@ -5,8 +5,8 @@ import com.hoandev.pinedrink.entity.dto.request.Order.CancelOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.CreateOrderRequest;
 import com.hoandev.pinedrink.entity.dto.request.Order.UpdateOrderStatusRequest;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
+import com.hoandev.pinedrink.entity.dto.response.Order.OrderListItemResponse;
 import com.hoandev.pinedrink.entity.dto.response.Order.OrderResponse;
-import com.hoandev.pinedrink.entity.dto.response.Order.OrderSummaryResponse;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.repository.CustomerProfileRepository;
@@ -67,11 +67,11 @@ public class OrderController {
      */
     @GetMapping("/summaries")
     @PreAuthorize("hasAuthority('PERM_ORDER_VIEW')")
-    public ResponseEntity<BaseResponse<Page<OrderSummaryResponse>>> getAllOrderSummaries(
+    public ResponseEntity<BaseResponse<Page<OrderListItemResponse>>> getAllOrderSummaries(
             @RequestParam(required = false) String status,
             Pageable pageable) {
         log.info("Getting all order summaries: status={}", status);
-        Page<OrderSummaryResponse> response = orderService.getAllOrderSummaries(status, pageable);
+        Page<OrderListItemResponse> response = orderService.getAllOrderSummaries(status, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Order summaries retrieved successfully"));
     }
 
@@ -122,23 +122,23 @@ public class OrderController {
      */
     @GetMapping("/my-orders/summaries")
     @PreAuthorize("hasAuthority('PERM_ORDER_VIEW_OWN')")
-    public ResponseEntity<BaseResponse<Page<OrderSummaryResponse>>> getMyOrderSummaries(
+    public ResponseEntity<BaseResponse<Page<OrderListItemResponse>>> getMyOrderSummaries(
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable) {
         CustomerProfile customer = getCurrentCustomer(principal);
         log.info("Getting customer order summaries: customerId={}", customer.getId());
-        Page<OrderSummaryResponse> response = orderService.getCustomerOrderSummaries(customer.getId(), pageable);
+        Page<OrderListItemResponse> response = orderService.getCustomerOrderSummaries(customer.getId(), pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Order summaries retrieved successfully"));
     }
 
     @GetMapping("/branch/{branchId}/summaries")
     @PreAuthorize("hasAuthority('PERM_ORDER_VIEW_BRANCH')")
-    public ResponseEntity<BaseResponse<Page<OrderSummaryResponse>>> getBranchOrderSummaries(
+    public ResponseEntity<BaseResponse<Page<OrderListItemResponse>>> getBranchOrderSummaries(
             @PathVariable String branchId,
             @RequestParam(required = false) String status,
             Pageable pageable) {
         log.info("Getting branch order summaries: branchId={}, status={}", branchId, status);
-        Page<OrderSummaryResponse> response = orderService.getBranchOrderSummaries(branchId, status, pageable);
+        Page<OrderListItemResponse> response = orderService.getBranchOrderSummaries(branchId, status, pageable);
         return ResponseEntity.ok(BaseResponse.success(response, "Order summaries retrieved successfully"));
     }
 

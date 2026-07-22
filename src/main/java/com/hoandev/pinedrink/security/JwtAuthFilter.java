@@ -20,21 +20,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-/** Request gửi vào
- ↓
- Lấy JWT từ header
- ↓
- Kiểm tra JWT
- ↓
- Đọc thông tin trong JWT
- ↓
- Load tài khoản
- ↓
- Tạo Authentication
- ↓
- Lưu vào SecurityContext
- ↓
- Cho request đi tiếp
+
+/**
+ * Filter xác thực JWT cho mỗi request.
+ *
+ * <p>Đọc Bearer token từ header Authorization, kiểm tra token, lấy thông tin
+ * người dùng, rồi lưu Authentication vào SecurityContext để Spring Security
+ * xử lý phân quyền ở các bước sau.</p>
  */
 @Component
 @Slf4j
@@ -49,6 +41,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService customUserDetailsService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Xác thực request hiện tại bằng JWT trước khi chuyển tiếp filter chain.
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -74,6 +69,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Trích xuất token, kiểm tra hợp lệ, tạo principal, rồi set authentication.
+     */
     private void authenticateRequest(
             HttpServletRequest request,
             HttpServletResponse response
@@ -101,6 +99,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         setAuthentication(userPrincipal, request);
     }
 
+    /**
+     * Tạo UserPrincipal theo loại token: reset token hoặc access token.
+     */
     private UserPrincipal createUserPrincipal(Claims claims) {
         String tokenType = claims.get("type", String.class);
 
@@ -111,6 +112,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         return loadPrincipalFromAccessToken(claims);
     }
 
+    /**
+     * Load người dùng từ subject của reset token.
+     */
     private UserPrincipal loadPrincipalFromResetToken(Claims claims) {
         String userId = claims.getSubject();
 
@@ -119,6 +123,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         return (UserPrincipal) customUserDetailsService.loadUserById(userId);
     }
 
+    /**
+     * Load tài khoản từ access token, kèm danh sách role trong claims.
+     */
     private UserPrincipal loadPrincipalFromAccessToken(Claims claims) {
         String accountId = claims.getSubject();
         List<String> roles = extractRoles(claims);
@@ -131,6 +138,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         );
     }
 
+    /**
+     * Lấy danh sách role từ claims của access token.
+     */
     private List<String> extractRoles(Claims claims) {
         Object rolesClaim = claims.get("roles");
 
@@ -145,6 +155,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 .toList();
     }
 
+    /**
+     * Tạo Authentication và lưu vào SecurityContext của request hiện tại.
+     */
     private void setAuthentication(
             UserPrincipal userPrincipal,
             HttpServletRequest request
@@ -169,6 +182,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         );
     }
 
+    /**
+     * Từ chối request khi tài khoản trong token đã bị vô hiệu hóa.
+     */
     private void rejectDisabledAccount(
             UserPrincipal userPrincipal,
             HttpServletResponse response
@@ -187,6 +203,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         );
     }
 
+    /**
+     * Lấy JWT từ header Authorization theo định dạng Bearer token.
+     */
     private String extractToken(HttpServletRequest request) {
         String authorizationHeader =
                 request.getHeader(AUTHORIZATION_HEADER);
@@ -199,6 +218,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         return authorizationHeader.substring(BEARER_PREFIX.length());
     }
 
+    /**
+     * Ghi response lỗi xác thực dạng JSON.
+     */
     private void writeAuthError(
             HttpServletResponse response,
             ErrorCode errorCode,

@@ -12,7 +12,7 @@ public record RabbitMqProperties(
         Realtime realtime,
         Channel domainEvents,
         Channel email,
-        Channel report,
+        ReportChannel report,
         OrderExpiry orderExpiry
 ) {
     /**
@@ -86,6 +86,20 @@ public record RabbitMqProperties(
             int concurrentConsumers,
             int maxConsumers,
             int prefetch
+    ) {
+    }
+
+    /**
+     * Cấu hình tối thiểu cho kênh xuất báo cáo.
+     *
+     * @param exchange tên exchange
+     * @param queue tên queue nhận job báo cáo
+     * @param routingKey routing key publish job báo cáo
+     */
+    public record ReportChannel(
+            String exchange,
+            String queue,
+            String routingKey
     ) {
     }
 

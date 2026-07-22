@@ -8,11 +8,9 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -236,38 +234,10 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue reportRetryQueue() {
-        return QueueBuilder.durable(properties.report().retryQueue())
-                .withArgument("x-message-ttl", properties.report().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.report().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.report().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue reportDlq() {
-        return QueueBuilder.durable(properties.report().dlq()).build();
-    }
-
-    @Bean
     public Binding reportBinding() {
         return BindingBuilder.bind(reportQueue())
                 .to(reportExchange())
                 .with(properties.report().routingKey());
-    }
-
-    @Bean
-    public Binding reportRetryBinding() {
-        return BindingBuilder.bind(reportRetryQueue())
-                .to(reportExchange())
-                .with(properties.report().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding reportDlqBinding() {
-        return BindingBuilder.bind(reportDlq())
-                .to(reportExchange())
-                .with(properties.report().dlqRoutingKey());
     }
 
     // ──────────────────────────────────────────────
@@ -314,23 +284,6 @@ public class RabbitMqConfig {
         template.setMessageConverter(messageConverter);
         template.setObservationEnabled(true);
         return template;
-    }
-
-    /**
-     * Factory riêng cho report export để kiểm soát số job sinh file nặng chạy song song.
-     */
-    @Bean
-    public SimpleRabbitListenerContainerFactory reportListenerContainerFactory(
-            SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connectionFactory
-    ) {
-        var report = properties.report();
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        configurer.configure(factory, connectionFactory);
-        factory.setConcurrentConsumers(report.concurrentConsumers());
-        factory.setMaxConcurrentConsumers(report.maxConsumers());
-        factory.setPrefetchCount(report.prefetch());
-        return factory;
     }
 
     private Queue realtimeQueue(String name) {

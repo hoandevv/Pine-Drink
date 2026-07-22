@@ -236,15 +236,7 @@ app:
     report:
       exchange: ${APP_RABBITMQ_REPORT_EXCHANGE:pine-drink.report.exchange}
       queue: ${APP_RABBITMQ_REPORT_QUEUE:pine-drink.report.queue}
-      retry-queue: ${APP_RABBITMQ_REPORT_RETRY_QUEUE:pine-drink.report.retry.queue}
-      dlq: ${APP_RABBITMQ_REPORT_DLQ:pine-drink.report.dlq}
       routing-key: ${APP_RABBITMQ_REPORT_ROUTING_KEY:pine-drink.report.export}
-      retry-routing-key: ${APP_RABBITMQ_REPORT_RETRY_ROUTING_KEY:pine-drink.report.retry}
-      dlq-routing-key: ${APP_RABBITMQ_REPORT_DLQ_ROUTING_KEY:pine-drink.report.failed}
-      retry-ttl-ms: ${APP_RABBITMQ_REPORT_RETRY_TTL_MS:60000}
-      concurrent-consumers: ${APP_RABBITMQ_REPORT_CONCURRENT_CONSUMERS:1}
-      max-consumers: ${APP_RABBITMQ_REPORT_MAX_CONSUMERS:2}
-      prefetch: ${APP_RABBITMQ_REPORT_PREFETCH:1}
 
     queue:
       geocoding: ${APP_RABBITMQ_QUEUE_GEOCODING:pine-drink.geocoding.queue}

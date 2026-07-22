@@ -164,9 +164,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     ) {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userPrincipal,
+                        userPrincipal, // thông tin của user
                         null,
-                        userPrincipal.getAuthorities()
+                        userPrincipal.getAuthorities() // ds quyền
                 );
 
         authentication.setDetails(

@@ -26,11 +26,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Spring Security configuration for the REST API.
+ * Cấu hình bảo mật chính cho REST API.
  *
- * <p>The application uses stateless JWT authentication. Read-only storefront
- * endpoints are public, while customer and management endpoints require a valid
- * Bearer access token.</p>
+ * <p>Dùng JWT stateless, tắt form login/http basic, cấu hình CORS, xử lý lỗi
+ * xác thực, phân quyền endpoint, rồi gắn các filter bảo mật vào filter chain.</p>
  */
 @Configuration
 @EnableMethodSecurity
@@ -58,7 +57,7 @@ public class SecurityConfig {
     private long maxAge;
 
     /**
-     * Provides the password hashing strategy used by authentication services.
+     * Cung cấp thuật toán mã hóa mật khẩu bằng BCrypt.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -66,19 +65,19 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines endpoint authorization, session policy, CORS, and auth filters.
+     * Tạo SecurityFilterChain cho session stateless, CORS, JWT và phân quyền API.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable) // Không dùng session, nên tắt CSRF
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // cấu hình để fe gọi do khác port
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
+                        .authenticationEntryPoint(authenticationEntryPoint) // xử lý lỗi xác thực
+                        .accessDeniedHandler(accessDeniedHandler) // đã đăng nhập nhưng không có quyền truy cập
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -118,14 +117,14 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                // đi qua jwtfilter để đọc token và xác thực người dùng trước khi vào controller
+                // Đọc JWT và xác thực người dùng trước khi request vào controller., filter mặc định của spring
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     /**
-     * Builds CORS rules from application configuration.
+     * Tạo cấu hình CORS từ các giá trị trong application config.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -147,7 +146,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Splits comma-separated configuration values into trimmed entries.
+     * Tách chuỗi cấu hình dạng comma-separated thành danh sách giá trị sạch.
      */
     private List<String> splitConfig(String value) {
         return Arrays.stream(value.split(","))

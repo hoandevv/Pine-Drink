@@ -1,7 +1,6 @@
 package com.hoandev.pinedrink.security;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-@RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
     private final String id;
@@ -20,6 +18,15 @@ public class UserPrincipal implements UserDetails {
     private final String password;
     private final String status;
     private final List<GrantedAuthority> authorities;
+
+    public UserPrincipal(String id, String username, String email, String password, String status, List<GrantedAuthority> authorities) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.authorities = authorities;
+    }
 
     @Override
     public String getUsername() {

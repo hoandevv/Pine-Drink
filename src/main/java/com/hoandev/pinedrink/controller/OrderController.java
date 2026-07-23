@@ -13,7 +13,6 @@ import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.OrderService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,12 +24,16 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/orders")
-@RequiredArgsConstructor
 @Slf4j
 public class OrderController {
 
     private final OrderService orderService;
     private final CustomerProfileRepository customerProfileRepository;
+
+    public OrderController(OrderService orderService, CustomerProfileRepository customerProfileRepository) {
+        this.orderService = orderService;
+        this.customerProfileRepository = customerProfileRepository;
+    }
 
     /**
      * Create a new order from cart

@@ -27,7 +27,6 @@ import com.hoandev.pinedrink.repository.ProductVariantRepository;
 import com.hoandev.pinedrink.repository.ToppingRepository;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.CartService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class CartServiceImpl implements CartService {
 
@@ -57,6 +55,20 @@ public class CartServiceImpl implements CartService {
     private final ToppingRepository toppingRepository;
     private final BranchVariantDailyStockService dailyStockService;
     private final CartMapper cartMapper;
+
+    public CartServiceImpl(CartRepository cartRepository, CartItemRepository cartItemRepository, CartItemToppingRepository cartItemToppingRepository, CustomerProfileRepository customerProfileRepository, BranchRepository branchRepository, BranchProductAvailabilityRepository branchProductAvailabilityRepository, ProductRepository productRepository, ProductVariantRepository productVariantRepository, ToppingRepository toppingRepository, BranchVariantDailyStockService dailyStockService, CartMapper cartMapper) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.cartItemToppingRepository = cartItemToppingRepository;
+        this.customerProfileRepository = customerProfileRepository;
+        this.branchRepository = branchRepository;
+        this.branchProductAvailabilityRepository = branchProductAvailabilityRepository;
+        this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
+        this.toppingRepository = toppingRepository;
+        this.dailyStockService = dailyStockService;
+        this.cartMapper = cartMapper;
+    }
 
     @Override
     @Transactional(readOnly = true)

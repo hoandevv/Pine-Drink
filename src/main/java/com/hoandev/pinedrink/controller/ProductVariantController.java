@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryResponse;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,11 +30,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products/{productId}/variants")
-@RequiredArgsConstructor
 @Slf4j
 public class ProductVariantController {
 
     private final ProductVariantService productVariantService;
+
+    public ProductVariantController(ProductVariantService productVariantService) {
+        this.productVariantService = productVariantService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")

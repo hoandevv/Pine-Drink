@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, String> {
-   /**
+    /**
      * Finds all customer addresses by customer ID.
      *
      * @param customerId the ID of the customer
@@ -20,4 +20,5 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
     List<CustomerAddress> findByCustomerId(String customerId);
     Page<CustomerAddress> findByCustomerId(String customerId, Pageable pageable);
     Optional<CustomerAddress> findByCustomerIdAndIsDefaultTrue(String customerId);
+    Optional<CustomerAddress> findByIdAndCustomerId(String id, String customerId);
 }

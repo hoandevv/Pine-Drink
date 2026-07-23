@@ -19,7 +19,6 @@ import com.hoandev.pinedrink.repository.BranchHoursRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
@@ -44,6 +42,15 @@ public class BranchServiceImpl implements BranchService {
     private final BranchHoursMapper branchHoursMapper;
     private final CodeGenerator codeGenerator;
     private final AccessScopeService accessScopeService;
+
+    public BranchServiceImpl(BranchRepository branchRepository, BranchHoursRepository branchHoursRepository, BranchMapper branchMapper, BranchHoursMapper branchHoursMapper, CodeGenerator codeGenerator, AccessScopeService accessScopeService) {
+        this.branchRepository = branchRepository;
+        this.branchHoursRepository = branchHoursRepository;
+        this.branchMapper = branchMapper;
+        this.branchHoursMapper = branchHoursMapper;
+        this.codeGenerator = codeGenerator;
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     @Transactional

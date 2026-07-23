@@ -24,7 +24,6 @@ import com.hoandev.pinedrink.repository.PaymentIntentRepository;
 import com.hoandev.pinedrink.repository.PaymentTransactionRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.PaymentService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -47,7 +46,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
@@ -70,6 +68,17 @@ public class PaymentServiceImpl implements PaymentService {
     private final MomoProperties momoProperties;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
+    public PaymentServiceImpl(OrderRepository orderRepository, PaymentIntentRepository paymentIntentRepository, PaymentTransactionRepository paymentTransactionRepository, PaymentMapper paymentMapper, AccessScopeService accessScopeService, MomoProperties momoProperties, RestTemplate restTemplate, ObjectMapper objectMapper) {
+        this.orderRepository = orderRepository;
+        this.paymentIntentRepository = paymentIntentRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
+        this.paymentMapper = paymentMapper;
+        this.accessScopeService = accessScopeService;
+        this.momoProperties = momoProperties;
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     @Transactional

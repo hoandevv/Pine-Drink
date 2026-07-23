@@ -16,7 +16,6 @@ import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ProfileService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
  * Handles user profile management operations.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ProfileServiceImpl implements ProfileService {
 
@@ -39,6 +37,14 @@ public class ProfileServiceImpl implements ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
     private final AuthMapper authMapper;
+
+    public ProfileServiceImpl(AccountRepository accountRepository, CustomerProfileRepository customerProfileRepository, PasswordEncoder passwordEncoder, FileStorageService fileStorageService, AuthMapper authMapper) {
+        this.accountRepository = accountRepository;
+        this.customerProfileRepository = customerProfileRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.fileStorageService = fileStorageService;
+        this.authMapper = authMapper;
+    }
 
     /**
      * {@inheritDoc}

@@ -1,7 +1,6 @@
 package com.hoandev.pinedrink.service;
 
 import com.hoandev.pinedrink.entity.dto.geocoding.GeocodingResult;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -15,11 +14,14 @@ import java.util.Optional;
  * Reduces external API calls and improves performance.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class GeocodingCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+
+    public GeocodingCacheService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     private static final String CACHE_PREFIX = "geocoding:";
     private static final String SEARCH_PREFIX = "geocoding:search:";

@@ -28,10 +28,7 @@ public class RabbitMqConfig {
 
     @Value("${app.rabbitmq.queue.geocoding:pine-drink.geocoding.queue}")
     private String geocodingQueueName;
-
-    // ──────────────────────────────────────────────
     // 1. Topic Exchanges
-    // ──────────────────────────────────────────────
 
     @Bean
     public TopicExchange domainEventExchange() {
@@ -44,11 +41,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public TopicExchange realtimeDeadLetterExchange() {
-        return new TopicExchange(properties.realtime().dlx(), true, false);
-    }
-
-    @Bean
     public TopicExchange emailExchange() {
         return new TopicExchange(properties.email().exchange());
     }
@@ -58,9 +50,7 @@ public class RabbitMqConfig {
         return new TopicExchange(properties.report().exchange());
     }
 
-    // ──────────────────────────────────────────────
     // 2. Domain Events — Queues & Bindings
-    // ──────────────────────────────────────────────
 
     @Bean
     public Queue domainEventQueue() {
@@ -69,38 +59,10 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue domainEventRetryQueue() {
-        return QueueBuilder.durable(properties.domainEvents().retryQueue())
-                .withArgument("x-message-ttl", properties.domainEvents().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.domainEvents().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.domainEvents().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue domainEventDlq() {
-        return QueueBuilder.durable(properties.domainEvents().dlq()).build();
-    }
-
-    @Bean
     public Binding domainEventBinding() {
         return BindingBuilder.bind(domainEventQueue())
                 .to(domainEventExchange())
                 .with(properties.domainEvents().routingKey());
-    }
-
-    @Bean
-    public Binding domainEventRetryBinding() {
-        return BindingBuilder.bind(domainEventRetryQueue())
-                .to(domainEventExchange())
-                .with(properties.domainEvents().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding domainEventDlqBinding() {
-        return BindingBuilder.bind(domainEventDlq())
-                .to(domainEventExchange())
-                .with(properties.domainEvents().dlqRoutingKey());
     }
 
     @Bean
@@ -121,11 +83,6 @@ public class RabbitMqConfig {
     @Bean
     public Queue realtimeWebhookQueue() {
         return realtimeQueue(properties.realtime().webhookQueue());
-    }
-
-    @Bean
-    public Queue realtimeDlq() {
-        return QueueBuilder.durable(properties.realtime().dlq()).build();
     }
 
     @Bean
@@ -164,11 +121,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding realtimeDlqBinding() {
-        return BindingBuilder.bind(realtimeDlq()).to(realtimeDeadLetterExchange()).with("failed");
-    }
-
-    @Bean
     public Queue geocodingQueue() {
         return QueueBuilder.durable(geocodingQueueName).build();
     }
@@ -180,27 +132,11 @@ public class RabbitMqConfig {
                 .with(properties.domainEvents().routingKey());
     }
 
-    // ──────────────────────────────────────────────
     // 3. Email — Queues & Bindings
-    // ──────────────────────────────────────────────
 
     @Bean
     public Queue emailQueue() {
         return QueueBuilder.durable(properties.email().queue()).build();
-    }
-
-    @Bean
-    public Queue emailRetryQueue() {
-        return QueueBuilder.durable(properties.email().retryQueue())
-                .withArgument("x-message-ttl", properties.email().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.email().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.email().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue emailDlq() {
-        return QueueBuilder.durable(properties.email().dlq()).build();
     }
 
     @Bean
@@ -209,25 +145,8 @@ public class RabbitMqConfig {
                 .to(emailExchange())
                 .with(properties.email().routingKey());
     }
-
-    @Bean
-    public Binding emailRetryBinding() {
-        return BindingBuilder.bind(emailRetryQueue())
-                .to(emailExchange())
-                .with(properties.email().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding emailDlqBinding() {
-        return BindingBuilder.bind(emailDlq())
-                .to(emailExchange())
-                .with(properties.email().dlqRoutingKey());
-    }
-
-    // ──────────────────────────────────────────────
     // 4. Report — Queues & Bindings
-    // ──────────────────────────────────────────────
-
+    // Khởi tạo object
     @Bean
     public Queue reportQueue() {
         return QueueBuilder.durable(properties.report().queue()).build();
@@ -240,10 +159,7 @@ public class RabbitMqConfig {
                 .with(properties.report().routingKey());
     }
 
-    // ──────────────────────────────────────────────
     // 5. Order Expiry — Delayed Message Exchange
-    // ──────────────────────────────────────────────
-
     @Bean
     public DirectExchange orderExpireExchange() {
         return ExchangeBuilder
@@ -255,10 +171,7 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue orderExpireQueue() {
-        return QueueBuilder.durable(properties.orderExpiry().queue())
-                .withArgument("x-dead-letter-exchange", properties.orderExpiry().exchange())
-                .withArgument("x-dead-letter-routing-key", "order.expire.dlq")
-                .build();
+        return QueueBuilder.durable(properties.orderExpiry().queue()).build();
     }
 
     @Bean
@@ -268,10 +181,7 @@ public class RabbitMqConfig {
                 .with(properties.orderExpiry().routingKey());
     }
 
-    // ──────────────────────────────────────────────
     // 6. Message Converter & RabbitTemplate
-    // ──────────────────────────────────────────────
-
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
@@ -287,9 +197,6 @@ public class RabbitMqConfig {
     }
 
     private Queue realtimeQueue(String name) {
-        return QueueBuilder.durable(name)
-                .withArgument("x-dead-letter-exchange", properties.realtime().dlx())
-                .withArgument("x-dead-letter-routing-key", "failed")
-                .build();
+        return QueueBuilder.durable(name).build();
     }
 }

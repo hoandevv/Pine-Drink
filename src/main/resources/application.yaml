@@ -204,34 +204,16 @@ app:
       audit-queue: ${APP_RABBITMQ_REALTIME_AUDIT_QUEUE:pine.audit.queue}
       chat-queue: ${APP_RABBITMQ_REALTIME_CHAT_QUEUE:pine.chat.queue}
       webhook-queue: ${APP_RABBITMQ_REALTIME_WEBHOOK_QUEUE:pine.webhook.queue}
-      dlq: ${APP_RABBITMQ_REALTIME_DLQ:pine.events.dlq}
-      dlx: ${APP_RABBITMQ_REALTIME_DLX:pine.events.dlx}
 
     domain-events:
       exchange: ${APP_RABBITMQ_DOMAIN_EVENTS_EXCHANGE:pine-drink.domain-events.exchange}
       queue: ${APP_RABBITMQ_DOMAIN_EVENTS_QUEUE:pine-drink.queue.domain-events.queue}
-      retry-queue: ${APP_RABBITMQ_DOMAIN_EVENTS_RETRY_QUEUE:pine-drink.queue.domain-events.retry.queue}
-      dlq: ${APP_RABBITMQ_DOMAIN_EVENTS_DLQ:pine-drink.queue.domain-events.dlq}
       routing-key: "${APP_RABBITMQ_DOMAIN_EVENTS_ROUTING_KEY:pine-drink.events.#}"
-      retry-routing-key: ${APP_RABBITMQ_DOMAIN_EVENTS_RETRY_ROUTING_KEY:pine-drink.events.retry}
-      dlq-routing-key: ${APP_RABBITMQ_DOMAIN_EVENTS_DLQ_ROUTING_KEY:pine-drink.events.failed}
-      retry-ttl-ms: ${APP_RABBITMQ_DOMAIN_EVENTS_RETRY_TTL_MS:30000}
-      concurrent-consumers: ${APP_RABBITMQ_DOMAIN_EVENTS_CONCURRENT_CONSUMERS:2}
-      max-consumers: ${APP_RABBITMQ_DOMAIN_EVENTS_MAX_CONSUMERS:6}
-      prefetch: ${APP_RABBITMQ_DOMAIN_EVENTS_PREFETCH:10}
 
     email:
       exchange: ${APP_RABBITMQ_EMAIL_EXCHANGE:pine-drink.email.exchange}
       queue: ${APP_RABBITMQ_EMAIL_QUEUE:pine-drink.email.queue}
-      retry-queue: ${APP_RABBITMQ_EMAIL_RETRY_QUEUE:pine-drink.email.retry.queue}
-      dlq: ${APP_RABBITMQ_EMAIL_DLQ:pine-drink.email.dlq}
       routing-key: ${APP_RABBITMQ_EMAIL_ROUTING_KEY:pine-drink.email.send}
-      retry-routing-key: ${APP_RABBITMQ_EMAIL_RETRY_ROUTING_KEY:pine-drink.email.retry}
-      dlq-routing-key: ${APP_RABBITMQ_EMAIL_DLQ_ROUTING_KEY:pine-drink.email.failed}
-      retry-ttl-ms: ${APP_RABBITMQ_EMAIL_RETRY_TTL_MS:30000}
-      concurrent-consumers: ${APP_RABBITMQ_EMAIL_CONCURRENT_CONSUMERS:3}
-      max-consumers: ${APP_RABBITMQ_EMAIL_MAX_CONSUMERS:10}
-      prefetch: ${APP_RABBITMQ_EMAIL_PREFETCH:1}
 
     report:
       exchange: ${APP_RABBITMQ_REPORT_EXCHANGE:pine-drink.report.exchange}

@@ -7,7 +7,6 @@ import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.security.websocket.StompPrincipal;
 import com.hoandev.pinedrink.service.ChatMessageService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
@@ -17,10 +16,13 @@ import java.security.Principal;
  * Controller for handling real-time chat messages.
  */
 @Controller
-@RequiredArgsConstructor
 public class ChatRealtimeController {
 
     private final ChatMessageService chatMessageService;
+
+    public ChatRealtimeController(ChatMessageService chatMessageService) {
+        this.chatMessageService = chatMessageService;
+    }
 
     @MessageMapping("/chat.send")
     public ChatMessageResponse send(@Valid @Payload SendChatMessageRequest request, Principal principal) {

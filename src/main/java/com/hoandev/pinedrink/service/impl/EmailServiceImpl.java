@@ -5,7 +5,6 @@ import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,11 +21,15 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+
+    public EmailServiceImpl(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+    }
 
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;

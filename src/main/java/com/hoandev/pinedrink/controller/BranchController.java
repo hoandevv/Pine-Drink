@@ -10,7 +10,6 @@ import com.hoandev.pinedrink.entity.dto.response.Branch.BranchSummaryResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.BranchService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,10 +21,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/branches")
-@RequiredArgsConstructor
 @Slf4j
 public class BranchController {
     private final BranchService branchService;
+
+    public BranchController(BranchService branchService) {
+        this.branchService = branchService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_BRANCH_CREATE')")

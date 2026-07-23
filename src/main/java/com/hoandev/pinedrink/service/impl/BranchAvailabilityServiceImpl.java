@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.mapper.BranchAvailabilityMapper;
 import com.hoandev.pinedrink.repository.*;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchAvailabilityService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BranchAvailabilityServiceImpl implements BranchAvailabilityService {
     private static final String ACTIVE = "ACTIVE";
@@ -30,6 +28,16 @@ public class BranchAvailabilityServiceImpl implements BranchAvailabilityService 
     private final ToppingRepository toppingRepository;
     private final BranchAvailabilityMapper branchAvailabilityMapper;
     private final AccessScopeService accessScopeService;
+
+    public BranchAvailabilityServiceImpl(BranchProductAvailabilityRepository branchProductAvailabilityRepository, BranchToppingAvailabilityRepository branchToppingAvailabilityRepository, BranchRepository branchRepository, ProductRepository productRepository, ToppingRepository toppingRepository, BranchAvailabilityMapper branchAvailabilityMapper, AccessScopeService accessScopeService) {
+        this.branchProductAvailabilityRepository = branchProductAvailabilityRepository;
+        this.branchToppingAvailabilityRepository = branchToppingAvailabilityRepository;
+        this.branchRepository = branchRepository;
+        this.productRepository = productRepository;
+        this.toppingRepository = toppingRepository;
+        this.branchAvailabilityMapper = branchAvailabilityMapper;
+        this.accessScopeService = accessScopeService;
+    }
 
     /**
      * Creates a new product availability entry for a branch.

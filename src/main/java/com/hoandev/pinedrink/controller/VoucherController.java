@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherResponse;
 import com.hoandev.pinedrink.entity.dto.response.Voucher.VoucherSummaryResponse;
 import com.hoandev.pinedrink.service.VoucherService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,11 +32,14 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/vouchers")
-@RequiredArgsConstructor
 @Slf4j
 public class VoucherController {
 
     private final VoucherService voucherService;
+
+    public VoucherController(VoucherService voucherService) {
+        this.voucherService = voucherService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_VOUCHER_CREATE')")

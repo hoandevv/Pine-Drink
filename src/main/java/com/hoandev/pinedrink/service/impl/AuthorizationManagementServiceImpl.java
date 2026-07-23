@@ -16,7 +16,6 @@ import com.hoandev.pinedrink.repository.RoleRepository;
 import com.hoandev.pinedrink.service.AuthorizationManagementService;
 import com.hoandev.pinedrink.service.PermissionCacheService;
 import com.hoandev.pinedrink.utils.Constants;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +31,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthorizationManagementServiceImpl implements AuthorizationManagementService {
 
@@ -43,6 +41,14 @@ public class AuthorizationManagementServiceImpl implements AuthorizationManageme
     private final RolePermissionRepository rolePermissionRepository;
     private final AccountRoleAssignmentRepository assignmentRepository;
     private final PermissionCacheService permissionCacheService;
+
+    public AuthorizationManagementServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository, RolePermissionRepository rolePermissionRepository, AccountRoleAssignmentRepository assignmentRepository, PermissionCacheService permissionCacheService) {
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.permissionCacheService = permissionCacheService;
+    }
 
     @Override
     @Transactional(readOnly = true)

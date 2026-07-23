@@ -23,7 +23,6 @@ import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.service.CategoryService;
 import com.hoandev.pinedrink.service.ReportJobService;
 import com.hoandev.pinedrink.service.ReportStorageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -39,7 +38,6 @@ import java.util.List;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class ReportJobServiceImpl implements ReportJobService {
     private static final long MAX_REPORT_RANGE_DAYS = 366;
 
@@ -52,6 +50,18 @@ public class ReportJobServiceImpl implements ReportJobService {
     private final ReportStorageService reportStorageService;
     private final CategoryService categoryService;
     private final ReportJobMapper reportJobMapper;
+
+    public ReportJobServiceImpl(ExportRequestRepository exportRequestRepository, AccountRepository accountRepository, BranchRepository branchRepository, EventPublisher eventPublisher, RabbitMqProperties rabbitMqProperties, ReportStorageProperties reportStorageProperties, ReportStorageService reportStorageService, CategoryService categoryService, ReportJobMapper reportJobMapper) {
+        this.exportRequestRepository = exportRequestRepository;
+        this.accountRepository = accountRepository;
+        this.branchRepository = branchRepository;
+        this.eventPublisher = eventPublisher;
+        this.rabbitMqProperties = rabbitMqProperties;
+        this.reportStorageProperties = reportStorageProperties;
+        this.reportStorageService = reportStorageService;
+        this.categoryService = categoryService;
+        this.reportJobMapper = reportJobMapper;
+    }
 
     /**
      * Tạo job xuất báo cáo và publish thông điệp RabbitMQ để xử lý nền.

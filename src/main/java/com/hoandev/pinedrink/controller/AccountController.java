@@ -12,7 +12,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.AccountService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,11 +25,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
-@RequiredArgsConstructor
 @Slf4j
 public class AccountController {
 
     private final AccountService accountService;
+
+    public AccountController(AccountService accountService) {
+        this.accountService = accountService;
+    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('PERM_ACCOUNT_VIEW')")

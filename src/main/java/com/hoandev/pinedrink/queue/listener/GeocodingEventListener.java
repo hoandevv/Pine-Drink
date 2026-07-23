@@ -6,7 +6,6 @@ import com.hoandev.pinedrink.queue.event.geocoding.GeocodingRequestEvent;
 import com.hoandev.pinedrink.repository.CustomerAddressRepository;
 import com.hoandev.pinedrink.service.GeocodingCacheService;
 import com.hoandev.pinedrink.service.GeocodingService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,7 +18,6 @@ import java.util.Optional;
  * Processes geocoding requests asynchronously.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class GeocodingEventListener {
 
@@ -29,6 +27,12 @@ public class GeocodingEventListener {
     private final GeocodingService geocodingService;
     
     private final GeocodingCacheService geocodingCacheService;
+
+    public GeocodingEventListener(CustomerAddressRepository customerAddressRepository, GeocodingService geocodingService, GeocodingCacheService geocodingCacheService) {
+        this.customerAddressRepository = customerAddressRepository;
+        this.geocodingService = geocodingService;
+        this.geocodingCacheService = geocodingCacheService;
+    }
 
     /**
      * Handles geocoding request events.

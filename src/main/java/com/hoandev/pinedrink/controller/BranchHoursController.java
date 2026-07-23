@@ -6,7 +6,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchHoursResponse;
 import com.hoandev.pinedrink.service.BranchHoursService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +16,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/branches/{branchId}/hours")
-@RequiredArgsConstructor
 @Slf4j
 public class BranchHoursController {
     private final BranchHoursService branchHoursService;
+
+    public BranchHoursController(BranchHoursService branchHoursService) {
+        this.branchHoursService = branchHoursService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_BRANCH_UPDATE')")

@@ -19,7 +19,6 @@ import com.hoandev.pinedrink.repository.ProductToppingRepository;
 import com.hoandev.pinedrink.repository.ToppingRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ProductToppingService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ProductToppingServiceImpl implements ProductToppingService {
     private final ProductToppingRepository productToppingRepository;
@@ -35,6 +33,14 @@ public class ProductToppingServiceImpl implements ProductToppingService {
     private final ToppingRepository toppingRepository;
     private final ProductToppingMapper productToppingMapper;
     private final AccessScopeService accessScopeService;
+
+    public ProductToppingServiceImpl(ProductToppingRepository productToppingRepository, ProductRepository productRepository, ToppingRepository toppingRepository, ProductToppingMapper productToppingMapper, AccessScopeService accessScopeService) {
+        this.productToppingRepository = productToppingRepository;
+        this.productRepository = productRepository;
+        this.toppingRepository = toppingRepository;
+        this.productToppingMapper = productToppingMapper;
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     @Transactional

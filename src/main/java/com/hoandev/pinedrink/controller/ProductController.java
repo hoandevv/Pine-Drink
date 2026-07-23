@@ -11,7 +11,6 @@ import com.hoandev.pinedrink.entity.dto.response.Product.ProductVariantSummaryRe
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,12 +33,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/products")
-@RequiredArgsConstructor
 @Slf4j
 public class ProductController {
 
     private final ProductService productService;
     private final ProductVariantService productVariantService;
+
+    public ProductController(ProductService productService, ProductVariantService productVariantService) {
+        this.productService = productService;
+        this.productVariantService = productVariantService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")

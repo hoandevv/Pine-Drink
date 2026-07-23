@@ -5,7 +5,6 @@ import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.service.OrderExpiryService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(
         name = "order.expire.fallback-enabled",
@@ -27,6 +25,12 @@ public class OrderExpiryFallbackPublisher {
     private final OrderRepository orderRepository;
     private final OrderExpiryService orderExpiryService;
     private final OrderProperties orderProperties;
+
+    public OrderExpiryFallbackPublisher(OrderRepository orderRepository, OrderExpiryService orderExpiryService, OrderProperties orderProperties) {
+        this.orderRepository = orderRepository;
+        this.orderExpiryService = orderExpiryService;
+        this.orderProperties = orderProperties;
+    }
 
     @Scheduled(fixedDelay = 300000)
     public void handleExpiredOrders() {

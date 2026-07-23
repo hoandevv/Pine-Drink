@@ -12,7 +12,6 @@ import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.utils.Constants;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,11 +26,15 @@ import java.util.Set;
  * Triển khai {@link AccessScopeService}.
  */
 @Service
-@RequiredArgsConstructor
 public class AccessScopeServiceImpl implements AccessScopeService {
 
     private final AccountRoleAssignmentRepository assignmentRepository;
     private final CustomerProfileRepository customerProfileRepository;
+
+    public AccessScopeServiceImpl(AccountRoleAssignmentRepository assignmentRepository, CustomerProfileRepository customerProfileRepository) {
+        this.assignmentRepository = assignmentRepository;
+        this.customerProfileRepository = customerProfileRepository;
+    }
 
     /**
      * {@inheritDoc}

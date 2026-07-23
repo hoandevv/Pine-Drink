@@ -22,7 +22,6 @@ import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ChatAccessService;
 import com.hoandev.pinedrink.service.ChatMessageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +35,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
 
@@ -49,6 +47,18 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final RealtimeEventFactory eventFactory;
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventPublisher realtimeEventPublisher;
+
+    public ChatMessageServiceImpl(ChatRoomRepository chatRoomRepository, ChatMessageRepository chatMessageRepository, AccountRepository accountRepository, ChatAccessService chatAccessService, ChatMapper chatMapper, AccessScopeService accessScopeService, RealtimeEventFactory eventFactory, RealtimePublishService realtimePublishService, RealtimeEventPublisher realtimeEventPublisher) {
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.accountRepository = accountRepository;
+        this.chatAccessService = chatAccessService;
+        this.chatMapper = chatMapper;
+        this.accessScopeService = accessScopeService;
+        this.eventFactory = eventFactory;
+        this.realtimePublishService = realtimePublishService;
+        this.realtimeEventPublisher = realtimeEventPublisher;
+    }
 
     @Override
     @Transactional

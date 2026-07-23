@@ -12,7 +12,6 @@ import com.hoandev.pinedrink.repository.DashboardRepository;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.DashboardService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +20,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int DEFAULT_TOP_PRODUCT_LIMIT = 10;
@@ -32,6 +30,13 @@ public class DashboardServiceImpl implements DashboardService {
     private final BranchRepository branchRepository;
     private final BranchMapper branchMapper;
     private final AccessScopeService accessScopeService;
+
+    public DashboardServiceImpl(DashboardRepository dashboardRepository, BranchRepository branchRepository, BranchMapper branchMapper, AccessScopeService accessScopeService) {
+        this.dashboardRepository = dashboardRepository;
+        this.branchRepository = branchRepository;
+        this.branchMapper = branchMapper;
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     @Transactional(readOnly = true)

@@ -26,7 +26,6 @@ import com.hoandev.pinedrink.service.DeliveryFeeService;
 import com.hoandev.pinedrink.service.OrderService;
 import com.hoandev.pinedrink.service.PaymentService;
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
@@ -49,7 +48,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
@@ -77,6 +75,33 @@ public class OrderServiceImpl implements OrderService {
     private final RealtimeEventFactory realtimeEventFactory;
     private final PaymentService paymentService;
     private final BranchHoursRepository branchHoursRepository;
+
+    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderItemToppingRepository orderItemToppingRepository, CartRepository cartRepository, CartItemRepository cartItemRepository, CartItemToppingRepository cartItemToppingRepository, CustomerProfileRepository customerProfileRepository, CustomerAddressRepository customerAddressRepository, BranchRepository branchRepository, OrderDeliveryRepository orderDeliveryRepository, OrderStatusHistoryRepository orderStatusHistoryRepository, VoucherRepository voucherRepository, VoucherUsageRepository voucherUsageRepository, VoucherBranchRepository voucherBranchRepository, BranchVariantDailyStockService dailyStockService, DeliveryFeeService deliveryFeeService, OrderMapper orderMapper, OrderProperties orderProperties, RabbitTemplate rabbitTemplate, RabbitMqProperties rabbitMqProperties, RealtimePublishService realtimePublishService, RealtimeEventFactory realtimeEventFactory, PaymentService paymentService, BranchHoursRepository branchHoursRepository) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.orderItemToppingRepository = orderItemToppingRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.cartItemToppingRepository = cartItemToppingRepository;
+        this.customerProfileRepository = customerProfileRepository;
+        this.customerAddressRepository = customerAddressRepository;
+        this.branchRepository = branchRepository;
+        this.orderDeliveryRepository = orderDeliveryRepository;
+        this.orderStatusHistoryRepository = orderStatusHistoryRepository;
+        this.voucherRepository = voucherRepository;
+        this.voucherUsageRepository = voucherUsageRepository;
+        this.voucherBranchRepository = voucherBranchRepository;
+        this.dailyStockService = dailyStockService;
+        this.deliveryFeeService = deliveryFeeService;
+        this.orderMapper = orderMapper;
+        this.orderProperties = orderProperties;
+        this.rabbitTemplate = rabbitTemplate;
+        this.rabbitMqProperties = rabbitMqProperties;
+        this.realtimePublishService = realtimePublishService;
+        this.realtimeEventFactory = realtimeEventFactory;
+        this.paymentService = paymentService;
+        this.branchHoursRepository = branchHoursRepository;
+    }
 
     @Override
     @Transactional
@@ -129,7 +154,10 @@ public class OrderServiceImpl implements OrderService {
 
         // Xử lý địa chỉ giao hàng và phí cho đơn DELIVERY
         if ("DELIVERY".equals(request.getOrderType())) {
-            CustomerAddress address = customerAddressRepository.findByCustomerIdAndIsDefaultTrue(customerId)
+            CustomerAddress address = hasText(request.getDeliveryAddressId())
+                    ? customerAddressRepository.findByIdAndCustomerId(request.getDeliveryAddressId(), customerId)
+                    .orElseThrow(() -> new BaseException(ErrorCode.CUSTOMER_002))
+                    : customerAddressRepository.findByCustomerIdAndIsDefaultTrue(customerId)
                     .orElseThrow(() -> new BaseException(ErrorCode.CUSTOMER_002));
 
             if (hasText(address.getReceiverName())) {
@@ -140,6 +168,13 @@ public class OrderServiceImpl implements OrderService {
             }
             order.setDeliveryAddress(formatAddress(address));
             order.setDeliveryFee(deliveryFeeService.calculate(branch, address, subtotal));
+        }
+
+        if (!hasText(order.getCustomerPhone())) {
+            String accountPhone = customer.getAccount() != null ? customer.getAccount().getPhone() : null;
+            if (hasText(accountPhone)) {
+                order.setCustomerPhone(accountPhone);
+            }
         }
 
         if (!hasText(order.getCustomerPhone())) {
@@ -209,11 +244,11 @@ public class OrderServiceImpl implements OrderService {
             // Đặt giữ tồn kho
             if (variant != null) {
                 dailyStockService.reserve(
-                    branch.getId(),
-                    variant.getId(),
-                    LocalDate.now(),
-                    cartItem.getQuantity(),
-                    order.getId()
+                        branch.getId(),
+                        variant.getId(),
+                        LocalDate.now(),
+                        cartItem.getQuantity(),
+                        order.getId()
                 );
             }
         }
@@ -447,7 +482,7 @@ public class OrderServiceImpl implements OrderService {
                 return newStatus.equals("READY") || newStatus.equals("REJECTED");
             case "READY":
                 return newStatus.equals("DELIVERING") || newStatus.equals("COMPLETED") || newStatus.equals("REJECTED");
-                // mở rộng sau này ch có thể shipper ms có tể confirm
+            // mở rộng sau này ch có thể shipper ms có tể confirm
             case "DELIVERING":
                 return newStatus.equals("DELIVERED")
                         || newStatus.equals("COMPLETED")
@@ -577,11 +612,11 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant variant = item.getVariant();
             if (variant != null) {
                 dailyStockService.release(
-                    branchId,
-                    variant.getId(),
-                    LocalDate.now(),
-                    item.getQuantity(),
-                    order.getId()
+                        branchId,
+                        variant.getId(),
+                        LocalDate.now(),
+                        item.getQuantity(),
+                        order.getId()
                 );
             }
         }
@@ -594,11 +629,11 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant variant = item.getVariant();
             if (variant != null) {
                 dailyStockService.confirmSold(
-                    branchId,
-                    variant.getId(),
-                    LocalDate.now(),
-                    item.getQuantity(),
-                    order.getId()
+                        branchId,
+                        variant.getId(),
+                        LocalDate.now(),
+                        item.getQuantity(),
+                        order.getId()
                 );
             }
         }
@@ -682,7 +717,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void publishOrderCreatedEvent(String orderId, String orderCode, String branchId,
-                                           String customerAccountId, BigDecimal totalAmount) {
+                                          String customerAccountId, BigDecimal totalAmount) {
         try {
             OrderCreatedPayload payload = new OrderCreatedPayload(
                     orderId, orderCode, branchId, customerAccountId, totalAmount);
@@ -702,8 +737,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void publishOrderStatusChangedEvent(String orderId, String orderCode, String oldStatus,
-                                                 String newStatus, String reason, String branchId,
-                                                 String customerAccountId) {
+                                                String newStatus, String reason, String branchId,
+                                                String customerAccountId) {
         try {
             OrderStatusChangedPayload payload = new OrderStatusChangedPayload(
                     orderId, orderCode, oldStatus, newStatus, reason, branchId, customerAccountId);
@@ -729,8 +764,8 @@ public class OrderServiceImpl implements OrderService {
         // Tải tất cả topping trong một truy vấn để tránh N+1
         List<String> orderItemIds = orderItems.stream().map(OrderItem::getId).collect(Collectors.toList());
         List<OrderItemTopping> allToppings = orderItemIds.isEmpty()
-            ? new ArrayList<>()
-            : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
+                ? new ArrayList<>()
+                : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
 
         // Gom nhóm topping theo id mục đơn hàng
         var toppingsByItemId = allToppings.stream()
@@ -831,8 +866,8 @@ public class OrderServiceImpl implements OrderService {
         // Tải tất cả topping trong một truy vấn
         List<String> orderItemIds = allItems.stream().map(OrderItem::getId).collect(Collectors.toList());
         List<OrderItemTopping> allToppings = orderItemIds.isEmpty()
-            ? new ArrayList<>()
-            : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
+                ? new ArrayList<>()
+                : orderItemToppingRepository.findByOrderItemIdIn(orderItemIds);
 
         // Gom nhóm topping theo id mục đơn hàng
         var toppingsByItemId = allToppings.stream()

@@ -10,7 +10,6 @@ import com.hoandev.pinedrink.entity.dto.response.Category.CategorySummaryRespons
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.CategoryService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -36,11 +35,14 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/categories")
-@RequiredArgsConstructor
 @Slf4j
 public class CategoryController {
 
     private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_CATEGORY_CREATE')")

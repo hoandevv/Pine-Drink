@@ -3,7 +3,6 @@ package com.hoandev.pinedrink.queue.listener;
 import com.hoandev.pinedrink.queue.event.email.PasswordResetEmailEvent;
 import com.hoandev.pinedrink.queue.event.email.RegisterOtpEmailEvent;
 import com.hoandev.pinedrink.service.EmailService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,11 +18,14 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @RabbitListener(queues = "${app.rabbitmq.email.queue}")
 public class EmailConsumer {
 
     private final EmailService emailService;
+
+    public EmailConsumer(EmailService emailService) {
+        this.emailService = emailService;
+    }
 
     /**
      * Handles registration OTP email events by delegating to {@link EmailService#sendOtpEmail}.

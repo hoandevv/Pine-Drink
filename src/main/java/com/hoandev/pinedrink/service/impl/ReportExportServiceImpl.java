@@ -15,7 +15,6 @@ import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import com.hoandev.pinedrink.service.JasperReportService;
 import com.hoandev.pinedrink.service.ReportExportService;
 import com.hoandev.pinedrink.service.ReportStorageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +34,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ReportExportServiceImpl implements ReportExportService {
 
     private static final long MAX_REPORT_RANGE_DAYS = 366;
@@ -46,6 +44,15 @@ public class ReportExportServiceImpl implements ReportExportService {
     private final ObjectMapper objectMapper;
     private final ProductRepository productRepository;
     private final ProductCatalogReportMapper productCatalogReportMapper;
+
+    public ReportExportServiceImpl(ExportRequestRepository exportRequestRepository, JasperReportService jasperReportService, ReportStorageService reportStorageService, ObjectMapper objectMapper, ProductRepository productRepository, ProductCatalogReportMapper productCatalogReportMapper) {
+        this.exportRequestRepository = exportRequestRepository;
+        this.jasperReportService = jasperReportService;
+        this.reportStorageService = reportStorageService;
+        this.objectMapper = objectMapper;
+        this.productRepository = productRepository;
+        this.productCatalogReportMapper = productCatalogReportMapper;
+    }
 
     /**
      * Thực thi một job xuất báo cáo đang chờ xử lý và lưu trạng thái cuối cùng.

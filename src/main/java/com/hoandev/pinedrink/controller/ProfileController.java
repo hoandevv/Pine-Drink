@@ -8,7 +8,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.FileUploadResponse;
 import com.hoandev.pinedrink.service.ProfileService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +21,14 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequestMapping("/api/v1/profile")
-@RequiredArgsConstructor
 @Slf4j
 public class ProfileController {
 
     private final ProfileService profileService;
+
+    public ProfileController(ProfileService profileService) {
+        this.profileService = profileService;
+    }
 
     /**
      * Retrieves the currently authenticated user's profile information.

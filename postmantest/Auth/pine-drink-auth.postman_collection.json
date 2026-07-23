@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "Pine Drink - Auth API",
+    "description": "Collection for testing authentication & registration flows.\n\n## Flow\n1. **Register** → receives OTP via email (or console if email disabled)\n2. **Verify OTP** → activates account + creates CustomerProfile\n3. **Login** → get access + refresh tokens\n4. **Get Profile** → requires Bearer token\n5. **Refresh Token** → rotate tokens\n6. **Logout** → revoke refresh token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "testuser@example.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "Test@123456",
+      "type": "string"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "site_key",
+      "value": "DEFAULT",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('email', json.data.email);",
+              "    pm.collectionVariables.set('password', 'Test@123456');",
+              "    console.log('Account created for: ' + json.data.email);",
+              "}",
+              "",
+              "console.log('OTP was sent to email. Check server logs or email inbox.');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"Test@123456\",\n  \"fullName\": \"Test User\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"0987654321\",\n  \"siteKey\": \"{{site_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "register"]
+        },
+        "description": "Create a new account (INACTIVE). An OTP is sent via email.\n\nValidation rules:\n- Username: 3-50 chars, alphanumeric + underscore\n- Password: ≥8 chars, upper + lower + digit + special\n- Email: valid format\n- Phone: 10-20 digits (optional)\n- SiteKey: required"
+      }
+    },
+    {
+      "name": "Verify OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    console.log('Account activated successfully');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/register/verify-otp",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "register", "verify-otp"]
+        },
+        "description": "Verify registration OTP. On success:\n- Account status → ACTIVE\n- CUSTOMER role assigned\n- CustomerProfile created\n\n⚠️ Set the `otp` collection variable to the 6-digit code from the server log or email."
+      }
+    },
+    {
+      "name": "Resend OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    console.log('OTP resent. Check server logs or email for new code.');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/register/resend-otp",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "register", "resend-otp"]
+        },
+        "description": "Resend OTP (60s cooldown). New OTP invalidates the old one."
+      }
+    },
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('access_token', json.data.accessToken);",
+              "    pm.collectionVariables.set('refresh_token', json.data.refreshToken);",
+              "    console.log('Access token saved');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "login"]
+        },
+        "description": "Authenticate with username or email. Returns:\n- `accessToken` (short-lived, auto-saved to `access_token` variable)\n- `refreshToken` (saved to `refresh_token` variable)"
+      }
+    },
+    {
+      "name": "Get Profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    console.log('User: ' + json.data.username + ' | ' + json.data.email);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "me"]
+        },
+        "description": "Get current authenticated user's profile. Requires a valid Bearer token."
+      }
+    },
+    {
+      "name": "Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('access_token', json.data.accessToken);",
+              "    pm.collectionVariables.set('refresh_token', json.data.refreshToken);",
+              "    console.log('Tokens rotated successfully');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/refresh-token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "refresh-token"]
+        },
+        "description": "Rotate refresh token. The old token is revoked, new pair issued.\nAuto-saves the new tokens to collection variables."
+      }
+    },
+    {
+      "name": "Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    pm.collectionVariables.set('access_token', '');",
+              "    pm.collectionVariables.set('refresh_token', '');",
+              "    console.log('Logged out, tokens cleared');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "logout"]
+        },
+        "description": "Revoke the refresh token. Clears local token variables."
+      }
+    }
+  ]
+}

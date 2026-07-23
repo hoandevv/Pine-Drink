@@ -1,0 +1,47 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: "${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pine_drink_dev}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}"
+    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:pine_drink_user}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:123456789}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis123}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_DEFAULT_USER:admin}
+    password: ${RABBITMQ_DEFAULT_PASS:admin123}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  thymeleaf:
+    cache: false
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.hoandev.pinedrink: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+
+app:
+  email:
+    enabled: ${EMAIL_ENABLED:false}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:5173,http://localhost:8080,http://localhost:3000}

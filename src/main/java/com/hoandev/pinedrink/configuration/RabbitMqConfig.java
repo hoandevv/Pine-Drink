@@ -182,11 +182,12 @@ public class RabbitMqConfig {
     }
 
     // 6. Message Converter & RabbitTemplate
+    // mục đích chuyển từ object thành json khi gửi message và ngược lại khi nhận message
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
-
+    // công cụ của spring để publish message tới RabitMq
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
                                           MessageConverter messageConverter) {

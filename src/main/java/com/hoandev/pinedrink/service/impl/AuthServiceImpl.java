@@ -108,11 +108,8 @@ public class AuthServiceImpl implements AuthService {
     private static final String FORGOT_PASSWORD_COOLDOWN_PREFIX = "otp:forgot-password:cooldown:";
     private static final String FORGOT_PASSWORD_ATTEMPT_PREFIX = "otp:forgot-password:attempt:";
 
-    @Value("${app.jwt.refresh-token-expiration:86400}")
+    @Value("${app.jwt.refresh-token-expiration}")
     private long refreshTokenExpirationSeconds;
-
-    @Value("${app.jwt.reset-token-expiration:900}")
-    private long resetTokenExpirationSeconds;
 
     /**
      * {@inheritDoc}
@@ -554,7 +551,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * Finds an account by username or email for login.
      */
-    private java.util.Optional<Account> findAccountForLogin(String usernameOrEmail) {
+    private Optional<Account> findAccountForLogin(String usernameOrEmail) {
         if (usernameOrEmail.contains("@")) {
             return accountRepository.findByEmail(usernameOrEmail.toLowerCase());
         }

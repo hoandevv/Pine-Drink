@@ -1,8 +1,5 @@
 package com.hoandev.pinedrink.exception;
 
-import lombok.Getter;
-
-@Getter
 public enum ErrorCode {
     COM_001("COM_001", "Dữ liệu gửi lên chưa hợp lệ"),
     COM_002("COM_002", "Hệ thống đang gặp sự cố. Vui lòng thử lại sau"),
@@ -130,5 +127,13 @@ public enum ErrorCode {
     ErrorCode(String code, String message) {
         this.code = code;
         this.message = message;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

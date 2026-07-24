@@ -6,14 +6,16 @@ import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ChatAccessService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class ChatAccessServiceImpl implements ChatAccessService {
 
     private final AccessScopeService accessScopeService;
+
+    public ChatAccessServiceImpl(AccessScopeService accessScopeService) {
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     public void assertCanAccessRoom(ChatRoom room, String accountId) {

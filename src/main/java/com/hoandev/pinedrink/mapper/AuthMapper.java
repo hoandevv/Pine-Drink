@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Auth.RegisterResponse;
 import com.hoandev.pinedrink.repository.AccountRoleAssignmentRepository;
 import com.hoandev.pinedrink.security.JwtTokenProvider;
 import com.hoandev.pinedrink.utils.Constants;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,11 +19,15 @@ import java.util.List;
  * Handles conversion between Account entities and response DTOs.
  */
 @Component
-@RequiredArgsConstructor
 public class AuthMapper {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AccountRoleAssignmentRepository assignmentRepository;
+
+    public AuthMapper(JwtTokenProvider jwtTokenProvider, AccountRoleAssignmentRepository assignmentRepository) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.assignmentRepository = assignmentRepository;
+    }
 
     /**
      * Maps an Account entity to AccountResponse DTO.

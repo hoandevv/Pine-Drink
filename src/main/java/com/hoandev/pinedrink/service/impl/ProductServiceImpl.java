@@ -20,7 +20,6 @@ import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ProductService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
@@ -40,6 +38,15 @@ public class ProductServiceImpl implements ProductService {
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
     private final FileStorageService fileStorageService;
+
+    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ProductMapper productMapper, AccessScopeService accessScopeService, CodeGenerator codeGenerator, FileStorageService fileStorageService) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.productMapper = productMapper;
+        this.accessScopeService = accessScopeService;
+        this.codeGenerator = codeGenerator;
+        this.fileStorageService = fileStorageService;
+    }
 
     @Override
     @Transactional

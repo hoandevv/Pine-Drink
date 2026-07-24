@@ -4,7 +4,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchProductAvailabilityResponse;
 import com.hoandev.pinedrink.entity.dto.response.Branch.BranchToppingAvailabilityResponse;
 import com.hoandev.pinedrink.service.BranchAvailabilityService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +22,14 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/branches/{branchId}/availability")
-@RequiredArgsConstructor
 @Slf4j
 public class PublicBranchAvailabilityController {
 
     private final BranchAvailabilityService branchAvailabilityService;
+
+    public PublicBranchAvailabilityController(BranchAvailabilityService branchAvailabilityService) {
+        this.branchAvailabilityService = branchAvailabilityService;
+    }
 
     /**
      * Lấy thông tin availability của 1 sản phẩm tại chi nhánh.

@@ -8,7 +8,6 @@ import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ProductToppingSummaryResponse;
 import com.hoandev.pinedrink.service.ProductToppingService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,11 +26,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products/{productId}/toppings")
-@RequiredArgsConstructor
 @Slf4j
 public class ProductToppingController {
 
     private final ProductToppingService productToppingService;
+
+    public ProductToppingController(ProductToppingService productToppingService) {
+        this.productToppingService = productToppingService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_TOPPING_CREATE')")

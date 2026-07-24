@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Product.ToppingResponse;
 import com.hoandev.pinedrink.entity.dto.response.Product.ToppingSummaryResponse;
 import com.hoandev.pinedrink.service.ToppingService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,11 +32,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/toppings")
-@RequiredArgsConstructor
 @Slf4j
 public class ToppingController {
 
     private final ToppingService toppingService;
+
+    public ToppingController(ToppingService toppingService) {
+        this.toppingService = toppingService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_TOPPING_CREATE')")

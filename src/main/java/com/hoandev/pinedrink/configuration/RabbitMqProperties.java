@@ -45,47 +45,27 @@ public record RabbitMqProperties(
      * @param auditQueue queue audit
      * @param chatQueue queue chat
      * @param webhookQueue queue webhook
-     * @param dlq dead-letter queue
-     * @param dlx dead-letter exchange
      */
     public record Realtime(
             String exchange,
             String notificationQueue,
             String auditQueue,
             String chatQueue,
-            String webhookQueue,
-            String dlq,
-            String dlx
+            String webhookQueue
     ) {
     }
 
     /**
-     * Mô tả một kênh (channel) tổng quát gồm exchange, queue và các thiết lập retry/dlq.
+     * Mô tả một kênh RabbitMQ cơ bản gồm exchange, queue và routing key.
      *
      * @param exchange tên exchange
      * @param queue tên queue chính
-     * @param retryQueue tên queue retry
-     * @param dlq tên dead-letter queue
      * @param routingKey routing key chính
-     * @param retryRoutingKey routing key cho retry
-     * @param dlqRoutingKey routing key cho dlq
-     * @param retryTtlMs thời gian TTL cho tin nhắn retry (ms)
-     * @param concurrentConsumers số consumer chạy đồng thời ban đầu
-     * @param maxConsumers số consumer tối đa
-     * @param prefetch số message prefetch cho consumer
      */
     public record Channel(
             String exchange,
             String queue,
-            String retryQueue,
-            String dlq,
-            String routingKey,
-            String retryRoutingKey,
-            String dlqRoutingKey,
-            long retryTtlMs,
-            int concurrentConsumers,
-            int maxConsumers,
-            int prefetch
+            String routingKey
     ) {
     }
 

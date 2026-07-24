@@ -8,7 +8,6 @@ import com.hoandev.pinedrink.service.GeocodingService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +23,15 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/v1/geocoding")
-@RequiredArgsConstructor
 @Slf4j
 public class GeocodingController {
 
     @Qualifier("nominatimGeocodingService")
     private final GeocodingService geocodingService;
+    public GeocodingController(GeocodingService geocodingService) {
+        this.geocodingService = geocodingService;
+    }
+
 
     /**
      * Search for addresses matching a query.

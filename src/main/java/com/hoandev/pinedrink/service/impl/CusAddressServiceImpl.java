@@ -15,7 +15,6 @@ import com.hoandev.pinedrink.repository.CustomerAddressRepository;
 import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.CusAddressService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,13 +29,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class CusAddressServiceImpl implements CusAddressService {
     private final CustomerAddressRepository customerAddressRepository;
     private final CustomerAddressMapper customerAddressMapper;
     private final CustomerProfileRepository customerProfileRepository;
     private final EventPublisher eventPublisher;
+
+    public CusAddressServiceImpl(CustomerAddressRepository customerAddressRepository, CustomerAddressMapper customerAddressMapper, CustomerProfileRepository customerProfileRepository, EventPublisher eventPublisher) {
+        this.customerAddressRepository = customerAddressRepository;
+        this.customerAddressMapper = customerAddressMapper;
+        this.customerProfileRepository = customerProfileRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     @Override
     @Transactional

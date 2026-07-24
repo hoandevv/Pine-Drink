@@ -3,7 +3,6 @@ package com.hoandev.pinedrink.service.impl;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.ReportStorageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -21,10 +20,13 @@ import java.nio.file.Path;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class LocalReportStorageService implements ReportStorageService {
 
     private final Path rootDir;
+
+    public LocalReportStorageService(Path rootDir) {
+        this.rootDir = rootDir;
+    }
 
     @Override
     public String save(byte[] bytes, String relativeFolder, String filename) {

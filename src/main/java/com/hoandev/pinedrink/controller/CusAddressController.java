@@ -7,7 +7,6 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.PageResponse;
 import com.hoandev.pinedrink.service.CusAddressService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,10 +22,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/customer/addresses")
-@RequiredArgsConstructor
 @Slf4j
 public class CusAddressController {
     private final CusAddressService cusAddressService;
+
+    public CusAddressController(CusAddressService cusAddressService) {
+        this.cusAddressService = cusAddressService;
+    }
 
     /**
      * Creates a new customer address.

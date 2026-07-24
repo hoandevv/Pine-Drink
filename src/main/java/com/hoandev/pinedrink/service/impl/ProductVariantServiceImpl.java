@@ -18,7 +18,6 @@ import com.hoandev.pinedrink.repository.ProductVariantRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.ProductVariantService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ProductVariantServiceImpl implements ProductVariantService {
     private final ProductVariantRepository productVariantRepository;
@@ -36,6 +34,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final ProductVariantMapper productVariantMapper;
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
+
+    public ProductVariantServiceImpl(ProductVariantRepository productVariantRepository, ProductRepository productRepository, ProductVariantMapper productVariantMapper, AccessScopeService accessScopeService, CodeGenerator codeGenerator) {
+        this.productVariantRepository = productVariantRepository;
+        this.productRepository = productRepository;
+        this.productVariantMapper = productVariantMapper;
+        this.accessScopeService = accessScopeService;
+        this.codeGenerator = codeGenerator;
+    }
 
     @Override
     @Transactional

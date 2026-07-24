@@ -1,6 +1,4 @@
 package com.hoandev.pinedrink.utils;
-
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -9,10 +7,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Component
-@RequiredArgsConstructor
 public class CodeGenerator {
 
     private final StringRedisTemplate stringRedisTemplate;
+
+    public CodeGenerator(StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
 
     private static final String KEY_PATTERN = "code:seq:%s:%s";
     private static final String KEY_PATTERN_SCOPE = "code:seq:%s:%s:%s";

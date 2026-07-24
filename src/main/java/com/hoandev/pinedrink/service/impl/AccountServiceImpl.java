@@ -32,7 +32,6 @@ import com.hoandev.pinedrink.service.PermissionCacheService;
 import com.hoandev.pinedrink.security.scope.AccessScopeContext;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
-    import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.Pageable;
@@ -54,7 +53,6 @@ import com.hoandev.pinedrink.utils.Constants;
     import java.util.stream.Collectors;
     
     @Service
-    @RequiredArgsConstructor
     @Slf4j
     public class AccountServiceImpl implements AccountService {
     
@@ -70,6 +68,36 @@ import com.hoandev.pinedrink.utils.Constants;
         private final PermissionCacheService permissionCacheService;
         private final AccessScopeService accessScopeService;
         private final CodeGenerator codeGenerator;
+
+    
+        public AccountServiceImpl(AccountRepository accountRepository, AccountRoleAssignmentRepository assignmentRepository, RoleRepository roleRepository, ScopeRepository scopeRepository, BranchRepository branchRepository, CustomerProfileRepository customerProfileRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, AccountManagementMapper accountManagementMapper, PermissionCacheService permissionCacheService, AccessScopeService accessScopeService, CodeGenerator codeGenerator) {
+    
+            this.accountRepository = accountRepository;
+    
+            this.assignmentRepository = assignmentRepository;
+    
+            this.roleRepository = roleRepository;
+    
+            this.scopeRepository = scopeRepository;
+    
+            this.branchRepository = branchRepository;
+    
+            this.customerProfileRepository = customerProfileRepository;
+    
+            this.refreshTokenRepository = refreshTokenRepository;
+    
+            this.passwordEncoder = passwordEncoder;
+    
+            this.accountManagementMapper = accountManagementMapper;
+    
+            this.permissionCacheService = permissionCacheService;
+    
+            this.accessScopeService = accessScopeService;
+    
+            this.codeGenerator = codeGenerator;
+    
+        }
+
     
         @Override
         @Transactional(readOnly = true)

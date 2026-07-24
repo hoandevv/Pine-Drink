@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Report.ReportOptionsResponse;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.ReportJobService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,10 +33,13 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/reports/jobs")
-@RequiredArgsConstructor
 public class ReportJobController {
 
     private final ReportJobService reportJobService;
+
+    public ReportJobController(ReportJobService reportJobService) {
+        this.reportJobService = reportJobService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_REPORT_CREATE')")

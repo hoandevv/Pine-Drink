@@ -17,7 +17,6 @@ import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.FileStorageService;
 import com.hoandev.pinedrink.service.ToppingService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ToppingServiceImpl implements ToppingService {
     private final ToppingRepository toppingRepository;
@@ -36,6 +34,14 @@ public class ToppingServiceImpl implements ToppingService {
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
     private final FileStorageService fileStorageService;
+
+    public ToppingServiceImpl(ToppingRepository toppingRepository, ToppingMapper toppingMapper, AccessScopeService accessScopeService, CodeGenerator codeGenerator, FileStorageService fileStorageService) {
+        this.toppingRepository = toppingRepository;
+        this.toppingMapper = toppingMapper;
+        this.accessScopeService = accessScopeService;
+        this.codeGenerator = codeGenerator;
+        this.fileStorageService = fileStorageService;
+    }
 
     @Override
     @Transactional

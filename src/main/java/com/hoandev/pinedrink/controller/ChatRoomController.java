@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.ChatMessageService;
 import com.hoandev.pinedrink.service.ChatRoomService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -28,11 +27,16 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/chat/rooms")
-@RequiredArgsConstructor
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
+
+    public ChatRoomController(ChatRoomService chatRoomService, ChatMessageService chatMessageService) {
+        this.chatRoomService = chatRoomService;
+        this.chatMessageService = chatMessageService;
+    }
+
     /**
      * Create a new chat room.
      *

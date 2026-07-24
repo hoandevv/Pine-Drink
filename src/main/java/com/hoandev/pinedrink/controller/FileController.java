@@ -4,7 +4,6 @@ import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.FileStorageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -23,11 +22,14 @@ import java.io.InputStream;
  */
 @RestController
 @RequestMapping("/api/v1/files")
-@RequiredArgsConstructor
 @Slf4j
 public class FileController {
 
     private final FileStorageService fileStorageService;
+
+    public FileController(FileStorageService fileStorageService) {
+        this.fileStorageService = fileStorageService;
+    }
 
     /**
      * Proxies private files from MinIO storage.

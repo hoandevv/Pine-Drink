@@ -2,7 +2,6 @@ package com.hoandev.pinedrink.queue.listener;
 
 import com.hoandev.pinedrink.queue.event.report.ReportExportRequestedEvent;
 import com.hoandev.pinedrink.service.ReportExportService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -16,22 +15,20 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ReportExportListener {
 
     private final ReportExportService reportExportService;
 
+    public ReportExportListener(ReportExportService reportExportService) {
+        this.reportExportService = reportExportService;
+    }
+
     /**
      * Consume yêu cầu xuất báo cáo từ report queue đã cấu hình.
      * <p>
-     * Concurrency và prefetch của listener được đọc từ {@code app.rabbitmq.report}.
-     *
      * @param event thông điệp mô tả job báo cáo cần được xuất
      */
-    @RabbitListener(
-            queues = "${app.rabbitmq.report.queue}",
-            containerFactory = "reportListenerContainerFactory"
-    )
+    @RabbitListener(queues = "${app.rabbitmq.report.queue}")
     public void handleReportExportRequested(ReportExportRequestedEvent event) {
         log.info("Received report export event: eventId={}, jobId={}", event.eventId(), event.jobId());
         try {

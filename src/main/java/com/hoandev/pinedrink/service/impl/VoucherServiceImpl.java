@@ -20,7 +20,6 @@ import com.hoandev.pinedrink.repository.VoucherRepository;
 import com.hoandev.pinedrink.repository.VoucherUsageRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.VoucherService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +40,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class VoucherServiceImpl implements VoucherService {
 
@@ -51,6 +49,15 @@ public class VoucherServiceImpl implements VoucherService {
     private final BranchRepository branchRepository;
     private final VoucherMapper voucherMapper;
     private final AccessScopeService accessScopeService;
+
+    public VoucherServiceImpl(VoucherRepository voucherRepository, VoucherBranchRepository voucherBranchRepository, VoucherUsageRepository voucherUsageRepository, BranchRepository branchRepository, VoucherMapper voucherMapper, AccessScopeService accessScopeService) {
+        this.voucherRepository = voucherRepository;
+        this.voucherBranchRepository = voucherBranchRepository;
+        this.voucherUsageRepository = voucherUsageRepository;
+        this.branchRepository = branchRepository;
+        this.voucherMapper = voucherMapper;
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     @Transactional

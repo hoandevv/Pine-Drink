@@ -12,7 +12,6 @@ import com.hoandev.pinedrink.repository.BranchHoursRepository;
 import com.hoandev.pinedrink.repository.BranchRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchHoursService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +21,19 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BranchHoursServiceImpl implements BranchHoursService {
     private final BranchHoursRepository branchHoursRepository;
     private final BranchRepository branchRepository;
     private final BranchHoursMapper branchHoursMapper;
     private final AccessScopeService accessScopeService;
+
+    public BranchHoursServiceImpl(BranchHoursRepository branchHoursRepository, BranchRepository branchRepository, BranchHoursMapper branchHoursMapper, AccessScopeService accessScopeService) {
+        this.branchHoursRepository = branchHoursRepository;
+        this.branchRepository = branchRepository;
+        this.branchHoursMapper = branchHoursMapper;
+        this.accessScopeService = accessScopeService;
+    }
 
     @Override
     @Transactional

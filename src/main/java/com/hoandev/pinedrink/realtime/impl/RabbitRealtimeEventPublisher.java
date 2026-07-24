@@ -3,7 +3,6 @@ package com.hoandev.pinedrink.realtime.impl;
 import com.hoandev.pinedrink.configuration.RabbitMqProperties;
 import com.hoandev.pinedrink.realtime.RealtimeEvent;
 import com.hoandev.pinedrink.realtime.RealtimeEventPublisher;
-import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 /**
@@ -23,11 +22,15 @@ import org.springframework.stereotype.Service;
  * Client
  */
 @Service
-@RequiredArgsConstructor
 public class RabbitRealtimeEventPublisher implements RealtimeEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
     private final RabbitMqProperties rabbitMqProperties;
+
+    public RabbitRealtimeEventPublisher(RabbitTemplate rabbitTemplate, RabbitMqProperties rabbitMqProperties) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.rabbitMqProperties = rabbitMqProperties;
+    }
 
     @Override
     public <T> void publish(String routingKey, RealtimeEvent<T> event) {

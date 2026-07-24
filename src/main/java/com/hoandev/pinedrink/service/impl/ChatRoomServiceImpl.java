@@ -24,7 +24,6 @@ import com.hoandev.pinedrink.service.ChatAccessService;
 import com.hoandev.pinedrink.service.ChatRoomService;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ChatRoomServiceImpl implements ChatRoomService {
 
@@ -48,6 +46,19 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private final AccessScopeService accessScopeService;
     private final RealtimeEventFactory eventFactory;
     private final RealtimePublishService realtimePublishService;
+
+    public ChatRoomServiceImpl(ChatRoomRepository chatRoomRepository, AccountRepository accountRepository, BranchRepository branchRepository, OrderRepository orderRepository, ChatAccessService chatAccessService, ChatMapper chatMapper, CodeGenerator codeGenerator, AccessScopeService accessScopeService, RealtimeEventFactory eventFactory, RealtimePublishService realtimePublishService) {
+        this.chatRoomRepository = chatRoomRepository;
+        this.accountRepository = accountRepository;
+        this.branchRepository = branchRepository;
+        this.orderRepository = orderRepository;
+        this.chatAccessService = chatAccessService;
+        this.chatMapper = chatMapper;
+        this.codeGenerator = codeGenerator;
+        this.accessScopeService = accessScopeService;
+        this.eventFactory = eventFactory;
+        this.realtimePublishService = realtimePublishService;
+    }
 
     @Override
     @Transactional

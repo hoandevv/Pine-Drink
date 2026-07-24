@@ -6,19 +6,21 @@ import com.hoandev.pinedrink.entity.CustomerAddress;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.DeliveryFeeService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Service
-@RequiredArgsConstructor
 public class DeliveryFeeServiceImpl implements DeliveryFeeService {
 
     private static final BigDecimal EARTH_RADIUS_KM = BigDecimal.valueOf(6371);
 
     private final OrderProperties orderProperties;
+
+    public DeliveryFeeServiceImpl(OrderProperties orderProperties) {
+        this.orderProperties = orderProperties;
+    }
 
     @Override
     public BigDecimal calculate(Branch branch, CustomerAddress address, BigDecimal subtotal) {

@@ -6,7 +6,6 @@ import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.service.FileStorageService;
 import io.minio.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,12 +17,16 @@ import java.util.UUID;
  * Implementation of {@link FileStorageService} using MinIO.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MinioFileStorageService implements FileStorageService {
 
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
+
+    public MinioFileStorageService(MinioClient minioClient, MinioProperties minioProperties) {
+        this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
+    }
 
     /**
      * {@inheritDoc}

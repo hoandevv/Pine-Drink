@@ -31,7 +31,6 @@ import com.hoandev.pinedrink.mapper.AuthMapper;
 import com.hoandev.pinedrink.utils.CodeGenerator;
 import com.hoandev.pinedrink.utils.Constants;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -59,7 +58,6 @@ import java.util.UUID;
  * Handles registration (with OTP), authentication, token refresh, and logout.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
@@ -78,6 +76,24 @@ public class AuthServiceImpl implements AuthService {
     private final CustomUserDetailsService customUserDetailsService;
     private final PermissionCacheService permissionCacheService;
     private final GoogleTokenVerifier googleTokenVerifier;
+
+    public AuthServiceImpl(AccountRepository accountRepository, RoleRepository roleRepository, AccountRoleAssignmentRepository assignmentRepository, ScopeRepository scopeRepository, RefreshTokenRepository refreshTokenRepository, CustomerProfileRepository customerProfileRepository, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder, CodeGenerator codeGenerator, StringRedisTemplate stringRedisTemplate, EventPublisher eventPublisher, AuthMapper authMapper, CustomUserDetailsService customUserDetailsService, PermissionCacheService permissionCacheService, GoogleTokenVerifier googleTokenVerifier) {
+        this.accountRepository = accountRepository;
+        this.roleRepository = roleRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.scopeRepository = scopeRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.customerProfileRepository = customerProfileRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.passwordEncoder = passwordEncoder;
+        this.codeGenerator = codeGenerator;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.eventPublisher = eventPublisher;
+        this.authMapper = authMapper;
+        this.customUserDetailsService = customUserDetailsService;
+        this.permissionCacheService = permissionCacheService;
+        this.googleTokenVerifier = googleTokenVerifier;
+    }
 
     private static final String OTP_KEY_PREFIX = "otp:register:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hoandev.pinedrink.entity.dto.geocoding.GeocodingResult;
 import com.hoandev.pinedrink.service.GeocodingService;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -28,11 +27,14 @@ import java.util.stream.Collectors;
  * Free and open-source geocoding service.
  */
 @Service("nominatimGeocodingService")
-@RequiredArgsConstructor
 @Slf4j
 public class NominatimGeocodingService implements GeocodingService {
 
     private final RestTemplate restTemplate;
+
+    public NominatimGeocodingService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Value("${geocoding.nominatim.base-url:https://nominatim.openstreetmap.org}")
     private String baseUrl;

@@ -10,7 +10,6 @@ import com.hoandev.pinedrink.repository.CustomerProfileRepository;
 import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.CartService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/customer/cart")
-@RequiredArgsConstructor
 @Slf4j
 //@PreAuthorize("hasRole('CUSTOMER')")
 public class CartController {
 
     private final CartService cartService;
     private final CustomerProfileRepository customerProfileRepository;
+
+    public CartController(CartService cartService, CustomerProfileRepository customerProfileRepository) {
+        this.cartService = cartService;
+        this.customerProfileRepository = customerProfileRepository;
+    }
 
     @GetMapping
     public ResponseEntity<BaseResponse<CartResponse>> getActiveCart(

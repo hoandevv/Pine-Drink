@@ -4,18 +4,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Request DTO for user registration.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
 public class RegisterRequest {
 
     @NotBlank(message = "Username is required")
@@ -48,5 +44,17 @@ public class RegisterRequest {
     @NotBlank(message = "Site key is required")
     @Size(max = 100, message = "Site key must not exceed 100 characters")
     private String siteKey;
+
+    public RegisterRequest() {
+    }
+
+    public RegisterRequest(String username, String password, String fullName, String email, String phone, String siteKey) {
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.siteKey = siteKey;
+    }
 
 }

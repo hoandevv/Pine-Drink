@@ -8,11 +8,9 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,10 +28,7 @@ public class RabbitMqConfig {
 
     @Value("${app.rabbitmq.queue.geocoding:pine-drink.geocoding.queue}")
     private String geocodingQueueName;
-
-    // ──────────────────────────────────────────────
     // 1. Topic Exchanges
-    // ──────────────────────────────────────────────
 
     @Bean
     public TopicExchange domainEventExchange() {
@@ -46,11 +41,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public TopicExchange realtimeDeadLetterExchange() {
-        return new TopicExchange(properties.realtime().dlx(), true, false);
-    }
-
-    @Bean
     public TopicExchange emailExchange() {
         return new TopicExchange(properties.email().exchange());
     }
@@ -60,9 +50,7 @@ public class RabbitMqConfig {
         return new TopicExchange(properties.report().exchange());
     }
 
-    // ──────────────────────────────────────────────
     // 2. Domain Events — Queues & Bindings
-    // ──────────────────────────────────────────────
 
     @Bean
     public Queue domainEventQueue() {
@@ -71,38 +59,10 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue domainEventRetryQueue() {
-        return QueueBuilder.durable(properties.domainEvents().retryQueue())
-                .withArgument("x-message-ttl", properties.domainEvents().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.domainEvents().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.domainEvents().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue domainEventDlq() {
-        return QueueBuilder.durable(properties.domainEvents().dlq()).build();
-    }
-
-    @Bean
     public Binding domainEventBinding() {
         return BindingBuilder.bind(domainEventQueue())
                 .to(domainEventExchange())
                 .with(properties.domainEvents().routingKey());
-    }
-
-    @Bean
-    public Binding domainEventRetryBinding() {
-        return BindingBuilder.bind(domainEventRetryQueue())
-                .to(domainEventExchange())
-                .with(properties.domainEvents().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding domainEventDlqBinding() {
-        return BindingBuilder.bind(domainEventDlq())
-                .to(domainEventExchange())
-                .with(properties.domainEvents().dlqRoutingKey());
     }
 
     @Bean
@@ -123,11 +83,6 @@ public class RabbitMqConfig {
     @Bean
     public Queue realtimeWebhookQueue() {
         return realtimeQueue(properties.realtime().webhookQueue());
-    }
-
-    @Bean
-    public Queue realtimeDlq() {
-        return QueueBuilder.durable(properties.realtime().dlq()).build();
     }
 
     @Bean
@@ -166,11 +121,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding realtimeDlqBinding() {
-        return BindingBuilder.bind(realtimeDlq()).to(realtimeDeadLetterExchange()).with("failed");
-    }
-
-    @Bean
     public Queue geocodingQueue() {
         return QueueBuilder.durable(geocodingQueueName).build();
     }
@@ -182,27 +132,11 @@ public class RabbitMqConfig {
                 .with(properties.domainEvents().routingKey());
     }
 
-    // ──────────────────────────────────────────────
     // 3. Email — Queues & Bindings
-    // ──────────────────────────────────────────────
 
     @Bean
     public Queue emailQueue() {
         return QueueBuilder.durable(properties.email().queue()).build();
-    }
-
-    @Bean
-    public Queue emailRetryQueue() {
-        return QueueBuilder.durable(properties.email().retryQueue())
-                .withArgument("x-message-ttl", properties.email().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.email().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.email().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue emailDlq() {
-        return QueueBuilder.durable(properties.email().dlq()).build();
     }
 
     @Bean
@@ -211,42 +145,11 @@ public class RabbitMqConfig {
                 .to(emailExchange())
                 .with(properties.email().routingKey());
     }
-
-    @Bean
-    public Binding emailRetryBinding() {
-        return BindingBuilder.bind(emailRetryQueue())
-                .to(emailExchange())
-                .with(properties.email().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding emailDlqBinding() {
-        return BindingBuilder.bind(emailDlq())
-                .to(emailExchange())
-                .with(properties.email().dlqRoutingKey());
-    }
-
-    // ──────────────────────────────────────────────
     // 4. Report — Queues & Bindings
-    // ──────────────────────────────────────────────
-
+    // Khởi tạo object
     @Bean
     public Queue reportQueue() {
         return QueueBuilder.durable(properties.report().queue()).build();
-    }
-
-    @Bean
-    public Queue reportRetryQueue() {
-        return QueueBuilder.durable(properties.report().retryQueue())
-                .withArgument("x-message-ttl", properties.report().retryTtlMs())
-                .withArgument("x-dead-letter-exchange", properties.report().exchange())
-                .withArgument("x-dead-letter-routing-key", properties.report().routingKey())
-                .build();
-    }
-
-    @Bean
-    public Queue reportDlq() {
-        return QueueBuilder.durable(properties.report().dlq()).build();
     }
 
     @Bean
@@ -256,24 +159,7 @@ public class RabbitMqConfig {
                 .with(properties.report().routingKey());
     }
 
-    @Bean
-    public Binding reportRetryBinding() {
-        return BindingBuilder.bind(reportRetryQueue())
-                .to(reportExchange())
-                .with(properties.report().retryRoutingKey());
-    }
-
-    @Bean
-    public Binding reportDlqBinding() {
-        return BindingBuilder.bind(reportDlq())
-                .to(reportExchange())
-                .with(properties.report().dlqRoutingKey());
-    }
-
-    // ──────────────────────────────────────────────
     // 5. Order Expiry — Delayed Message Exchange
-    // ──────────────────────────────────────────────
-
     @Bean
     public DirectExchange orderExpireExchange() {
         return ExchangeBuilder
@@ -285,10 +171,7 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue orderExpireQueue() {
-        return QueueBuilder.durable(properties.orderExpiry().queue())
-                .withArgument("x-dead-letter-exchange", properties.orderExpiry().exchange())
-                .withArgument("x-dead-letter-routing-key", "order.expire.dlq")
-                .build();
+        return QueueBuilder.durable(properties.orderExpiry().queue()).build();
     }
 
     @Bean
@@ -298,15 +181,13 @@ public class RabbitMqConfig {
                 .with(properties.orderExpiry().routingKey());
     }
 
-    // ──────────────────────────────────────────────
     // 6. Message Converter & RabbitTemplate
-    // ──────────────────────────────────────────────
-
+    // mục đích chuyển từ object thành json khi gửi message và ngược lại khi nhận message
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
-
+    // công cụ của spring để publish message tới RabitMq
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
                                           MessageConverter messageConverter) {
@@ -316,27 +197,7 @@ public class RabbitMqConfig {
         return template;
     }
 
-    /**
-     * Factory riêng cho report export để kiểm soát số job sinh file nặng chạy song song.
-     */
-    @Bean
-    public SimpleRabbitListenerContainerFactory reportListenerContainerFactory(
-            SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connectionFactory
-    ) {
-        var report = properties.report();
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        configurer.configure(factory, connectionFactory);
-        factory.setConcurrentConsumers(report.concurrentConsumers());
-        factory.setMaxConcurrentConsumers(report.maxConsumers());
-        factory.setPrefetchCount(report.prefetch());
-        return factory;
-    }
-
     private Queue realtimeQueue(String name) {
-        return QueueBuilder.durable(name)
-                .withArgument("x-dead-letter-exchange", properties.realtime().dlx())
-                .withArgument("x-dead-letter-routing-key", "failed")
-                .build();
+        return QueueBuilder.durable(name).build();
     }
 }

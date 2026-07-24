@@ -15,7 +15,6 @@ import com.hoandev.pinedrink.mapper.DailyStockMapper;
 import com.hoandev.pinedrink.repository.*;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +25,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BranchVariantDailyStockServiceImpl implements BranchVariantDailyStockService {
     private final BranchVariantDailyStockRepository stockRepository;
@@ -36,6 +34,16 @@ public class BranchVariantDailyStockServiceImpl implements BranchVariantDailySto
     private final OrderRepository orderRepository;
     private final AccessScopeService accessScopeService;
     private final DailyStockMapper dailyStockMapper;
+
+    public BranchVariantDailyStockServiceImpl(BranchVariantDailyStockRepository stockRepository, BranchVariantStockLogRepository logRepository, BranchRepository branchRepository, ProductVariantRepository productVariantRepository, OrderRepository orderRepository, AccessScopeService accessScopeService, DailyStockMapper dailyStockMapper) {
+        this.stockRepository = stockRepository;
+        this.logRepository = logRepository;
+        this.branchRepository = branchRepository;
+        this.productVariantRepository = productVariantRepository;
+        this.orderRepository = orderRepository;
+        this.accessScopeService = accessScopeService;
+        this.dailyStockMapper = dailyStockMapper;
+    }
 
     @Override
     @Transactional(readOnly = true)

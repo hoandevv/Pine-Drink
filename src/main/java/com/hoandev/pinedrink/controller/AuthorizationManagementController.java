@@ -7,7 +7,6 @@ import com.hoandev.pinedrink.entity.dto.response.Authorization.RoleResponse;
 import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.service.AuthorizationManagementService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,10 +20,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/authorization")
-@RequiredArgsConstructor
 public class AuthorizationManagementController {
 
     private final AuthorizationManagementService authorizationManagementService;
+
+    public AuthorizationManagementController(AuthorizationManagementService authorizationManagementService) {
+        this.authorizationManagementService = authorizationManagementService;
+    }
 
     @GetMapping("/roles")
     @PreAuthorize("hasAuthority('PERM_ROLE_VIEW')")

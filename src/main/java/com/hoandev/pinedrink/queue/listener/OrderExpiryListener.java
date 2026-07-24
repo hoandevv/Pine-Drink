@@ -1,13 +1,11 @@
 package com.hoandev.pinedrink.queue.listener;
 
 import com.hoandev.pinedrink.service.OrderExpiryService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 /**
  * Listener cho thông báo hết hạn đơn hàng từ RabbitMQ.
@@ -19,6 +17,10 @@ public class OrderExpiryListener {
 
     /** Service chứa logic để đánh dấu đơn hàng là hết hạn. */
     private final OrderExpiryService orderExpiryService;
+    public OrderExpiryListener(OrderExpiryService orderExpiryService) {
+        this.orderExpiryService = orderExpiryService;
+    }
+
 
     @RabbitListener(
             queues = "${app.rabbitmq.order-expiry.queue:pine-drink.order-expire.queue}",

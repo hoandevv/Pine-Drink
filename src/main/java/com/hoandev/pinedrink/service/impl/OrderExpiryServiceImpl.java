@@ -13,7 +13,6 @@ import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.repository.OrderStatusHistoryRepository;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.OrderExpiryService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderExpiryServiceImpl implements OrderExpiryService {
 
@@ -35,6 +33,16 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
     private final OrderProperties orderProperties;
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventFactory realtimeEventFactory;
+
+    public OrderExpiryServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderStatusHistoryRepository orderStatusHistoryRepository, BranchVariantDailyStockService dailyStockService, OrderProperties orderProperties, RealtimePublishService realtimePublishService, RealtimeEventFactory realtimeEventFactory) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.orderStatusHistoryRepository = orderStatusHistoryRepository;
+        this.dailyStockService = dailyStockService;
+        this.orderProperties = orderProperties;
+        this.realtimePublishService = realtimePublishService;
+        this.realtimeEventFactory = realtimeEventFactory;
+    }
 
     @Override
     @Transactional

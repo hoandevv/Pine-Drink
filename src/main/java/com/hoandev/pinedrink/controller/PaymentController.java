@@ -9,7 +9,6 @@ import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
 import com.hoandev.pinedrink.service.PaymentService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +24,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/payments")
-@RequiredArgsConstructor
 @Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
 
     @PostMapping("/offline/record")
     @PreAuthorize("hasAuthority('PERM_ORDER_UPDATE_STATUS')")

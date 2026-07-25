@@ -13,6 +13,7 @@ import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.repository.OrderStatusHistoryRepository;
 import com.hoandev.pinedrink.service.BranchVariantDailyStockService;
 import com.hoandev.pinedrink.service.OrderExpiryService;
+import com.hoandev.pinedrink.service.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,8 +34,9 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
     private final OrderProperties orderProperties;
     private final RealtimePublishService realtimePublishService;
     private final RealtimeEventFactory realtimeEventFactory;
+    private final PaymentService paymentService;
 
-    public OrderExpiryServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderStatusHistoryRepository orderStatusHistoryRepository, BranchVariantDailyStockService dailyStockService, OrderProperties orderProperties, RealtimePublishService realtimePublishService, RealtimeEventFactory realtimeEventFactory) {
+    public OrderExpiryServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderStatusHistoryRepository orderStatusHistoryRepository, BranchVariantDailyStockService dailyStockService, OrderProperties orderProperties, RealtimePublishService realtimePublishService, RealtimeEventFactory realtimeEventFactory, PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
@@ -42,6 +44,7 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
         this.orderProperties = orderProperties;
         this.realtimePublishService = realtimePublishService;
         this.realtimeEventFactory = realtimeEventFactory;
+        this.paymentService = paymentService;
     }
 
     @Override
@@ -70,6 +73,7 @@ public class OrderExpiryServiceImpl implements OrderExpiryService {
         order.setCancelReason(reason);
 
         releaseStock(order);
+        paymentService.refundPaidOrderIfNeeded(order, reason);
         saveStatusHistory(order, OrderStatus.PENDING, OrderStatus.REJECTED, reason);
 
         log.info("Order auto-rejected: orderId={}, orderCode={}, createdAt={}",

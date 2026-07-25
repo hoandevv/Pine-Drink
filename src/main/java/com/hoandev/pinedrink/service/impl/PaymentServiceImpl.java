@@ -17,7 +17,6 @@ import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentRespon
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.RefundResponse;
-import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.entity.enums.PaymentProvider;
 import com.hoandev.pinedrink.entity.enums.PaymentStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -68,8 +67,6 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String STATUS_FAILED = PaymentStatus.FAILED.getValue();
     private static final String STATUS_UNPAID = PaymentStatus.UNPAID.getValue();
     private static final String STATUS_REFUNDED = PaymentStatus.REFUNDED.getValue();
-    private static final String ORDER_PENDING = OrderStatus.PENDING.getValue();
-    private static final String ORDER_CONFIRMED = OrderStatus.CONFIRMED.getValue();
     private static final String ORDER_CANCELLED = OrderStatus.CANCELLED.getValue();
     private static final String ORDER_REJECTED = OrderStatus.REJECTED.getValue();
 
@@ -137,7 +134,39 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BaseException(ErrorCode.PAYMENT_002);
         }
 
-        BigDecimal requestedAmount = request.getAmount().setScale(2, RoundingMode.UNNECESSARY);
+        return refundTransaction(transaction, request.getAmount(), request.getReason(), getCurrentAccountOrNull());
+    }
+
+    @Override
+    @Transactional
+    public void refundPaidOrderIfNeeded(Order order, String reason) {
+        if (order == null || !STATUS_PAID.equals(order.getPaymentStatus())) {
+            return;
+        }
+
+        PaymentTransaction transaction = paymentTransactionRepository
+                .findLatestByOrderAndStatusForUpdate(order.getId(), STATUS_PAID)
+                .orElse(null);
+        if (transaction == null) {
+            log.warn("Auto refund skipped: paid transaction not found, orderId={}", order.getId());
+            return;
+        }
+
+        BigDecimal refundedAmount = refundRepository.sumActiveRefundAmountByTransaction(transaction.getId());
+        BigDecimal remainingAmount = transaction.getAmount().subtract(refundedAmount);
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            markTransactionFullyRefunded(transaction);
+            paymentTransactionRepository.save(transaction);
+            return;
+        }
+
+        refundTransaction(transaction, remainingAmount, reason, null);
+        log.info("Auto refund created: orderId={}, transactionId={}, amount={}",
+                order.getId(), transaction.getId(), remainingAmount);
+    }
+
+    private RefundResponse refundTransaction(PaymentTransaction transaction, BigDecimal amount, String reason, Account requestedBy) {
+        BigDecimal requestedAmount = amount.setScale(2, RoundingMode.UNNECESSARY);
         BigDecimal refundedAmount = refundRepository.sumActiveRefundAmountByTransaction(transaction.getId());
         BigDecimal remainingAmount = transaction.getAmount().subtract(refundedAmount);
         if (requestedAmount.compareTo(remainingAmount) > 0) {
@@ -148,23 +177,27 @@ public class PaymentServiceImpl implements PaymentService {
         refund.setTransaction(transaction);
         refund.setRefundCode(generateRefundCode());
         refund.setAmount(requestedAmount);
-        refund.setReason(request.getReason());
+        refund.setReason(reason);
         refund.setStatus(STATUS_COMPLETED);
         refund.setCompletedAt(LocalDateTime.now());
-        refund.setRequestedBy(getCurrentAccountOrNull());
+        refund.setRequestedBy(requestedBy);
         refund = refundRepository.save(refund);
 
         BigDecimal totalRefunded = refundedAmount.add(requestedAmount);
         if (totalRefunded.compareTo(transaction.getAmount()) >= 0) {
-            transaction.setStatus(STATUS_REFUNDED);
-            transaction.getOrder().setPaymentStatus(STATUS_REFUNDED);
-            if (transaction.getPaymentIntent() != null) {
-                transaction.getPaymentIntent().setStatus(STATUS_REFUNDED);
-            }
+            markTransactionFullyRefunded(transaction);
         }
         paymentTransactionRepository.save(transaction);
 
         return paymentMapper.toRefundResponse(refund);
+    }
+
+    private void markTransactionFullyRefunded(PaymentTransaction transaction) {
+        transaction.setStatus(STATUS_REFUNDED);
+        transaction.getOrder().setPaymentStatus(STATUS_REFUNDED);
+        if (transaction.getPaymentIntent() != null) {
+            transaction.getPaymentIntent().setStatus(STATUS_REFUNDED);
+        }
     }
 
     @Override
@@ -516,10 +549,6 @@ public class PaymentServiceImpl implements PaymentService {
             transaction.setFailedReason(null);
             intent.setStatus(STATUS_PAID);
             order.setPaymentStatus(STATUS_PAID);
-            if (ORDER_PENDING.equals(order.getStatus())) {
-                order.setStatus(ORDER_CONFIRMED);
-                order.setConfirmedAt(LocalDateTime.now());
-            }
         } else {
             transaction.setStatus(STATUS_FAILED);
             transaction.setFailedReason(request.getMessage());

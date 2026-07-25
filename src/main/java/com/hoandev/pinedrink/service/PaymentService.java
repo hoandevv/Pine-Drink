@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.service;
 
+import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.CreateRefundRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoCreatePaymentRequest;
@@ -22,6 +23,11 @@ public interface PaymentService {
      * Tạo đơn hoàn tiền.
      */
     RefundResponse createRefund(CreateRefundRequest request);
+
+    /**
+     * Tự động hoàn toàn bộ phần tiền còn lại của đơn đã thanh toán.
+     */
+    void refundPaidOrderIfNeeded(Order order, String reason);
 
     /**
      * Lấy giao dịch thanh toán mới nhất của đơn hàng.

@@ -49,4 +49,18 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             limit 1
             """)
     Optional<PaymentTransaction> findLatestByOrder(@Param("orderId") String orderId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select transaction
+            from PaymentTransaction transaction
+            where transaction.order.id = :orderId
+              and transaction.status = :status
+            order by transaction.createdAt desc
+            limit 1
+            """)
+    Optional<PaymentTransaction> findLatestByOrderAndStatusForUpdate(
+            @Param("orderId") String orderId,
+            @Param("status") String status
+    );
 }

@@ -440,11 +440,13 @@ public class OrderServiceImpl implements OrderService {
                 order.setCancelledAt(now);
                 order.setCancelReason(request.getReason());
                 releaseStock(order);
+                paymentService.refundPaidOrderIfNeeded(order, request.getReason());
                 break;
             case "REJECTED":
                 order.setRejectedAt(now);
                 order.setCancelReason(request.getReason());
                 releaseStock(order);
+                paymentService.refundPaidOrderIfNeeded(order, request.getReason());
                 break;
         }
 
@@ -540,6 +542,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus("CANCELLED");
         order.setCancelledAt(LocalDateTime.now());
         order.setCancelReason(request.getReason());
+        paymentService.refundPaidOrderIfNeeded(order, request.getReason());
         order = orderRepository.save(order);
         saveStatusHistory(order, currentStatus, "CANCELLED", request.getReason());
 

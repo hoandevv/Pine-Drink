@@ -1,6 +1,8 @@
 package com.hoandev.pinedrink.entity;
 
-import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportItemDto;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductResponse;
+import com.hoandev.pinedrink.entity.dto.response.Product.ProductSummaryResponse;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,18 +14,51 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@SqlResultSetMapping(name = "ProductCatalogResultMapping", classes = @ConstructorResult(targetClass = ProductCatalogResult.class, columns = {
-        @ColumnResult(name = "productCode", type = String.class),
-        @ColumnResult(name = "productName", type = String.class),
-        @ColumnResult(name = "categoryName", type = String.class),
-        @ColumnResult(name = "basePrice", type = BigDecimal.class),
-        @ColumnResult(name = "status", type = String.class),
-        @ColumnResult(name = "preparationMinutes", type = Integer.class),
-        @ColumnResult(name = "featured", type = Boolean.class),
-        @ColumnResult(name = "bestSeller", type = Boolean.class),
-        @ColumnResult(name = "variants", type = String.class),
-        @ColumnResult(name = "createdAt", type = LocalDateTime.class)
-}))
+@SqlResultSetMappings({
+        @SqlResultSetMapping(name = "ProductResponseMapping", classes = @ConstructorResult(targetClass = ProductResponse.class, columns = {
+                @ColumnResult(name = "id", type = String.class),
+                @ColumnResult(name = "code", type = String.class),
+                @ColumnResult(name = "name", type = String.class),
+                @ColumnResult(name = "description", type = String.class),
+                @ColumnResult(name = "imageUrl", type = String.class),
+                @ColumnResult(name = "basePrice", type = BigDecimal.class),
+                @ColumnResult(name = "preparationMinutes", type = Integer.class),
+                @ColumnResult(name = "featured", type = Boolean.class),
+                @ColumnResult(name = "bestSeller", type = Boolean.class),
+                @ColumnResult(name = "availableIceLevels", type = String.class),
+                @ColumnResult(name = "availableSugarLevels", type = String.class),
+                @ColumnResult(name = "categoryId", type = String.class),
+                @ColumnResult(name = "categoryName", type = String.class),
+                @ColumnResult(name = "status", type = String.class),
+                @ColumnResult(name = "createdAt", type = LocalDateTime.class),
+                @ColumnResult(name = "updatedAt", type = LocalDateTime.class)
+        })),
+        @SqlResultSetMapping(name = "ProductSummaryResponseMapping", classes = @ConstructorResult(targetClass = ProductSummaryResponse.class, columns = {
+                @ColumnResult(name = "id", type = String.class),
+                @ColumnResult(name = "code", type = String.class),
+                @ColumnResult(name = "name", type = String.class),
+                @ColumnResult(name = "imageUrl", type = String.class),
+                @ColumnResult(name = "basePrice", type = BigDecimal.class),
+                @ColumnResult(name = "preparationMinutes", type = Integer.class),
+                @ColumnResult(name = "featured", type = Boolean.class),
+                @ColumnResult(name = "bestSeller", type = Boolean.class),
+                @ColumnResult(name = "categoryId", type = String.class),
+                @ColumnResult(name = "categoryName", type = String.class),
+                @ColumnResult(name = "status", type = String.class)
+        })),
+        @SqlResultSetMapping(name = "ProductCatalogReportItemMapping", classes = @ConstructorResult(targetClass = ProductCatalogReportItemDto.class, columns = {
+                @ColumnResult(name = "productCode", type = String.class),
+                @ColumnResult(name = "productName", type = String.class),
+                @ColumnResult(name = "categoryName", type = String.class),
+                @ColumnResult(name = "basePrice", type = String.class),
+                @ColumnResult(name = "status", type = String.class),
+                @ColumnResult(name = "preparationMinutes", type = String.class),
+                @ColumnResult(name = "featured", type = String.class),
+                @ColumnResult(name = "bestSeller", type = String.class),
+                @ColumnResult(name = "variants", type = String.class),
+                @ColumnResult(name = "createdAt", type = String.class)
+        }))
+})
 @Table(name = "pr_product", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Product extends BaseEntity {
 

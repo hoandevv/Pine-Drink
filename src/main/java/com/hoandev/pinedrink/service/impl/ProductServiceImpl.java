@@ -13,7 +13,6 @@ import com.hoandev.pinedrink.entity.enums.FileVisibility;
 import com.hoandev.pinedrink.entity.enums.ProductStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
-import com.hoandev.pinedrink.mapper.ProductMapper;
 import com.hoandev.pinedrink.repository.CategoryRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
 import com.hoandev.pinedrink.service.AccessScopeService;
@@ -27,22 +26,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @Service
 @Slf4j
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductMapper productMapper;
     private final AccessScopeService accessScopeService;
     private final CodeGenerator codeGenerator;
     private final FileStorageService fileStorageService;
 
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ProductMapper productMapper, AccessScopeService accessScopeService, CodeGenerator codeGenerator, FileStorageService fileStorageService) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, AccessScopeService accessScopeService, CodeGenerator codeGenerator, FileStorageService fileStorageService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
-        this.productMapper = productMapper;
         this.accessScopeService = accessScopeService;
         this.codeGenerator = codeGenerator;
         this.fileStorageService = fileStorageService;
@@ -62,7 +57,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_004));
         validateActiveCategory(category);
         String productCode = resolveCreateCode();
-        Product product = productMapper.toEntity(request, category);
+        Product product = buildProduct(request, category);
         String uploadedImageUrl = uploadProductImage(imageFile);
         if (uploadedImageUrl != null) {
             product.setImageUrl(uploadedImageUrl);
@@ -72,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             product = productRepository.save(product);
             log.info("Product created: id={}, code={}", product.getId(), product.getCode());
-            return productMapper.toResponse(product);
+            return getProductResponseOrThrow(product.getId());
         } catch (RuntimeException ex) {
             deleteManagedProductImage(uploadedImageUrl);
             throw ex;
@@ -97,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
             validateActiveCategory(category);
             product.setCategory(category);
         }
-        productMapper.updateEntity(product, request);
+        applyUpdate(product, request);
         String uploadedImageUrl = uploadProductImage(imageFile);
         if (uploadedImageUrl != null) {
             product.setImageUrl(uploadedImageUrl);
@@ -107,7 +102,7 @@ public class ProductServiceImpl implements ProductService {
             product = productRepository.save(product);
             deleteReplacedProductImage(oldImageUrl, newImageUrl);
             log.info("Product updated: id={}, code={}", product.getId(), product.getCode());
-            return productMapper.toResponse(product);
+            return getProductResponseOrThrow(product.getId());
         } catch (RuntimeException ex) {
             if (uploadedImageUrl != null) {
                 deleteManagedProductImage(uploadedImageUrl);
@@ -127,7 +122,7 @@ public class ProductServiceImpl implements ProductService {
         product.setStatus(request.getStatus().getValue());
         product = productRepository.save(product);
         log.info("Product status updated: id={}, code={}, status={}", product.getId(), product.getCode(), product.getStatus());
-        return productMapper.toResponse(product);
+        return getProductResponseOrThrow(product.getId());
     }
 
     @Override
@@ -146,33 +141,79 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getById(String id) {
-        return productMapper.toResponse(getProductOrThrow(id));
+        return getProductResponseOrThrow(id);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> getSummaries(String keyword, String categoryId, String status, Pageable pageable) {
-        Page<ProductSummaryResponse> products = productRepository.searchProductSummaries(keyword, categoryId, status, pageable);
+        Page<ProductSummaryResponse> products = productRepository.searchProductSummaryResponses(keyword, categoryId, status, pageable);
         return PageResponse.from(products);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProductResponse> getAll(String keyword, String categoryId, String status, Pageable pageable) {
-        Page<Product> products = productRepository.searchProducts(
+        Page<ProductResponse> products = productRepository.searchProductResponses(
                 keyword,
                 categoryId,
                 status,
                 ProductStatus.ACTIVE.getValue().equals(status) ? ProductStatus.ACTIVE.getValue() : null,
                 pageable);
-        List<ProductResponse> content = products.getContent().stream()
-                .map(productMapper::toResponse)
-                .toList();
-        return PageResponse.from(products, content);
+        return PageResponse.from(products);
     }
 
     private Product getProductOrThrow(String id) {
         return productRepository.findById(id).orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_001));
+    }
+
+    private ProductResponse getProductResponseOrThrow(String id) {
+        return productRepository.findProductResponseById(id).orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_001));
+    }
+
+    private Product buildProduct(CreateProductRequest request, Category category) {
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setImageUrl(request.getImageUrl());
+        product.setBasePrice(request.getBasePrice());
+        product.setPreparationMinutes(request.getPreparationMinutes() != null ? request.getPreparationMinutes() : 10);
+        product.setFeatured(request.isFeatured());
+        product.setBestSeller(request.isBestSeller());
+        product.setAvailableIceLevels(request.getAvailableIceLevels() != null ? request.getAvailableIceLevels() : "0,30,50,70,100");
+        product.setAvailableSugarLevels(request.getAvailableSugarLevels() != null ? request.getAvailableSugarLevels() : "0,30,50,70,100");
+        product.setCategory(category);
+        return product;
+    }
+
+    private void applyUpdate(Product product, UpdateProductRequest request) {
+        if (request.getName() != null) {
+            product.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            product.setDescription(request.getDescription());
+        }
+        if (request.getImageUrl() != null) {
+            product.setImageUrl(request.getImageUrl());
+        }
+        if (request.getBasePrice() != null) {
+            product.setBasePrice(request.getBasePrice());
+        }
+        if (request.getPreparationMinutes() != null) {
+            product.setPreparationMinutes(request.getPreparationMinutes());
+        }
+        if (request.getFeatured() != null) {
+            product.setFeatured(request.getFeatured());
+        }
+        if (request.getBestSeller() != null) {
+            product.setBestSeller(request.getBestSeller());
+        }
+        if (request.getAvailableIceLevels() != null) {
+            product.setAvailableIceLevels(request.getAvailableIceLevels());
+        }
+        if (request.getAvailableSugarLevels() != null) {
+            product.setAvailableSugarLevels(request.getAvailableSugarLevels());
+        }
     }
 
     private String resolveCreateCode() {

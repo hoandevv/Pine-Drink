@@ -1,11 +1,13 @@
 package com.hoandev.pinedrink.service;
 
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
+import com.hoandev.pinedrink.entity.dto.request.Payment.CreateRefundRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoCreatePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoIpnRequest;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
+import com.hoandev.pinedrink.entity.dto.response.Payment.RefundResponse;
 
 import java.util.Map;
 
@@ -15,6 +17,11 @@ public interface PaymentService {
      * Nhân viên gọi hàm này sau khi đã nhận tiền ngoài cổng thanh toán online.
      */
     PaymentTransactionResponse recordOfflinePayment(RecordOfflinePaymentRequest request);
+
+    /**
+     * Tạo đơn hoàn tiền.
+     */
+    RefundResponse createRefund(CreateRefundRequest request);
 
     /**
      * Lấy giao dịch thanh toán mới nhất của đơn hàng.

@@ -99,6 +99,7 @@ public enum ErrorCode {
     ORDER_003("ORDER_003", "Đơn hàng không còn ở trạng thái chờ xác nhận"),
 
     PAYMENT_001("PAYMENT_001", "Cổng thanh toán đang tạm thời không khả dụng"),
+    PAYMENT_002("PAYMENT_001", "Giao dịch thanh toán không hợp lệ"),
 
     VOUCHER_001("VOUCHER_001", "Không tìm thấy voucher"),
     VOUCHER_002("VOUCHER_002", "Mã voucher đã tồn tại"),

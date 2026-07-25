@@ -1,5 +1,6 @@
 package com.hoandev.pinedrink.controller;
 
+import com.hoandev.pinedrink.entity.dto.request.Payment.CreateRefundRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoCreatePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoIpnRequest;
@@ -7,6 +8,7 @@ import com.hoandev.pinedrink.entity.dto.response.BaseResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
+import com.hoandev.pinedrink.entity.dto.response.Payment.RefundResponse;
 import com.hoandev.pinedrink.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,14 @@ public class PaymentController {
         log.info("Getting payment status: orderId={}", orderId);
         PaymentTransactionResponse response = paymentService.getLatestOrderPaymentStatus(orderId);
         return ResponseEntity.ok(BaseResponse.success(response, "Payment status retrieved successfully"));
+    }
+
+    @PostMapping("/refunds")
+    @PreAuthorize("hasAuthority('PERM_ORDER_UPDATE_STATUS')")
+    public ResponseEntity<BaseResponse<RefundResponse>> createRefund(
+            @Valid @RequestBody CreateRefundRequest request) {
+        RefundResponse response = paymentService.createRefund(request);
+        return ResponseEntity.ok(BaseResponse.success(response, "Refund created successfully"));
     }
 
     @PostMapping("/momo/create")

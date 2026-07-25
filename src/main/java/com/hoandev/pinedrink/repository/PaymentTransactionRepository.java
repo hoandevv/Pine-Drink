@@ -1,7 +1,9 @@
 package com.hoandev.pinedrink.repository;
 
 import com.hoandev.pinedrink.entity.PaymentTransaction;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +32,14 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             String transactionCode,
             String paymentMethod
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select transaction
+            from PaymentTransaction transaction
+            where transaction.id = :transactionId
+            """)
+    Optional<PaymentTransaction> findByIdForUpdate(@Param("transactionId") String transactionId);
 
     @Query("""
             select transaction

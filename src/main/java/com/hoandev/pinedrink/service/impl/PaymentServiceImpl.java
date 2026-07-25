@@ -4,30 +4,39 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoandev.pinedrink.configuration.MomoProperties;
+import com.hoandev.pinedrink.entity.Account;
 import com.hoandev.pinedrink.entity.Order;
 import com.hoandev.pinedrink.entity.PaymentIntent;
 import com.hoandev.pinedrink.entity.PaymentTransaction;
+import com.hoandev.pinedrink.entity.Refund;
+import com.hoandev.pinedrink.entity.dto.request.Payment.CreateRefundRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoCreatePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.MomoIpnRequest;
 import com.hoandev.pinedrink.entity.dto.request.Payment.RecordOfflinePaymentRequest;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
+import com.hoandev.pinedrink.entity.dto.response.Payment.RefundResponse;
 import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.entity.enums.PaymentProvider;
 import com.hoandev.pinedrink.entity.enums.PaymentStatus;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
 import com.hoandev.pinedrink.mapper.PaymentMapper;
+import com.hoandev.pinedrink.repository.AccountRepository;
 import com.hoandev.pinedrink.repository.OrderRepository;
 import com.hoandev.pinedrink.repository.PaymentIntentRepository;
 import com.hoandev.pinedrink.repository.PaymentTransactionRepository;
+import com.hoandev.pinedrink.repository.RefundRepository;
+import com.hoandev.pinedrink.security.UserPrincipal;
 import com.hoandev.pinedrink.service.AccessScopeService;
 import com.hoandev.pinedrink.service.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -54,25 +63,33 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String METHOD_BANK_TRANSFER = PaymentProvider.BANK_TRANSFER.getValue();
     private static final String METHOD_MOMO = PaymentProvider.MOMO.getValue();
     private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_COMPLETED = "COMPLETED";
     private static final String STATUS_PAID = PaymentStatus.PAID.getValue();
     private static final String STATUS_FAILED = PaymentStatus.FAILED.getValue();
     private static final String STATUS_UNPAID = PaymentStatus.UNPAID.getValue();
+    private static final String STATUS_REFUNDED = PaymentStatus.REFUNDED.getValue();
+    private static final String ORDER_PENDING = OrderStatus.PENDING.getValue();
+    private static final String ORDER_CONFIRMED = OrderStatus.CONFIRMED.getValue();
     private static final String ORDER_CANCELLED = OrderStatus.CANCELLED.getValue();
     private static final String ORDER_REJECTED = OrderStatus.REJECTED.getValue();
 
     private final OrderRepository orderRepository;
     private final PaymentIntentRepository paymentIntentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final RefundRepository refundRepository;
+    private final AccountRepository accountRepository;
     private final PaymentMapper paymentMapper;
     private final AccessScopeService accessScopeService;
     private final MomoProperties momoProperties;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public PaymentServiceImpl(OrderRepository orderRepository, PaymentIntentRepository paymentIntentRepository, PaymentTransactionRepository paymentTransactionRepository, PaymentMapper paymentMapper, AccessScopeService accessScopeService, MomoProperties momoProperties, RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public PaymentServiceImpl(OrderRepository orderRepository, PaymentIntentRepository paymentIntentRepository, PaymentTransactionRepository paymentTransactionRepository, RefundRepository refundRepository, AccountRepository accountRepository, PaymentMapper paymentMapper, AccessScopeService accessScopeService, MomoProperties momoProperties, RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.orderRepository = orderRepository;
         this.paymentIntentRepository = paymentIntentRepository;
         this.paymentTransactionRepository = paymentTransactionRepository;
+        this.refundRepository = refundRepository;
+        this.accountRepository = accountRepository;
         this.paymentMapper = paymentMapper;
         this.accessScopeService = accessScopeService;
         this.momoProperties = momoProperties;
@@ -108,6 +125,46 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Offline payment recorded: orderId={}, transactionId={}, method={}",
                 order.getId(), transaction.getId(), paymentMethod);
         return toResponse(transaction);
+    }
+
+    @Override
+    @Transactional
+    public RefundResponse createRefund(CreateRefundRequest request) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByIdForUpdate(request.getTransactionId())
+                .orElseThrow(() -> new BaseException(ErrorCode.COM_005));
+
+        if (!STATUS_PAID.equals(transaction.getStatus())) {
+            throw new BaseException(ErrorCode.PAYMENT_002);
+        }
+
+        BigDecimal requestedAmount = request.getAmount().setScale(2, RoundingMode.UNNECESSARY);
+        BigDecimal refundedAmount = refundRepository.sumActiveRefundAmountByTransaction(transaction.getId());
+        BigDecimal remainingAmount = transaction.getAmount().subtract(refundedAmount);
+        if (requestedAmount.compareTo(remainingAmount) > 0) {
+            throw new BaseException(ErrorCode.COM_004);
+        }
+
+        Refund refund = new Refund();
+        refund.setTransaction(transaction);
+        refund.setRefundCode(generateRefundCode());
+        refund.setAmount(requestedAmount);
+        refund.setReason(request.getReason());
+        refund.setStatus(STATUS_COMPLETED);
+        refund.setCompletedAt(LocalDateTime.now());
+        refund.setRequestedBy(getCurrentAccountOrNull());
+        refund = refundRepository.save(refund);
+
+        BigDecimal totalRefunded = refundedAmount.add(requestedAmount);
+        if (totalRefunded.compareTo(transaction.getAmount()) >= 0) {
+            transaction.setStatus(STATUS_REFUNDED);
+            transaction.getOrder().setPaymentStatus(STATUS_REFUNDED);
+            if (transaction.getPaymentIntent() != null) {
+                transaction.getPaymentIntent().setStatus(STATUS_REFUNDED);
+            }
+        }
+        paymentTransactionRepository.save(transaction);
+
+        return paymentMapper.toRefundResponse(refund);
     }
 
     @Override
@@ -218,70 +275,21 @@ public class PaymentServiceImpl implements PaymentService {
             log.warn("MoMo IPN rejected: invalid signature, orderId={}, requestId={}", request.getOrderId(), request.getRequestId());
             return momoIpnResponse(request, 1, "Invalid signature");
         }
-
-        Optional<PaymentTransaction> latest = paymentTransactionRepository
-                .findByTransactionCodeAndPaymentMethod(request.getOrderId(), METHOD_MOMO);
-        if (latest.isEmpty()) {
-            log.warn("MoMo IPN ignored: transaction not found, momoOrderId={}, requestId={}", request.getOrderId(), request.getRequestId());
-            return momoIpnResponse(request, 0, "Transaction already processed or not found");
-        }
-        if (!Objects.equals(request.getOrderId(), request.getRequestId())) {
-            log.warn("MoMo IPN rejected: requestId mismatch, orderId={}, requestId={}", request.getOrderId(), request.getRequestId());
-            return momoIpnResponse(request, 1, "Invalid request id");
-        }
-
-        PaymentTransaction transaction = latest.get();
-        if (!STATUS_PENDING.equals(transaction.getStatus())) {
-            log.info("MoMo IPN ignored: transaction already processed, transactionId={}, status={}", transaction.getId(), transaction.getStatus());
-            return momoIpnResponse(request, 0, "Transaction already processed");
-        }
-
-        Order order = orderRepository.findByIdForUpdate(transaction.getOrder().getId())
-                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
-        PaymentIntent intent = transaction.getPaymentIntent();
-
-        if (request.getAmount() == null || transaction.getAmount().compareTo(BigDecimal.valueOf(request.getAmount())) != 0) {
-            transaction.setStatus(STATUS_FAILED);
-            transaction.setFailedReason("Amount mismatch");
-            paymentTransactionRepository.save(transaction);
-            log.warn("MoMo IPN rejected: amount mismatch, transactionId={}, expected={}, actual={}",
-                    transaction.getId(), transaction.getAmount(), request.getAmount());
-            return momoIpnResponse(request, 1, "Amount mismatch");
-        }
-
-        if (Integer.valueOf(0).equals(request.getResultCode())) {
-            transaction.setStatus(STATUS_PAID);
-            transaction.setPaidAt(LocalDateTime.now());
-            transaction.setFailedReason(null);
-            intent.setStatus(STATUS_PAID);
-            order.setPaymentStatus(STATUS_PAID);
-        } else {
-            transaction.setStatus(STATUS_FAILED);
-            transaction.setFailedReason(request.getMessage());
-            intent.setStatus(STATUS_FAILED);
-            order.setPaymentStatus(STATUS_UNPAID);
-        }
-
-        intent.setResponsePayload(writeJson(request));
-        paymentTransactionRepository.save(transaction);
-        paymentIntentRepository.save(intent);
-        orderRepository.save(order);
-        log.info("MoMo IPN processed: orderId={}, transactionId={}, resultCode={}, paymentStatus={}",
-                order.getId(), transaction.getId(), request.getResultCode(), order.getPaymentStatus());
-        return momoIpnResponse(request, 0, "Success");
+        return handleVerifiedMomoCallback(request);
     }
 
     @Override
     /**
      * Xác thực tham số redirect từ MoMo để frontend hiển thị kết quả.
-     * Không cập nhật trạng thái thanh toán ở đây vì redirect qua browser không đủ tin cậy.
+     * IPN vẫn là nguồn tin cậy chính, nhưng return được xử lý idempotent để tránh trường hợp IPN không tới được local/dev.
      */
+    @Transactional
     public MomoIpnResponse handleMomoReturn(Map<String, String> params) {
         MomoIpnRequest request = objectMapper.convertValue(params, MomoIpnRequest.class);
         if (!verifyMomoIpnSignature(request)) {
             return momoIpnResponse(request, 1, "Invalid signature");
         }
-        return momoIpnResponse(request, 0, "Return verified");
+        return handleVerifiedMomoCallback(request);
     }
 
     private PaymentTransactionResponse handleAlreadyPaidOrder(Order order, String paymentMethod) {
@@ -385,6 +393,19 @@ public class PaymentServiceImpl implements PaymentService {
         return "PAY-" + paymentMethod + "-" + System.currentTimeMillis() + "-" + random;
     }
 
+    private String generateRefundCode() {
+        String random = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        return "REF-" + System.currentTimeMillis() + "-" + random;
+    }
+
+    private Account getCurrentAccountOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            return null;
+        }
+        return accountRepository.findById(principal.getId()).orElse(null);
+    }
+
     private PaymentTransactionResponse toResponse(PaymentTransaction transaction) {
         return paymentMapper.toResponse(transaction, STATUS_UNPAID);
     }
@@ -456,6 +477,63 @@ public class PaymentServiceImpl implements PaymentService {
                 + "&resultCode=" + nullToEmpty(request.getResultCode())
                 + "&transId=" + nullToEmpty(request.getTransId());
         return hmacSha256(rawSignature).equalsIgnoreCase(nullToEmpty(request.getSignature()));
+    }
+
+    private MomoIpnResponse handleVerifiedMomoCallback(MomoIpnRequest request) {
+        Optional<PaymentTransaction> latest = paymentTransactionRepository
+                .findByTransactionCodeAndPaymentMethod(request.getOrderId(), METHOD_MOMO);
+        if (latest.isEmpty()) {
+            log.warn("MoMo callback ignored: transaction not found, momoOrderId={}, requestId={}", request.getOrderId(), request.getRequestId());
+            return momoIpnResponse(request, 0, "Transaction already processed or not found");
+        }
+        if (!Objects.equals(request.getOrderId(), request.getRequestId())) {
+            log.warn("MoMo callback rejected: requestId mismatch, orderId={}, requestId={}", request.getOrderId(), request.getRequestId());
+            return momoIpnResponse(request, 1, "Invalid request id");
+        }
+
+        PaymentTransaction transaction = latest.get();
+        if (!STATUS_PENDING.equals(transaction.getStatus())) {
+            log.info("MoMo callback ignored: transaction already processed, transactionId={}, status={}", transaction.getId(), transaction.getStatus());
+            return momoIpnResponse(request, 0, "Transaction already processed");
+        }
+
+        Order order = orderRepository.findByIdForUpdate(transaction.getOrder().getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_001));
+        PaymentIntent intent = transaction.getPaymentIntent();
+
+        if (request.getAmount() == null || transaction.getAmount().compareTo(BigDecimal.valueOf(request.getAmount())) != 0) {
+            transaction.setStatus(STATUS_FAILED);
+            transaction.setFailedReason("Amount mismatch");
+            paymentTransactionRepository.save(transaction);
+            log.warn("MoMo callback rejected: amount mismatch, transactionId={}, expected={}, actual={}",
+                    transaction.getId(), transaction.getAmount(), request.getAmount());
+            return momoIpnResponse(request, 1, "Amount mismatch");
+        }
+
+        if (Integer.valueOf(0).equals(request.getResultCode())) {
+            transaction.setStatus(STATUS_PAID);
+            transaction.setPaidAt(LocalDateTime.now());
+            transaction.setFailedReason(null);
+            intent.setStatus(STATUS_PAID);
+            order.setPaymentStatus(STATUS_PAID);
+            if (ORDER_PENDING.equals(order.getStatus())) {
+                order.setStatus(ORDER_CONFIRMED);
+                order.setConfirmedAt(LocalDateTime.now());
+            }
+        } else {
+            transaction.setStatus(STATUS_FAILED);
+            transaction.setFailedReason(request.getMessage());
+            intent.setStatus(STATUS_FAILED);
+            order.setPaymentStatus(STATUS_UNPAID);
+        }
+
+        intent.setResponsePayload(writeJson(request));
+        paymentTransactionRepository.save(transaction);
+        paymentIntentRepository.save(intent);
+        orderRepository.save(order);
+        log.info("MoMo callback processed: orderId={}, transactionId={}, resultCode={}, paymentStatus={}",
+                order.getId(), transaction.getId(), request.getResultCode(), order.getPaymentStatus());
+        return momoIpnResponse(request, 0, "Success");
     }
 
     private String hmacSha256(String data) {

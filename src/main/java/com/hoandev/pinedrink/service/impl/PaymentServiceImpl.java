@@ -17,6 +17,7 @@ import com.hoandev.pinedrink.entity.dto.response.Payment.MomoCreatePaymentRespon
 import com.hoandev.pinedrink.entity.dto.response.Payment.MomoIpnResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.PaymentTransactionResponse;
 import com.hoandev.pinedrink.entity.dto.response.Payment.RefundResponse;
+import com.hoandev.pinedrink.entity.enums.OrderStatus;
 import com.hoandev.pinedrink.entity.enums.PaymentProvider;
 import com.hoandev.pinedrink.entity.enums.PaymentStatus;
 import com.hoandev.pinedrink.exception.BaseException;
@@ -281,6 +282,13 @@ public class PaymentServiceImpl implements PaymentService {
             transaction.setStatus(STATUS_FAILED);
             transaction.setFailedReason(response.path("message").asText("MoMo create payment failed"));
             paymentTransactionRepository.save(transaction);
+
+            intent.setStatus(STATUS_FAILED);
+            paymentIntentRepository.save(intent);
+
+            order.setStatus(ORDER_CANCELLED);
+            order.setPaymentStatus(STATUS_UNPAID);
+            orderRepository.save(order);
         }
 
         return MomoCreatePaymentResponse.builder()
@@ -554,6 +562,7 @@ public class PaymentServiceImpl implements PaymentService {
             transaction.setFailedReason(request.getMessage());
             intent.setStatus(STATUS_FAILED);
             order.setPaymentStatus(STATUS_UNPAID);
+            order.setStatus(ORDER_CANCELLED);
         }
 
         intent.setResponsePayload(writeJson(request));

@@ -4,14 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoandev.pinedrink.entity.ExportRequest;
 import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportDto;
+import com.hoandev.pinedrink.entity.dto.report.ProductCatalogReportItemDto;
 import com.hoandev.pinedrink.entity.enums.ExportRequestStatus;
 import com.hoandev.pinedrink.entity.enums.ReportType;
 import com.hoandev.pinedrink.exception.BaseException;
 import com.hoandev.pinedrink.exception.ErrorCode;
-import com.hoandev.pinedrink.mapper.ProductCatalogReportMapper;
 import com.hoandev.pinedrink.repository.ExportRequestRepository;
 import com.hoandev.pinedrink.repository.ProductRepository;
-import com.hoandev.pinedrink.repository.result.ProductCatalogResult;
 import com.hoandev.pinedrink.service.JasperReportService;
 import com.hoandev.pinedrink.service.ReportExportService;
 import com.hoandev.pinedrink.service.ReportStorageService;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -37,21 +37,20 @@ import java.util.List;
 public class ReportExportServiceImpl implements ReportExportService {
 
     private static final long MAX_REPORT_RANGE_DAYS = 366;
+    private static final DateTimeFormatter REPORT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final ExportRequestRepository exportRequestRepository;
     private final JasperReportService jasperReportService;
     private final ReportStorageService reportStorageService;
     private final ObjectMapper objectMapper;
     private final ProductRepository productRepository;
-    private final ProductCatalogReportMapper productCatalogReportMapper;
 
-    public ReportExportServiceImpl(ExportRequestRepository exportRequestRepository, JasperReportService jasperReportService, ReportStorageService reportStorageService, ObjectMapper objectMapper, ProductRepository productRepository, ProductCatalogReportMapper productCatalogReportMapper) {
+    public ReportExportServiceImpl(ExportRequestRepository exportRequestRepository, JasperReportService jasperReportService, ReportStorageService reportStorageService, ObjectMapper objectMapper, ProductRepository productRepository) {
         this.exportRequestRepository = exportRequestRepository;
         this.jasperReportService = jasperReportService;
         this.reportStorageService = reportStorageService;
         this.objectMapper = objectMapper;
         this.productRepository = productRepository;
-        this.productCatalogReportMapper = productCatalogReportMapper;
     }
 
     /**
@@ -130,9 +129,21 @@ public class ReportExportServiceImpl implements ReportExportService {
         LocalDateTime fromDate = parseStartOfDay(readFilter(job.getFilters(), "fromDate", null));
         LocalDateTime toDate = parseExclusiveEndOfDay(readFilter(job.getFilters(), "toDate", null));
         validateDateRange(fromDate, toDate);
-        List<ProductCatalogResult> products = productRepository.findProductCatalogReport(
+        List<ProductCatalogReportItemDto> products = productRepository.findProductCatalogReport(
                 status, categoryId, fromDate, toDate);
-        return productCatalogReportMapper.toReportDto(products, status, categoryId);
+        return buildProductCatalogReport(products, status, categoryId);
+    }
+
+    private ProductCatalogReportDto buildProductCatalogReport(
+            List<ProductCatalogReportItemDto> products, String statusFilter, String categoryFilter) {
+        return ProductCatalogReportDto.builder()
+                .title("DANH SACH SAN PHAM")
+                .generatedAt(LocalDateTime.now().format(REPORT_DATE_TIME_FORMATTER))
+                .statusFilter(defaultText(statusFilter, "ALL"))
+                .categoryFilter(defaultText(categoryFilter, "ALL"))
+                .totalProducts(String.valueOf(products.size()))
+                .items(products)
+                .build();
     }
 
     private LocalDateTime parseStartOfDay(String value) {
@@ -186,6 +197,10 @@ public class ReportExportServiceImpl implements ReportExportService {
             return null;
         }
         return value;
+    }
+
+    private String defaultText(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value;
     }
 
     /**
